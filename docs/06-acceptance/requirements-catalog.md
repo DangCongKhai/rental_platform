@@ -8,7 +8,7 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: Guest. Dependencies: S
 
 Factors: Identity consistency; privilege escalation; privacy
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
 Register through Supabase Auth, confirm email before protected product writes, and create one application profile keyed by Auth UUID. Users can act as both tenant and owner; no role selection or phone OTP is required.
 
@@ -23,9 +23,9 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: User. Dependencies: Sh
 
 Factors: Authentication; expiration; recovery
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Sign in through Supabase Auth. Send its access token to Laravel; use provider refresh flow and protect private Next.js pages and API endpoints.
+Sign in through Supabase Auth. Send its access token to Next.js Route Handlers; use provider refresh flow and protect private Next.js pages and API endpoints.
 
 - FR02-AC01 [Positive] Confirmed user submits correct credentials → Protected dashboard loads the linked profile.
 - FR02-AC02 [Negative] Wrong password or unconfirmed account → Clear safe error; no protected data returned.
@@ -38,9 +38,9 @@ Module: `M01-identity-access`. Priority: P2 Defer. Actors: User. Dependencies: F
 
 Factors: Identity linking; callback integrity
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS + Google OAuth
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS + Google OAuth
 
-Optional Google sign in with configured redirect allowlist; map provider identity to one profile. Do not implement a second Laravel password store.
+Optional Google sign in with configured redirect allowlist; map provider identity to one profile. Do not implement a second application password store.
 
 - FR03-AC01 [Positive] User completes allowed Google callback → Provider identity maps to one application profile.
 - FR03-AC02 [Security] Invalid callback/state or attempted client-created admin flag → Reject flow or ignore forbidden privilege input.
@@ -52,9 +52,9 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: User. Dependencies: Sh
 
 Factors: Session lifecycle; bearer-token limits
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Sign out via Supabase and clear user-scoped Next.js/TanStack data. Document that a previously issued JWT may remain valid until expiry when Laravel validates it offline.
+Sign out via Supabase and clear user-scoped Next.js/TanStack data. Document that a previously issued JWT may remain valid until expiry when the Next.js server validates it offline.
 
 - FR04-AC01 [Positive] User logs out → Current browser loses credentials and private cached data; protected navigation requires sign-in.
 - FR04-AC02 [Security] Another user signs in on same browser → No previous user private data appears.
@@ -66,14 +66,14 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: User; Admin. Dependenc
 
 Factors: Ownership; least privilege; direct DB exposure
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Use is_admin on trusted profiles for moderation. Normal users act as tenant and owner through resource relationships. Backend checks every private read/write; frontend guards are only UX.
 
 - FR05-AC01 [Security] Owner B guesses Owner A property/unit/request UUID → Return 403/404 without private data or mutation.
 - FR05-AC02 [Security] Normal user submits is_admin or another owner_id → Reject restricted input; actor comes from verified identity.
 - FR05-AC03 [Security] Normal user calls an admin moderation endpoint → 403; no audit outcome or notification is committed.
-- FR05-AC04 [Security] Browser directly calls Supabase Data API/storage → Business tables are not writable/readable through unintended grants; storage rules restrict private files. Laravel authorization remains enforced even if DB connection bypasses RLS.
+- FR05-AC04 [Security] Browser directly calls Supabase Data API/storage → Business tables are not writable/readable through unintended grants; storage rules restrict private files. Server authorization remains enforced even if DB connection bypasses RLS.
 
 ## FR06 Profile and dual dashboards
 
@@ -81,7 +81,7 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: User. Dependencies: Sh
 
 Factors: Data minimization; stale edits
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 View/update permitted name and contact information and navigate between tenant area and Manage rentals. Phone is contact information, not verified ownership. Avatar/DOB are optional later scope.
 
@@ -95,7 +95,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Physical inventory; owner linkage
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Owner creates physical property, address, amenities and controlled policies. WHOLE_SPACE atomically creates one backend unit; SEPARATE_UNITS uses explicit unit creation. Incomplete drafts can be saved. No property approval state or mandatory ownership evidence/phone verification in MVP. Amenities use properties.shared_amenities JSONB with schema_version, allowlisted standard key/object entries and custom text array; select or add custom features directly in the property form (FR87).
 
@@ -110,7 +110,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: History preservation; optimistic concurrency
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Owner edits own property and archives unused resources. Existing tenancy, request, contract and audit references are preserved. Archive prevents new marketing/proposals but does not erase active agreements.
 
@@ -125,7 +125,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Validation; private staging; durable file references
 
-Tools: Next.js upload UI + Laravel validation/Policies + Supabase Storage
+Tools: Next.js upload UI + server validation and policies + Supabase Storage
 
 Upload validated images and create one property_media row with optional same-property unit_id. No review_status, approval, replacement chain or admin photo queue. Upload completes before media becomes selectable. Initial listing review sees selected photos; later additions appear directly when selected on an eligible listing.
 
@@ -140,7 +140,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Source data reuse; one current advertisement
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Choose own nonarchived property, market selected units, enter title/description and choose cover from existing selected media. Reuse property address/policies and unit specifications/photos. One nonarchived listing per property.
 
@@ -155,7 +155,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Stale approvals; public consistency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 After first APPROVED decision, owner may update property, units, policies, media and listing wording immediately without resetting approval. Changes are audited and remain reportable. Edits before approval invalidate the submitted content revision. Admin suspension is independent and cannot be cleared by an edit.
 
@@ -170,7 +170,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Completeness; idempotence
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + queued notification
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + queued notification
 
 First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision and listing submitted_revision. Rejected initial submissions may be corrected/resubmitted.
 
@@ -185,7 +185,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Admin. Dependencie
 
 Factors: Initial package completeness; current content revision; admin authorization
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Admin queue displays only initial PENDING listings with property/unit details, selected gallery, policies and captured revisions. Show owner and completeness; admin approves or rejects with reason.
 
@@ -199,7 +199,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Admin. Dependencie
 
 Factors: Exact content approval; separate publication
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin approves the exact submitted listing/property content revisions. Store reviewer/time and approved_content_revision. Approval permits publication but does not publish automatically.
 
@@ -214,7 +214,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Admin. Dependencie
 
 Factors: Explainable decisions; terminal transitions
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin rejects initial submission with a required reason. Owner corrects data and resubmits; later content violations use suspension rather than resetting initial approval.
 
@@ -228,7 +228,7 @@ Module: `M03-listings-moderation`. Priority: P2 Defer. Actors: Admin. Dependenci
 
 Factors: Scope control
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Defer a distinct CHANGES_REQUESTED state. MVP uses rejection with a reason plus edit/resubmit.
 
@@ -240,7 +240,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Inventory eligibility; fresh DB checks
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner may publish only an initially approved, nonarchived, complete listing belonging to a nonarchived property and not admin-suspended. Require at least one READY, marketed unit with availability for the selected date query. Search without dates defaults to today for the unit minimum duration. No property/image approval conditions.
 
@@ -255,7 +255,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Owner; Admin. Depe
 
 Factors: Visibility; cache invalidation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Laravel Cache
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + server cache
 
 Owner can hide or archive own listing. Admin suspension is a separate control with required reason. Republishing an owner-hidden listing retains initial approval and must pass current eligibility; owner cannot remove admin suspension.
 
@@ -269,7 +269,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: Guest; User. Depe
 
 Factors: Eligibility; pagination; cost
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel Eloquent + PostgreSQL FTS/indexes
+Tools: Next.js + React + Tailwind + TanStack Query + server queries + PostgreSQL FTS/indexes
 
 Search public eligible listings by text/address and paginated filters. Query units whose full desired interval has no blocking tenancy overlap. Without dates use today through each unit minimum rental term; label this default. Never use property RENTED or a stored availability count.
 
@@ -284,7 +284,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: Guest; User. Depe
 
 Factors: Same-unit semantics; client response order
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Support price, area, type, amenities, occupants and controlled policy filters on the same available unit. Start/end dates are both required when filtering dates; inclusive end is converted to [start,end+1day). Amenity filters use canonical catalog keys with enabled=true on eligible units/property scope; distinguish shared laundry from an in-unit washing machine. Custom descriptions never automatically match standard filters (FR87).
 
@@ -299,7 +299,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: Guest; User. Depe
 
 Factors: Accurate linked data; privacy
 
-Tools: Next.js + React + Tailwind + TanStack Query + next/image + Laravel Resources
+Tools: Next.js + React + Tailwind + TanStack Query + next/image + response DTOs
 
 Show shared gallery, advertised rules, unit photos/specifications/prices and date-qualified availability. Owner contact enquiry form has contact name/phone/message and desired date range. Never display agreement documents or other prospects contact details. Display canonical localized amenity labels with owner details, separating shared property facilities, private unit features and additional custom text (FR87).
 
@@ -327,7 +327,7 @@ Module: `M04-discovery-favourites`. Priority: P2 Defer. Actors: Guest; User. Dep
 
 Factors: Consistent query scope
 
-Tools: Next.js + React + Tailwind + TanStack Query + map SDK + shared Laravel search action
+Tools: Next.js + React + Tailwind + TanStack Query + map SDK + shared server search service
 
 Use same normalized filter service for map and list; map bounding changes have explicit URL/query state.
 
@@ -340,7 +340,7 @@ Module: `M02-property-units-media`. Priority: P2 Defer. Actors: System; Owner. D
 
 Factors: External service failure; stale jobs
 
-Tools: Laravel Queue database driver + geocoding API
+Tools: database-backed queue + geocoding API
 
 Optional asynchronous address-to-coordinate conversion after saving address. Manual address remains authoritative when provider fails.
 
@@ -354,7 +354,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Tenant. Dependencies: 
 
 Factors: Eligibility; no reservation; duplicate semantics
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Authenticated tenant submits contact_name, contact_phone, desired_move_in_date, desired_end_date, optional preferred_unit_id and message. Store contact snapshots. Status PENDING throughout offline discussion. No calendar, manual discussion acceptance or unit reservation at enquiry creation.
 
@@ -370,7 +370,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Tenant. Dependencies: 
 
 Factors: Concurrent duplication; usable threads
 
-Tools: PostgreSQL partial unique index + shared action
+Tools: PostgreSQL partial unique index + shared server service
 
 At most one PENDING request per tenant/listing; accepted/rejected/withdrawn history remains. Unique partial index is authoritative; retries compare payload.
 
@@ -384,7 +384,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Tenant. Dependencies: 
 
 Factors: Private data; state clarity
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Display private submitted contacts, desired dates, request status/outcome and linked tenancy confirmation state. ACCEPTED means proposal created, not that tenancy contract is mutually confirmed.
 
@@ -399,7 +399,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Tenant. Dependencies: 
 
 Factors: Pending state transitions; withdrawal versus proposal race
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Tenant may withdraw own PENDING request with audit and owner notification. Accepted requests are handled through tenancy proposal actions instead.
 
@@ -413,7 +413,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Owner. Dependencies: S
 
 Factors: Ownership; meaningful lead state
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Owner sees own property requests and private tenant contact snapshots, dates and preferred unit. Discuss offline while PENDING. Actions are Reject and Create tenancy proposal; no viewing/calendar or stand-alone Accept.
 
@@ -428,7 +428,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Owner. Dependencies: S
 
 Factors: Atomic final acceptance; offline agreement
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Create tenancy, immutable ORIGINAL contract version, explicit owner confirmation, temporary reservation, audit and outbox; change rental request PENDING to ACCEPTED in the same transaction. Tenant confirmation follows separately.
 
@@ -443,7 +443,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Owner. Dependencies: S
 
 Factors: Explainability; cancellation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner can reject PENDING enquiry with reason; no viewing cancellation or automatic rejection merely because another enquiry was accepted. System auto-rejection uses FR85.
 
@@ -457,7 +457,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: System. Dependencies: 
 
 Factors: Durable business history; transaction consistency
 
-Tools: PostgreSQL audit_logs + shared Laravel actions
+Tools: PostgreSQL audit_logs + shared server services
 
 Append-only audit events record request status, proposal/confirmation/version changes and automatic decisions with actor/system identity, safe before/after, reason and correlation UUID.
 
@@ -472,7 +472,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: System. Dependenci
 
 Factors: Concurrent occupancy; allocation granularity
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints + btree_gist exclusion constraint
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + btree_gist exclusion constraint
 
 PostgreSQL GiST exclusion constraint on tenancies(unit_id, daterange(blocked_start_date, blocked_end_date+1, [))) for PENDING_CONFIRMATION/CONFIRMED/ACTIVE. Different nonoverlapping future tenancies on one unit are permitted. Blocking envelope includes confirmed span plus any proposed renewal extension.
 
@@ -488,7 +488,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Agreement recording; exact unit; snapshots
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints + Supabase private Storage
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + Supabase private Storage
 
 Owner chooses exact READY nonarchived unit in request property, enters final dates/rent/deposit, negotiated policy snapshot and private agreement document, then explicitly confirms version. Create one continuing tenancy with version 1, pending pointer and configured confirmation deadline. Default reservation 48h is a proposed configurable setting.
 
@@ -504,7 +504,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Privacy; effective periods
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + private Storage
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL + private Storage
 
 Owner and tenant can view all immutable version metadata/documents, each party confirmation/decline, proposed/current/upcoming terms, deadline and supersession links. Derive state from current pending pointer, confirmations and audit events; do not mark old versions confirmed by inference.
 
@@ -519,7 +519,7 @@ Module: `M08-reports-admin`. Priority: P2 Defer. Actors: Tenant. Dependencies: F
 
 Factors: Eligibility; abuse; uniqueness
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Optional one property review per ACTIVE/ENDED tenancy; rating1–5 and comment. Reviews pending manual moderation if enabled.
 
@@ -533,7 +533,7 @@ Module: `M08-reports-admin`. Priority: P2 Defer. Actors: Guest; User. Dependenci
 
 Factors: Moderated visibility; aggregates
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Only display reviews when review feature exists; show approved reviews and consistent rating aggregate.
 
@@ -546,7 +546,7 @@ Module: `M08-reports-admin`. Priority: P0 Must. Actors: Authenticated user. Depe
 
 Factors: Abuse limits; synchronous persistence
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + queued notification
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + queued notification
 
 Submit reason code and description for suspicious published listing. Save OPEN report synchronously; queue admin alert after commit. Do not use Kafka/RabbitMQ for report creation.
 
@@ -562,7 +562,7 @@ Module: `M08-reports-admin`. Priority: P0 Must. Actors: Admin. Dependencies: Sha
 
 Factors: Resolution history; fair moderation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Admin moves OPEN report to REVIEWING then RESOLVED/DISMISSED with required reason. An optional suspension is atomic with resolution and audit; notify reporter with sanitized outcome. Restoration is an explicit admin restriction action, not a new ordinary property/photo review.
 
@@ -577,7 +577,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: Guest; API client
 
 Factors: Consistent DTO; pagination
 
-Tools: Laravel Resource Controllers + API Resources + OpenAPI
+Tools: Next.js resource Route Handlers + response DTOs + OpenAPI
 
 Expose GET listing collection/detail using one public eligibility service; include safe unit/media/policy DTOs, pagination and errors.
 
@@ -591,7 +591,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner; Admin wher
 
 Factors: Authorization parity; archival
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Authorize owner-scoped CRUD for properties, units and gallery selection. Route linked-content writes through property content lock/revision/audit action. No property approval, document-evidence review or image-review endpoints.
 
@@ -605,7 +605,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Tenant; Owner. Dep
 
 Factors: Explicit transitions; idempotence
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Provide authenticated request submit/withdraw/reject, tenancy propose/correct/cancel/end/move-in, exact-version confirm/decline and renewal request/propose actions. Shared actions enforce policies, idempotency and transaction rules. No viewings endpoints.
 
@@ -614,17 +614,17 @@ Provide authenticated request submit/withdraw/reject, tenancy propose/correct/ca
 - FR42-AC03 [Race] Client sends stale tenancy revision or superseded version UUID → 409 without changing confirmations or blocked span.
 - FR42-AC04 [Integrity] Equivalent HTTP and worker actions run → Both use same business locks/constraints.
 
-## FR43 Verify Supabase JWT in Laravel
+## FR43 Verify Supabase JWT in Next.js
 
 Module: `M01-identity-access`. Priority: P0 Must. Actors: API client. Dependencies: Shared foundation.
 
 Factors: Signature and claims; single identity authority
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. No Sanctum personal_access_tokens in chosen auth path.
+Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
 
-- FR43-AC01 [Positive] Valid project access token → Laravel resolves current profile and then runs Policies.
+- FR43-AC01 [Positive] Valid project access token → The Next.js server resolves the current profile and then runs server policies.
 - FR43-AC02 [Security] Tampered payload, alg none, wrong issuer/audience/key or expired token → 401, no protected action.
 - FR43-AC03 [Security] Body contains a different user_id → Never replaces verified sub.
 - FR43-AC04 [Failure] Unknown kid/key rotation or JWKS refresh failure → Bounded key refresh, fail closed and safe error; no arbitrary token-supplied key URL.
@@ -636,9 +636,9 @@ Module: `M10-operations-delivery`. Priority: P1 Should. Actors: Developer. Depen
 
 Factors: Usable API contract
 
-Tools: Scramble/OpenAPI + Laravel middleware annotation
+Tools: OpenAPI generated from Next.js Route Handlers
 
-Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Do not label JWT as Sanctum token.
+Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
 
 - FR44-AC01 [Positive] Open generated docs → Auth and action routes include examples for401/403/404/409/422.
 - FR44-AC02 [Validation] Try documented request flow → Matches implemented field names and state enums.
@@ -650,9 +650,9 @@ Module: `M09-notifications-audit`. Priority: P1 Should. Actors: System. Dependen
 
 Factors: After-commit reliability; retry semantics
 
-Tools: Laravel Queue(database) + Workers + Scheduler + transactional outbox + Supabase PostgreSQL
+Tools: database-backed queue + Next.js worker + scheduler + transactional outbox + Supabase PostgreSQL
 
-Write notification_outbox atomically with request/moderation/proposal/confirmation/renewal outcomes. Laravel queue workers deliver notifications after commit, with retry/event deduplication. Use database-backed Laravel Queue on Supabase PostgreSQL for MVP; no Kafka/RabbitMQ or viewing reminders.
+Write notification_outbox atomically with request/moderation/proposal/confirmation/renewal outcomes. Next.js queue workers deliver notifications after commit, with retry and event deduplication. Use a database-backed queue on Supabase PostgreSQL for MVP; no Kafka, RabbitMQ, or viewing reminders.
 
 - FR45-AC01 [Positive] Owner creates proposal → Tenant notification links exact version/deadline after commit.
 - FR45-AC02 [Failure] Delivery service unavailable → Business transaction remains committed; bounded worker retries and observable failure.
@@ -665,7 +665,7 @@ Module: `M04-discovery-favourites`. Priority: P1 Should. Actors: System. Depende
 
 Factors: Visibility invalidation; no authority from cache
 
-Tools: Laravel Cache database store + TanStack Query + next/image
+Tools: database-backed server cache + TanStack Query + next/image
 
 Next.js/TanStack Query may cache public reads. Invalidate on content, media, policy, suspension and allocation changes. Public detail/API must gate current hidden/suspended status; availability remains indicative until transactional proposal creation.
 
@@ -679,7 +679,7 @@ Module: `M10-operations-delivery`. Priority: P1 Should. Actors: System; Develope
 
 Factors: Traceability; privacy
 
-Tools: Laravel Logging/Monolog + configured alert destination
+Tools: Next.js server logging + configured alert destination
 
 Log request/event ID, actor/resource UUIDs, operation and failure duration/context. Alert configured admin/developer on critical storage, transaction or exhausted job failures. Business audit remains separate.
 
@@ -693,12 +693,12 @@ Module: `M10-operations-delivery`. Priority: P1 Should. Actors: Developer; autho
 
 Factors: Performance; restricted diagnostics
 
-Tools: Laravel Telescope + DB query listener + cumulative query monitoring
+Tools: restricted server diagnostics + DB query listener + cumulative query monitoring
 
-Use Telescope in development with restricted access. Capture slow query duration and cumulative query time and configure explicit developer alert thresholds; Telescope display alone is not an alert.
+Use restricted development diagnostics. Capture slow query duration and cumulative query time and configure explicit developer alert thresholds. A diagnostics screen alone is not an alert.
 
 - FR48-AC01 [Positive] Slow query exceeds configured threshold → Record duration/query fingerprint/correlation; deliver alert once per dedupe window.
-- FR48-AC02 [Security] Public visitor requests Telescope → Unavailable or403; query bindings redact sensitive information.
+- FR48-AC02 [Security] Public visitor requests development diagnostics → Unavailable or403; query bindings redact sensitive information.
 - FR48-AC03 [Failure] Monitor/alert service down → App continues; local diagnostic fallback.
 
 ## FR49 Password reset and email confirmation
@@ -707,7 +707,7 @@ Module: `M01-identity-access`. Priority: P0 Must. Actors: User. Dependencies: Sh
 
 Factors: Account recovery; provider-managed credentials
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
 Use Supabase confirmation/recovery links with configured allowed redirects. Reset password through provider; never store plaintext or recovery tokens in application tables.
 
@@ -721,7 +721,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Inventory identity; structured input
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 SEPARATE_UNITS allows manual or structured bulk creation: count, prefix, starting number and defaults. Generate editable preview rows in Next.js; save final JSON array transactionally. No LLM/SQL generation. Unit amenity defaults use the same controlled JSONB structure as FR87; each preview row gets its own copied value, not linked mutable defaults.
 
@@ -736,7 +736,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Unit versus template; stale writes
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner edits specifications, marketed price/deposit, minimum duration and controlled policy overrides. Valid post-approval edits appear directly with audit; current or proposed contract snapshots are immutable. Unit amenities use units.amenities with allowlisted scope-aware catalog keys and custom text per FR87; no owner-created global amenity key.
 
@@ -751,7 +751,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Availability derivation; maintenance
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 units.operational_status is READY, MAINTENANCE or RETIRED. Rental availability is derived for a requested interval from blocking tenancy ranges, not an OCCUPIED flag. is_marketed controls advertisement only. Maintenance stops new proposals but does not cancel agreements.
 
@@ -766,7 +766,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner; System. De
 
 Factors: Source-linked public content; revision propagation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Increment property.content_revision for changes to any initial-review content, including units, selected photos and policies. Before first approval invalidate pending snapshot. After approval retain approval and show changes directly; append safe audit before/after with actor/time. Amenity changes increment property content_revision, retain normal post-approval editing and record before/after audit. Standard label changes in the code catalog do not rewrite saved keys (FR87).
 
@@ -781,7 +781,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Selection versus approval; cover references
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js upload UI + Laravel HTTP client + Supabase private Storage + PostgreSQL
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js upload UI + server HTTP client + Supabase private Storage + PostgreSQL
 
 Owner selects media, sets order and cover, or soft-deletes unused photos. Selected nondeleted property/unit media may appear without review. Cover must be selected, same-property shared media; deleting cover requires replacement or explicit hide.
 
@@ -796,7 +796,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Immutable storage; predecessor consistency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js upload UI + Laravel HTTP client + Supabase private Storage + PostgreSQL
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js upload UI + server HTTP client + Supabase private Storage + PostgreSQL
 
 To change photo bytes, upload a new object/media row and switch gallery/cover references in a transaction after upload succeeds; optionally soft-delete old media. No replaces_image_id, image approvals or waiting-choice dialog.
 
@@ -811,7 +811,7 @@ Module: `M02-property-units-media`. Priority: P1 Should. Actors: System. Depende
 
 Factors: Reference integrity; asynchronous storage
 
-Tools: Scheduled Laravel cleanup + Supabase Storage + PostgreSQL
+Tools: scheduled server cleanup + Supabase Storage + PostgreSQL
 
 Scheduled cleanup deletes incomplete unreferenced uploads and soft-deleted media after configured retention. Recheck cover/gallery/audit retention references before deleting. Contract documents are excluded from public-photo cleanup.
 
@@ -826,7 +826,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner. Dependenci
 
 Factors: Validated schema; reusable defaults
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind + TanStack Query
 
 properties.policies contains schema_version, defaults for predefined pets/smoking, and shared_rules array. Owner uses form fields; backend validates allowlisted keys/enums and limits. No independent policy table in MVP; later migration can preserve stable keys. Approved listings update immediately with audit.
 
@@ -841,7 +841,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner; Guest; Ten
 
 Factors: Inheritance; consistency; historical terms
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind + TanStack Query
 
 units.policy_overrides contains optional predefined enum overrides and additional_rules array. Missing key inherits property default; shared_rules always retained. Preserve resolved actually agreed policies in immutable version snapshot at proposal, editable only through new version.
 
@@ -856,7 +856,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Actual occupancy; history; reopening
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Initial proposal decline releases reservation and sets AWAITING_REVISION; owner may issue corrected version under same tenancy after rechecking availability. Expired initial proposal becomes EXPIRED. Owner may cancel pre-start confirmed tenancy or record actual end with reason; preserve accepted enquiry/history and immutable agreements. Ending cancels pending renewal work and releases only the remaining blocked portion.
 
@@ -872,7 +872,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Document privacy; dated evidence
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + private Storage
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + private Storage
 
 Store version_number, ORIGINAL type, dates/rent/deposit, negotiated policies, private unique document_path, SHA256, optional owner-reported signed_on and created_by/created_at. No signing service. Owner explicitly confirms exact version on submit; tenant must independently confirm same UUID/hash. Store owner_confirmed_at, tenant_confirmed_at, tenant_rejected_at and tenant_rejection_reason on tenancy_contracts; there is no separate confirmation entity.
 
@@ -887,7 +887,7 @@ Module: `M07-renewals`. Priority: P0 Must. Actors: Tenant. Dependencies: Shared 
 
 Factors: One pending request; original proposal integrity
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Tenant on CONFIRMED/ACTIVE tenancy requests a later end date and proposed monthly rent. At most one PENDING renewal request per tenancy. Request alone changes no dates/availability. Allow one upcoming renewal workflow at a time; request proposal values remain immutable.
 
@@ -902,7 +902,7 @@ Module: `M07-renewals`. Priority: P0 Must. Actors: Tenant; Owner. Dependencies: 
 
 Factors: Explicit final states; no approval-only extension
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Tenant cancels or owner rejects PENDING renewal request with reason. If a pending renewal contract exists, invalidate its pending pointer and restore blocked envelope to confirmed dates in same transaction; old version/confirmations remain history.
 
@@ -917,7 +917,7 @@ Module: `M07-renewals`. Priority: P0 Must. Actors: Owner. Dependencies: Shared f
 
 Factors: Atomic agreement linkage; consecutive terms
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints + private document Storage
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + private document Storage
 
 Owner records negotiated consecutive continuation dates/rent/document from PENDING renewal request. Add RENEWAL contract version under same tenancy and owner confirmation, reserve extension via blocked envelope. Renewal request remains PENDING until tenant confirms same version; then mark ACCEPTED atomically with confirmed span expansion.
 
@@ -934,7 +934,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Historical truth; current vs future terms
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 tenancy_contracts stores immutable submitted agreement versions, agreed terms/document/hash and write-once participant confirmation metadata. ORIGINAL and consecutive RENEWAL segments represent agreed periods; corrections create new rows with supersedes_contract_id. Current agreed rent comes only from the mutually confirmed segment covering the date. No separate contract_confirmations table. Confirmed mid-term amendments remain deferred.
 
@@ -949,7 +949,7 @@ Module: `M08-reports-admin`. Priority: P0 Must. Actors: Authenticated reporter; 
 
 Factors: Abuse prevention; confidentiality
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Laravel rate limiter + Notifications
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + server rate limiter + Notifications
 
 Reporter can view own reports and sanitized status/outcome. Admin notes remain private. Enforce configured per-user/IP submission limits and one live report per reporter/listing.
 
@@ -964,7 +964,7 @@ Module: `M09-notifications-audit`. Priority: P1 Should. Actors: User. Dependenci
 
 Factors: Recipient isolation; idempotent read state
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + notifications
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL + notifications
 
 Persist event-keyed in-app messages with safe links; unread/read state per recipient. Email links navigate through authorized application routes, not permanent document URLs.
 
@@ -978,7 +978,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: System. Dependenci
 
 Factors: Retry safety; optimistic concurrency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + PostgreSQL unique keys
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + PostgreSQL unique keys
 
 Use client_operation_id UUID on creates and revision checks on mutable resources. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
 
@@ -993,14 +993,14 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: System. Dependenci
 
 Factors: Deadlocks; coordinated critical paths
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
-All writes use shared Laravel actions, fixed lock order property then units sorted by UUID then rental request/tenancy/renewal rows. Persist domain/audit/outbox/idempotency in same transaction. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers as specified.
+All writes use shared server services, fixed lock order property then units sorted by UUID then rental request/tenancy/renewal rows. Persist domain/audit/outbox/idempotency in same transaction. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers as specified.
 
 - FR75-AC01 [Race] Two proposal/renewal/expiry actions use independent connections → Consistent locks avoid lost changes; deadlocks retried boundedly.
 - FR75-AC02 [Failure] Action fails after adding version before reservation acceptance → Whole action rolls back; only staged orphan file may remain.
 - FR75-AC03 [Integrity] Direct SQL attempts invalid pending pointer or confirmation actor → Composite FK/check/constraint trigger rejects invalid committed state.
-- FR75-AC04 [Security] Frontend anon key attempts app table writes → Denied by grants/RLS; Laravel verified actions enforce domain rules.
+- FR75-AC04 [Security] Frontend anon key attempts app table writes → Denied by grants/RLS; server-verified services enforce domain rules.
 
 ## FR76 Deferred and excluded MVP scope
 
@@ -1022,7 +1022,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: System. Dependenc
 
 Factors: No stale counters; same-unit search
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + PostgreSQL queries
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + PostgreSQL queries
 
 For each selected interval, eligible unit has complete required listing data, is READY, marketed, nonarchived, minimum-duration compliant and has no overlap with blocking tenancy envelope. Pending-confirmation holds count as blocked until explicit expiry release. Count and rent range derive from same qualifying query. Without dates use each unit minimum term from today.
 
@@ -1037,7 +1037,7 @@ Module: `M03-listings-moderation`. Priority: P0 Must. Actors: Admin. Dependencie
 
 Factors: Reports supplement prior review; immediate safety
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin can suspend published listing directly after inspection or authenticated report with reason, audit and notice. admin_suspended_at/by/reason independent of initial moderation/publication. Owner edits cannot remove suspension. Admin may explicitly restore after checking corrections; no repeated ordinary content approval process.
 
@@ -1053,7 +1053,7 @@ Module: `M08-reports-admin`. Priority: P2 Defer. Actors: Admin. Dependencies: FR
 
 Factors: Public content consistency
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 If reviews are implemented, approve/reject exact submitted revision and allow reported harmful review removal. Required rejection/removal reasons.
 
@@ -1067,7 +1067,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner. Dependencie
 
 Factors: Lifecycle clarity; no duplicate allocation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Owner records move-in on/after first confirmed start date for CONFIRMED tenancy, changes to ACTIVE and audits. PENDING_CONFIRMATION never activates on date arrival. Future nonoverlapping tenancies remain permitted; activation does not extend blocked range.
 
@@ -1082,7 +1082,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Both parties acknowledge the same tenancy_contracts.id and immutable document_sha256. owner_confirmed_at is set only through explicit owner submission; tenant_confirmed_at is set once by the related tenant before deadline on the current pending contract. Tenant may instead set tenant_rejected_at with reason, never both outcomes. The final confirmation promotes confirmed dates and clears the pending pointer/deadline atomically. A new contract version requires fresh confirmation fields.
 
@@ -1099,7 +1099,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Tenant can decline exact current version with reason. Initial tenancy becomes AWAITING_REVISION and releases hold; renewal decline keeps confirmed tenancy/range and request PENDING. Owner creates corrected immutable version linked to superseded version, obtains new explicit owner confirmation and new reservation/deadline after rechecking availability. No correction of already mutually confirmed terms in MVP.
 
@@ -1115,7 +1115,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel Scheduler + Queue Workers + Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js scheduler + queue workers + server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Store confirmation_expires_at using server clock; proposed default48h configurable. Scheduler scans due holds and action paths reap them under locks. No now() in exclusion predicate. Initial expiry sets EXPIRED and clears hold; pending renewal expiry restores confirmed envelope, clears pending pointer and leaves renewal request PENDING for discussion. Accepted enquiry history stays accepted.
 
@@ -1131,7 +1131,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 tenancies stores confirmed_start/end and blocked_start/end as transactional projections. Original unconfirmed proposal has only blocked dates. Confirmed tenancy with pending renewal expands blocked_end while confirmed_end stays unchanged. Decline/cancel/expiry restores blocked span to confirmed span; successful agreement promotes confirmed span.
 
@@ -1146,7 +1146,7 @@ Module: `M05-rental-requests`. Priority: P0 Must. Actors: Owner; Tenant. Depende
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel Scheduler + database queue worker + shared availability query + Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js scheduler + database queue worker + shared availability query + server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Assumption: a PENDING rental request becomes eligible for auto-rejection at created_at+15 days. Reject with NO_AVAILABLE_UNIT only if no READY/marketed/nonarchived eligible unit in the listing property covers the complete desired interval. A preferred unit is a preference, so consider alternatives. Do not reject only because request aged15 days or another request accepted. Exclude admin/publication visibility from physical availability test; hiding is not occupation.
 
@@ -1165,7 +1165,7 @@ Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: Owner; Tenant. Dep
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: PostgreSQL FKs/CHECKs/UNIQUE/GiST + deferred constraint triggers + Laravel migrations
+Tools: PostgreSQL FKs/CHECKs/UNIQUE/GiST + deferred constraint triggers + SQL migrations
 
 Database triggers protect tenancy_contracts terms/document/hash from update/delete while permitting one authorized null-to-value tenant confirmation or rejection update. Existing confirmation timestamps and reasons cannot be overwritten. Composite FKs keep pending/latest/superseded/basis contract references in the same tenancy. Deferred invariant checks enforce exact-contract mutual confirmation, request outcomes and date projections. No separate confirmation table.
 
@@ -1181,12 +1181,12 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner; Guest; Sys
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
 
-Tools: Next.js forms + Laravel catalog endpoint/config + FormRequest/Policies + PostgreSQL JSONB + revision/audit actions
+Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + revision/audit services
 
-Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. Laravel owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
+Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. The server owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
 
 - FR87-AC01 [Positive] Owner selects Wi-Fi and Elevator in property form and AC in unit form → Save canonical wifi/elevator/air_conditioning keys in correct JSONB scope; labels come from code catalog.
-- FR87-AC02 [Validation] Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root → Laravel rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details.
+- FR87-AC02 [Validation] Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root → the server rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details.
 - FR87-AC03 [Positive] Owner enters composed/decomposed Vietnamese text with extra whitespace → NFC-normalize, trim and collapse whitespace; retain Vietnamese accents/display spelling. Deduplicate same-resource custom text via case-folded comparison only.
 - FR87-AC04 [Integrity] Owner enters EV Charger but catalog has no matching standard option → Save as custom text after explicit Add additional feature action; do not generate a global slug or automatically match an EV-charging filter.
 - FR87-AC05 [Positive] Owner searches AC or aircon through explicitly maintained aliases → Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice.
@@ -1202,7 +1202,7 @@ Module: `M04-discovery-favourites`. Priority: P0 Must. Actors: Authenticated use
 
 Factors: Stable property identity; private data; idempotency; race-safe UI; visibility
 
-Tools: Next.js heart/list UI + TanStack Query + Laravel Policies/REST + PostgreSQL unique pair
+Tools: Next.js heart/list UI + TanStack Query + server policies and Route Handlers + PostgreSQL unique pair
 
 Authenticated users save properties through the heart on listing cards/details, remove saved properties and view a private paginated favourites list and count. Persist favourite_properties keyed to user_profiles and properties, not listings or units. Guests are prompted to sign in. Use PUT desired saved state and DELETE desired unsaved state, not a toggle endpoint. Keep unavailable relations as generic placeholders without hidden listing content. Favouriting is not an enquiry, subscription or reservation. User reports this feature has been added; actual implementation completeness must be checked in the local repository.
 

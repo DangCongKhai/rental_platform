@@ -1,6 +1,6 @@
 # Proposed API contract
 
-These are target contracts, not verified existing routes. Discover actual repository routing before issue creation; preserve compatible existing patterns and document any change. CRUD stands for resource collection/detail create/read/update/archive operations and must be expanded into actual HTTP routes in Scramble. No toggle endpoint for favourites and no manual rental-request Accept endpoint.
+These are target contracts, not verified existing routes. Discover actual repository routing before issue creation; preserve compatible existing patterns and document any change. CRUD stands for resource collection/detail create/read/update/archive operations and must be expanded into actual HTTP routes in the generated OpenAPI document. No toggle endpoint for favourites and no manual rental-request Accept endpoint.
 
 | Method | Target route | Actor | Behavior |
 | --- | --- | --- | --- |
@@ -8,7 +8,7 @@ These are target contracts, not verified existing routes. Discover actual reposi
 | GET | /api/v1/listings/{listing} | Public | Hidden/suspended/unapproved unavailable; no tenant contacts/private contracts |
 | GET | /api/v1/amenities | Public | Code-managed stable catalog labels/aliases/scopes; no arbitrary catalog POST |
 | GET/PATCH | /api/v1/me/profile | Authenticated | Own permitted fields; revision checked; admin fields forbidden |
-| CRUD | /api/v1/properties | Owner | Resource Controller/FormRequest/Policy; archive referenced records |
+| CRUD | /api/v1/properties | Owner | Route Handler, validation schema, and server policy; archive referenced records |
 | CRUD | /api/v1/properties/{property}/units | Owner | Whole-space guard; same-property normalized labels |
 | POST | /api/v1/properties/{property}/units/bulk | Owner | Atomic complete preview rows with individual retry keys |
 | POST/PATCH/DELETE | /api/v1/properties/{property}/media | Owner | Completed validated upload, scope, selection and safe removal |
@@ -58,8 +58,8 @@ JSON writes use validated fields; actor identity never comes from user_id in bod
 
 Enquiry payload: contact_name, contact_phone, desired_move_in_date, desired_end_date, message, optional preferred_unit_id, client_operation_id. Contract proposal: unit/date terms, monthly_rent/deposit_amount, actual policies_snapshot, private staged document reference/hash, optional signed_on, explicit owner acknowledgement, expected revisions and retry key. Confirmation: exact contract resource, matching document_sha256 and expected tenancy revision. Never allow clients to submit confirmation timestamps or is_admin directly.
 
-Common status:401 unauthenticated,403 unauthorized (or404 to avoid existence disclosure),404 unavailable,409 state/revision/overlap conflict,422 field validation,429 throttled,503 controlled external service failure. Use consistent error schema and correlation ID without secrets. List endpoints paginate and batch eager-loaded relationships; no N+1 property/unit/media queries.
+Common status:401 unauthenticated,403 unauthorized (or404 to avoid existence disclosure),404 unavailable,409 state/revision/overlap conflict,422 field validation,429 throttled,503 controlled external service failure. Use consistent error schema and correlation ID without secrets. List endpoints paginate and batch loaded relationships; no N+1 property/unit/media queries.
 
 Favourites endpoints use Cache-Control private/no-store as appropriate; never place user-specific is_favourite in a shared cached listing DTO. A public card can be combined client-side with a private capped favourite-id response. Badge counts saved relations including unavailable placeholders. Calls are not sent to queues. Parallel devices converge to last DB-committed intended state; do not promise a global ordering from browser click timestamps.
 
-Generate OpenAPI from real controllers with Scramble, including custom bearer security if approved. A handwritten route table is not the course documentation evidence.
+Generate OpenAPI from the real Route Handlers, including bearer security. A handwritten route table is not the course documentation evidence.

@@ -46,7 +46,7 @@ Each FR has exactly one primary module; issues may reference several FRs without
 | FR40 | Public listing REST resources | P0 Must | M04-discovery-favourites | FR40-AC01, FR40-AC02, FR40-AC03 |
 | FR41 | Property and unit REST CRUD | P0 Must | M02-property-units-media | FR41-AC01, FR41-AC02, FR41-AC03 |
 | FR42 | Rental request tenancy and renewal action APIs | P0 Must | M06-tenancies-contracts | FR42-AC01, FR42-AC02, FR42-AC03, FR42-AC04 |
-| FR43 | Verify Supabase JWT in Laravel | P0 Must | M01-identity-access | FR43-AC01, FR43-AC02, FR43-AC03, FR43-AC04, FR43-AC05 |
+| FR43 | Verify Supabase JWT in Next.js | P0 Must | M01-identity-access | FR43-AC01, FR43-AC02, FR43-AC03, FR43-AC04, FR43-AC05 |
 | FR44 | OpenAPI documentation | P1 Should | M10-operations-delivery | FR44-AC01, FR44-AC02, FR44-AC03 |
 | FR45 | Asynchronous domain notifications | P1 Should | M09-notifications-audit | FR45-AC01, FR45-AC02, FR45-AC03, FR45-AC04 |
 | FR46 | Cache public listing content with fresh visibility checks | P1 Should | M04-discovery-favourites | FR46-AC01, FR46-AC02, FR46-AC03 |

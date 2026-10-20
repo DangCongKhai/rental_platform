@@ -11,6 +11,8 @@ This is an implementation specification and issue-planning input for a four-pers
 
 The full requirements and acceptance catalogue is retained in `06-acceptance/requirements-catalog.md` and `acceptance-cases.md`. Current baseline: **81 active specification rows and 324 acceptance cases**: workbook version3 contributes80/314; newly requested FR88 favourites contributes1/10. This does not silently rewrite the earlier workbook. Original FR priorities and IDs are retained; retired IDs are not reused.
 
-Use Next.js frontend, Laravel API and Supabase PostgreSQL/Auth/Storage. The user reports teacher approval for that stack. Exact replacement of named Blade/Livewire/Sanctum grading items is not evidenced; record that distinction rather than implementing two authentication systems.
+Use Next.js for the UI and the server API, and Supabase for PostgreSQL, Auth, and Storage.
+
+Local Supabase setup and the day-to-day run order are in [08-project/local-development.md](08-project/local-development.md).
 
 Do not rename `tenancy_contracts`, `tenancy_renewal_requests`, `audit_logs` or `notifications`. Contract confirmation timestamps live inside `tenancy_contracts`.

@@ -19,4 +19,4 @@ Own pending enquiry. Trigger is the named user action or due system evaluation.
 No pending thread or reservation side effect.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

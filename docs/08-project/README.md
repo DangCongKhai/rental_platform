@@ -10,12 +10,12 @@
 - [issue authoring ](issue-authoring.md)
 - [local ai issue prompt ](local-ai-issue-prompt.md)
 - [glossary ](glossary.md)
+- [local development ](local-development.md)
 
 
 ## Technical reference links
 - PostgreSQL ranges/exclusion: https://www.postgresql.org/docs/current/rangetypes.html
 - btree_gist UUID/scalar support: https://www.postgresql.org/docs/15/btree-gist.html
-- Laravel queues: https://laravel.com/docs/queues (match installed major version)
-- Telescope: https://laravel.com/docs/telescope
-- Scramble installation: https://scramble.dedoc.co/installation
+- Next.js Route Handlers: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
+- Supabase local development: https://supabase.com/docs/guides/local-development/cli/getting-started
 - Unicode normalization: https://www.unicode.org/reports/tr15/

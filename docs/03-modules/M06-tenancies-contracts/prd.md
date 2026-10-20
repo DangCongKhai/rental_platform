@@ -4,7 +4,7 @@
 Exact unit allocation, immutable tenancy_contracts, embedded confirmations, correction chains, temporary holds and lifecycle actions. Member-C owns tenant/owner screens.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: Concurrent occupancy; allocation granularity
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints + btree_gist exclusion constraint
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + btree_gist exclusion constraint
 
 PostgreSQL GiST exclusion constraint on tenancies(unit_id, daterange(blocked_start_date, blocked_end_date+1, [))) for PENDING_CONFIRMATION/CONFIRMED/ACTIVE. Different nonoverlapping future tenancies on one unit are permitted. Blocking envelope includes confirmed span plus any proposed renewal extension.
 
@@ -30,7 +30,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Agreement recording; exact unit; snapshots
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints + Supabase private Storage
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + Supabase private Storage
 
 Owner chooses exact READY nonarchived unit in request property, enters final dates/rent/deposit, negotiated policy snapshot and private agreement document, then explicitly confirms version. Create one continuing tenancy with version 1, pending pointer and configured confirmation deadline. Default reservation 48h is a proposed configurable setting.
 
@@ -47,7 +47,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Privacy; effective periods
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + private Storage
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL + private Storage
 
 Owner and tenant can view all immutable version metadata/documents, each party confirmation/decline, proposed/current/upcoming terms, deadline and supersession links. Derive state from current pending pointer, confirmations and audit events; do not mark old versions confirmed by inference.
 
@@ -63,7 +63,7 @@ Priority: P0 Must. Actors: Tenant; Owner. Dependencies: Shared identity/resource
 
 Factors: Explicit transitions; idempotence
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Provide authenticated request submit/withdraw/reject, tenancy propose/correct/cancel/end/move-in, exact-version confirm/decline and renewal request/propose actions. Shared actions enforce policies, idempotency and transaction rules. No viewings endpoints.
 
@@ -79,7 +79,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Actual occupancy; history; reopening
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Initial proposal decline releases reservation and sets AWAITING_REVISION; owner may issue corrected version under same tenancy after rechecking availability. Expired initial proposal becomes EXPIRED. Owner may cancel pre-start confirmed tenancy or record actual end with reason; preserve accepted enquiry/history and immutable agreements. Ending cancels pending renewal work and releases only the remaining blocked portion.
 
@@ -96,7 +96,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Document privacy; dated evidence
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + private Storage
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + private Storage
 
 Store version_number, ORIGINAL type, dates/rent/deposit, negotiated policies, private unique document_path, SHA256, optional owner-reported signed_on and created_by/created_at. No signing service. Owner explicitly confirms exact version on submit; tenant must independently confirm same UUID/hash. Store owner_confirmed_at, tenant_confirmed_at, tenant_rejected_at and tenant_rejection_reason on tenancy_contracts; there is no separate confirmation entity.
 
@@ -112,7 +112,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Historical truth; current vs future terms
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 tenancy_contracts stores immutable submitted agreement versions, agreed terms/document/hash and write-once participant confirmation metadata. ORIGINAL and consecutive RENEWAL segments represent agreed periods; corrections create new rows with supersedes_contract_id. Current agreed rent comes only from the mutually confirmed segment covering the date. No separate contract_confirmations table. Confirmed mid-term amendments remain deferred.
 
@@ -128,7 +128,7 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: Retry safety; optimistic concurrency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + PostgreSQL unique keys
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + PostgreSQL unique keys
 
 Use client_operation_id UUID on creates and revision checks on mutable resources. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
 
@@ -144,23 +144,23 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: Deadlocks; coordinated critical paths
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
-All writes use shared Laravel actions, fixed lock order property then units sorted by UUID then rental request/tenancy/renewal rows. Persist domain/audit/outbox/idempotency in same transaction. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers as specified.
+All writes use shared server services, fixed lock order property then units sorted by UUID then rental request/tenancy/renewal rows. Persist domain/audit/outbox/idempotency in same transaction. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers as specified.
 
 Acceptance criteria:
 
 - FR75-AC01 [Race] Two proposal/renewal/expiry actions use independent connections → Consistent locks avoid lost changes; deadlocks retried boundedly.
 - FR75-AC02 [Failure] Action fails after adding version before reservation acceptance → Whole action rolls back; only staged orphan file may remain.
 - FR75-AC03 [Integrity] Direct SQL attempts invalid pending pointer or confirmation actor → Composite FK/check/constraint trigger rejects invalid committed state.
-- FR75-AC04 [Security] Frontend anon key attempts app table writes → Denied by grants/RLS; Laravel verified actions enforce domain rules.
+- FR75-AC04 [Security] Frontend anon key attempts app table writes → Denied by grants/RLS; server-verified services enforce domain rules.
 
 ### FR80 Confirm move-in after mutual contract confirmation
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Lifecycle clarity; no duplicate allocation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Owner records move-in on/after first confirmed start date for CONFIRMED tenancy, changes to ACTIVE and audits. PENDING_CONFIRMATION never activates on date arrival. Future nonoverlapping tenancies remain permitted; activation does not extend blocked range.
 
@@ -176,7 +176,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Both parties acknowledge the same tenancy_contracts.id and immutable document_sha256. owner_confirmed_at is set only through explicit owner submission; tenant_confirmed_at is set once by the related tenant before deadline on the current pending contract. Tenant may instead set tenant_rejected_at with reason, never both outcomes. The final confirmation promotes confirmed dates and clears the pending pointer/deadline atomically. A new contract version requires fresh confirmation fields.
 
@@ -194,7 +194,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Tenant can decline exact current version with reason. Initial tenancy becomes AWAITING_REVISION and releases hold; renewal decline keeps confirmed tenancy/range and request PENDING. Owner creates corrected immutable version linked to superseded version, obtains new explicit owner confirmation and new reservation/deadline after rechecking availability. No correction of already mutually confirmed terms in MVP.
 
@@ -211,7 +211,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel Scheduler + Queue Workers + Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js scheduler + queue workers + server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Store confirmation_expires_at using server clock; proposed default48h configurable. Scheduler scans due holds and action paths reap them under locks. No now() in exclusion predicate. Initial expiry sets EXPIRED and clears hold; pending renewal expiry restores confirmed envelope, clears pending pointer and leaves renewal request PENDING for discussion. Accepted enquiry history stays accepted.
 
@@ -228,7 +228,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 tenancies stores confirmed_start/end and blocked_start/end as transactional projections. Original unconfirmed proposal has only blocked dates. Confirmed tenancy with pending renewal expands blocked_end while confirmed_end stays unchanged. Decline/cancel/expiry restores blocked span to confirmed span; successful agreement promotes confirmed span.
 
@@ -244,7 +244,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: PostgreSQL FKs/CHECKs/UNIQUE/GiST + deferred constraint triggers + Laravel migrations
+Tools: PostgreSQL FKs/CHECKs/UNIQUE/GiST + deferred constraint triggers + SQL migrations
 
 Database triggers protect tenancy_contracts terms/document/hash from update/delete while permitting one authorized null-to-value tenant confirmation or rejection update. Existing confirmation timestamps and reasons cannot be overwritten. Composite FKs keep pending/latest/superseded/basis contract references in the same tenancy. Deferred invariant checks enforce exact-contract mutual confirmation, request outcomes and date projections. No separate confirmation table.
 
@@ -263,7 +263,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 GiST exclusion, participant/hash/version agreement, deadline races, projections and write-once metadata. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No contract_versions or contract_confirmations table; no legal signature engine; no confirmed mid-term amendment.

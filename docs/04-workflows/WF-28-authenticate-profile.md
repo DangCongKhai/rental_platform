@@ -9,7 +9,7 @@ Configured Supabase project. Trigger is the named user action or due system eval
 
 ## Main flow
 1. Register/confirm email/login or provider recovery.
-2. Laravel verifies JWT signature/project claims and profile eligibility.
+2. The Next.js server verifies JWT signature, project claims, and profile eligibility.
 3. Run resource policy on each private action; update permitted profile fields with revision.
 4. Logout clears private client data; document expiry-bound copied JWT behavior.
 
@@ -21,4 +21,4 @@ Configured Supabase project. Trigger is the named user action or due system eval
 One verified identity/profile with tenant and owner capability.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

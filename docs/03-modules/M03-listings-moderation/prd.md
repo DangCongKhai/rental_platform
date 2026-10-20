@@ -4,7 +4,7 @@
 Property-level draft, first package review, owner publication and independent admin suspension. Member-D builds admin screens against reviewed endpoints.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Source data reuse; one current advertisement
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Choose own nonarchived property, market selected units, enter title/description and choose cover from existing selected media. Reuse property address/policies and unit specifications/photos. One nonarchived listing per property.
 
@@ -29,7 +29,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Stale approvals; public consistency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 After first APPROVED decision, owner may update property, units, policies, media and listing wording immediately without resetting approval. Changes are audited and remain reportable. Edits before approval invalidate the submitted content revision. Admin suspension is independent and cannot be cleared by an edit.
 
@@ -45,7 +45,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Completeness; idempotence
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + queued notification
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + queued notification
 
 First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision and listing submitted_revision. Rejected initial submissions may be corrected/resubmitted.
 
@@ -61,7 +61,7 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Initial package completeness; current content revision; admin authorization
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Admin queue displays only initial PENDING listings with property/unit details, selected gallery, policies and captured revisions. Show owner and completeness; admin approves or rejects with reason.
 
@@ -76,7 +76,7 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Exact content approval; separate publication
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin approves the exact submitted listing/property content revisions. Store reviewer/time and approved_content_revision. Approval permits publication but does not publish automatically.
 
@@ -92,7 +92,7 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Explainable decisions; terminal transitions
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin rejects initial submission with a required reason. Owner corrects data and resubmits; later content violations use suspension rather than resetting initial approval.
 
@@ -107,7 +107,7 @@ Priority: P2 Defer. Actors: Admin. Dependencies: FR15.
 
 Factors: Scope control
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Defer a distinct CHANGES_REQUESTED state. MVP uses rejection with a reason plus edit/resubmit.
 
@@ -120,7 +120,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Inventory eligibility; fresh DB checks
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner may publish only an initially approved, nonarchived, complete listing belonging to a nonarchived property and not admin-suspended. Require at least one READY, marketed unit with availability for the selected date query. Search without dates defaults to today for the unit minimum duration. No property/image approval conditions.
 
@@ -136,7 +136,7 @@ Priority: P0 Must. Actors: Owner; Admin. Dependencies: Shared identity/resource 
 
 Factors: Visibility; cache invalidation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Laravel Cache
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + server cache
 
 Owner can hide or archive own listing. Admin suspension is a separate control with required reason. Republishing an owner-hidden listing retains initial approval and must pass current eligibility; owner cannot remove admin suspension.
 
@@ -151,7 +151,7 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Reports supplement prior review; immediate safety
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Admin can suspend published listing directly after inspection or authenticated report with reason, audit and notice. admin_suspended_at/by/reason independent of initial moderation/publication. Owner edits cannot remove suspension. Admin may explicitly restore after checking corrections; no repeated ordinary content approval process.
 
@@ -170,7 +170,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 Stale initial approval, owner edits versus suspension and shared visibility gate. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 After initial approval edits do not reapprove; owner cannot clear suspension; CHANGES_REQUESTED extension deferred.

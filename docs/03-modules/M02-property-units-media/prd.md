@@ -4,7 +4,7 @@
 Owner physical inventory, whole-space auto-unit, editable bulk units, image lifecycle and controlled JSONB policies/amenities.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Physical inventory; owner linkage
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Owner creates physical property, address, amenities and controlled policies. WHOLE_SPACE atomically creates one backend unit; SEPARATE_UNITS uses explicit unit creation. Incomplete drafts can be saved. No property approval state or mandatory ownership evidence/phone verification in MVP. Amenities use properties.shared_amenities JSONB with schema_version, allowlisted standard key/object entries and custom text array; select or add custom features directly in the property form (FR87).
 
@@ -29,7 +29,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: History preservation; optimistic concurrency
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Owner edits own property and archives unused resources. Existing tenancy, request, contract and audit references are preserved. Archive prevents new marketing/proposals but does not erase active agreements.
 
@@ -45,7 +45,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Validation; private staging; durable file references
 
-Tools: Next.js upload UI + Laravel validation/Policies + Supabase Storage
+Tools: Next.js upload UI + server validation and policies + Supabase Storage
 
 Upload validated images and create one property_media row with optional same-property unit_id. No review_status, approval, replacement chain or admin photo queue. Upload completes before media becomes selectable. Initial listing review sees selected photos; later additions appear directly when selected on an eligible listing.
 
@@ -61,7 +61,7 @@ Priority: P2 Defer. Actors: System; Owner. Dependencies: FR07.
 
 Factors: External service failure; stale jobs
 
-Tools: Laravel Queue database driver + geocoding API
+Tools: database-backed queue + geocoding API
 
 Optional asynchronous address-to-coordinate conversion after saving address. Manual address remains authoritative when provider fails.
 
@@ -76,7 +76,7 @@ Priority: P0 Must. Actors: Owner; Admin where explicitly allowed. Dependencies: 
 
 Factors: Authorization parity; archival
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Authorize owner-scoped CRUD for properties, units and gallery selection. Route linked-content writes through property content lock/revision/audit action. No property approval, document-evidence review or image-review endpoints.
 
@@ -91,7 +91,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Inventory identity; structured input
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 SEPARATE_UNITS allows manual or structured bulk creation: count, prefix, starting number and defaults. Generate editable preview rows in Next.js; save final JSON array transactionally. No LLM/SQL generation. Unit amenity defaults use the same controlled JSONB structure as FR87; each preview row gets its own copied value, not linked mutable defaults.
 
@@ -107,7 +107,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Unit versus template; stale writes
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner edits specifications, marketed price/deposit, minimum duration and controlled policy overrides. Valid post-approval edits appear directly with audit; current or proposed contract snapshots are immutable. Unit amenities use units.amenities with allowlisted scope-aware catalog keys and custom text per FR87; no owner-created global amenity key.
 
@@ -123,7 +123,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Availability derivation; maintenance
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 units.operational_status is READY, MAINTENANCE or RETIRED. Rental availability is derived for a requested interval from blocking tenancy ranges, not an OCCUPIED flag. is_marketed controls advertisement only. Maintenance stops new proposals but does not cancel agreements.
 
@@ -139,7 +139,7 @@ Priority: P0 Must. Actors: Owner; System. Dependencies: Shared identity/resource
 
 Factors: Source-linked public content; revision propagation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Increment property.content_revision for changes to any initial-review content, including units, selected photos and policies. Before first approval invalidate pending snapshot. After approval retain approval and show changes directly; append safe audit before/after with actor/time. Amenity changes increment property content_revision, retain normal post-approval editing and record before/after audit. Standard label changes in the code catalog do not rewrite saved keys (FR87).
 
@@ -155,7 +155,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Selection versus approval; cover references
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js upload UI + Laravel HTTP client + Supabase private Storage + PostgreSQL
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js upload UI + server HTTP client + Supabase private Storage + PostgreSQL
 
 Owner selects media, sets order and cover, or soft-deletes unused photos. Selected nondeleted property/unit media may appear without review. Cover must be selected, same-property shared media; deleting cover requires replacement or explicit hide.
 
@@ -171,7 +171,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Immutable storage; predecessor consistency
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js upload UI + Laravel HTTP client + Supabase private Storage + PostgreSQL
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js upload UI + server HTTP client + Supabase private Storage + PostgreSQL
 
 To change photo bytes, upload a new object/media row and switch gallery/cover references in a transaction after upload succeeds; optionally soft-delete old media. No replaces_image_id, image approvals or waiting-choice dialog.
 
@@ -187,7 +187,7 @@ Priority: P1 Should. Actors: System. Dependencies: Shared identity/resource foun
 
 Factors: Reference integrity; asynchronous storage
 
-Tools: Scheduled Laravel cleanup + Supabase Storage + PostgreSQL
+Tools: scheduled server cleanup + Supabase Storage + PostgreSQL
 
 Scheduled cleanup deletes incomplete unreferenced uploads and soft-deleted media after configured retention. Recheck cover/gallery/audit retention references before deleting. Contract documents are excluded from public-photo cleanup.
 
@@ -203,7 +203,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Validated schema; reusable defaults
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind + TanStack Query
 
 properties.policies contains schema_version, defaults for predefined pets/smoking, and shared_rules array. Owner uses form fields; backend validates allowlisted keys/enums and limits. No independent policy table in MVP; later migration can preserve stable keys. Approved listings update immediately with audit.
 
@@ -219,7 +219,7 @@ Priority: P0 Must. Actors: Owner; Guest; Tenant. Dependencies: Shared identity/r
 
 Factors: Inheritance; consistency; historical terms
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind + TanStack Query
 
 units.policy_overrides contains optional predefined enum overrides and additional_rules array. Missing key inherits property default; shared_rules always retained. Preserve resolved actually agreed policies in immutable version snapshot at proposal, editable only through new version.
 
@@ -235,14 +235,14 @@ Priority: P0 Must. Actors: Owner; Guest; System. Dependencies: FR07 FR20 FR21 FR
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
 
-Tools: Next.js forms + Laravel catalog endpoint/config + FormRequest/Policies + PostgreSQL JSONB + revision/audit actions
+Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + revision/audit services
 
-Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. Laravel owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
+Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. The server owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
 
 Acceptance criteria:
 
 - FR87-AC01 [Positive] Owner selects Wi-Fi and Elevator in property form and AC in unit form → Save canonical wifi/elevator/air_conditioning keys in correct JSONB scope; labels come from code catalog.
-- FR87-AC02 [Validation] Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root → Laravel rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details.
+- FR87-AC02 [Validation] Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root → the server rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details.
 - FR87-AC03 [Positive] Owner enters composed/decomposed Vietnamese text with extra whitespace → NFC-normalize, trim and collapse whitespace; retain Vietnamese accents/display spelling. Deduplicate same-resource custom text via case-folded comparison only.
 - FR87-AC04 [Integrity] Owner enters EV Charger but catalog has no matching standard option → Save as custom text after explicit Add additional feature action; do not generate a global slug or automatically match an EV-charging filter.
 - FR87-AC05 [Positive] Owner searches AC or aircon through explicitly maintained aliases → Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice.
@@ -259,7 +259,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 Same-property references, complete published data, upload failures and stale content revisions. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No property or per-image moderation; no amenity/policy management tables; geocoding remains domain-deferred unless separately selected for course evidence.

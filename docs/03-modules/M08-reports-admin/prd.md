@@ -13,7 +13,7 @@ Priority: P2 Defer. Actors: Tenant. Dependencies: FR35 FR79.
 
 Factors: Eligibility; abuse; uniqueness
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Optional one property review per ACTIVE/ENDED tenancy; rating1–5 and comment. Reviews pending manual moderation if enabled.
 
@@ -28,7 +28,7 @@ Priority: P2 Defer. Actors: Guest; User. Dependencies: FR36 FR79.
 
 Factors: Moderated visibility; aggregates
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 Only display reviews when review feature exists; show approved reviews and consistent rating aggregate.
 
@@ -42,7 +42,7 @@ Priority: P0 Must. Actors: Authenticated user. Dependencies: Shared identity/res
 
 Factors: Abuse limits; synchronous persistence
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + queued notification
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + queued notification
 
 Submit reason code and description for suspicious published listing. Save OPEN report synchronously; queue admin alert after commit. Do not use Kafka/RabbitMQ for report creation.
 
@@ -59,7 +59,7 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Resolution history; fair moderation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Admin moves OPEN report to REVIEWING then RESOLVED/DISMISSED with required reason. An optional suspension is atomic with resolution and audit; notify reporter with sanitized outcome. Restoration is an explicit admin restriction action, not a new ordinary property/photo review.
 
@@ -75,7 +75,7 @@ Priority: P0 Must. Actors: Authenticated reporter; Admin. Dependencies: Shared i
 
 Factors: Abuse prevention; confidentiality
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Laravel rate limiter + Notifications
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + server rate limiter + Notifications
 
 Reporter can view own reports and sanitized status/outcome. Admin notes remain private. Enforce configured per-user/IP submission limits and one live report per reporter/listing.
 
@@ -91,7 +91,7 @@ Priority: P2 Defer. Actors: Admin. Dependencies: FR36.
 
 Factors: Public content consistency
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
 
 If reviews are implemented, approve/reject exact submitted revision and allow reported harmful review removal. Required rejection/removal reasons.
 
@@ -108,7 +108,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 Admin UI is not the authorization boundary; protected actions remain reviewed backend work. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 Property reviews deferred. Member-D must not implement role-granting, suspension authorization or transaction rules alone.

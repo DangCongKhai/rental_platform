@@ -4,7 +4,7 @@
 Supabase identity, profile bootstrap, dual tenant/owner navigation and server resource authorization.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Guest. Dependencies: Shared identity/resource foundat
 
 Factors: Identity consistency; privilege escalation; privacy
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
 Register through Supabase Auth, confirm email before protected product writes, and create one application profile keyed by Auth UUID. Users can act as both tenant and owner; no role selection or phone OTP is required.
 
@@ -29,9 +29,9 @@ Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundati
 
 Factors: Authentication; expiration; recovery
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Sign in through Supabase Auth. Send its access token to Laravel; use provider refresh flow and protect private Next.js pages and API endpoints.
+Sign in through Supabase Auth. Send its access token to Next.js Route Handlers; use provider refresh flow and protect private Next.js pages and API endpoints.
 
 Acceptance criteria:
 
@@ -45,9 +45,9 @@ Priority: P2 Defer. Actors: User. Dependencies: FR01 FR43.
 
 Factors: Identity linking; callback integrity
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS + Google OAuth
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS + Google OAuth
 
-Optional Google sign in with configured redirect allowlist; map provider identity to one profile. Do not implement a second Laravel password store.
+Optional Google sign in with configured redirect allowlist; map provider identity to one profile. Do not implement a second application password store.
 
 Acceptance criteria:
 
@@ -60,9 +60,9 @@ Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundati
 
 Factors: Session lifecycle; bearer-token limits
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Sign out via Supabase and clear user-scoped Next.js/TanStack data. Document that a previously issued JWT may remain valid until expiry when Laravel validates it offline.
+Sign out via Supabase and clear user-scoped Next.js/TanStack data. Document that a previously issued JWT may remain valid until expiry when the Next.js server validates it offline.
 
 Acceptance criteria:
 
@@ -75,7 +75,7 @@ Priority: P0 Must. Actors: User; Admin. Dependencies: Shared identity/resource f
 
 Factors: Ownership; least privilege; direct DB exposure
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Use is_admin on trusted profiles for moderation. Normal users act as tenant and owner through resource relationships. Backend checks every private read/write; frontend guards are only UX.
 
@@ -84,14 +84,14 @@ Acceptance criteria:
 - FR05-AC01 [Security] Owner B guesses Owner A property/unit/request UUID → Return 403/404 without private data or mutation.
 - FR05-AC02 [Security] Normal user submits is_admin or another owner_id → Reject restricted input; actor comes from verified identity.
 - FR05-AC03 [Security] Normal user calls an admin moderation endpoint → 403; no audit outcome or notification is committed.
-- FR05-AC04 [Security] Browser directly calls Supabase Data API/storage → Business tables are not writable/readable through unintended grants; storage rules restrict private files. Laravel authorization remains enforced even if DB connection bypasses RLS.
+- FR05-AC04 [Security] Browser directly calls Supabase Data API/storage → Business tables are not writable/readable through unintended grants; storage rules restrict private files. Server authorization remains enforced even if DB connection bypasses RLS.
 
 ### FR06 Profile and dual dashboards
 Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundation.
 
 Factors: Data minimization; stale edits
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 View/update permitted name and contact information and navigate between tenant area and Manage rentals. Phone is contact information, not verified ownership. Avatar/DOB are optional later scope.
 
@@ -101,18 +101,18 @@ Acceptance criteria:
 - FR06-AC02 [Security] Profile PATCH includes admin flag, identity UUID or verification fields → Rejected; privilege fields unchanged.
 - FR06-AC03 [Race] Two tabs edit the same profile version → Expected version rejects stale write with 409 rather than silently overwriting.
 
-### FR43 Verify Supabase JWT in Laravel
+### FR43 Verify Supabase JWT in Next.js
 Priority: P0 Must. Actors: API client. Dependencies: Shared identity/resource foundation.
 
 Factors: Signature and claims; single identity authority
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. No Sanctum personal_access_tokens in chosen auth path.
+Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
 
 Acceptance criteria:
 
-- FR43-AC01 [Positive] Valid project access token → Laravel resolves current profile and then runs Policies.
+- FR43-AC01 [Positive] Valid project access token → The Next.js server resolves the current profile and then runs server policies.
 - FR43-AC02 [Security] Tampered payload, alg none, wrong issuer/audience/key or expired token → 401, no protected action.
 - FR43-AC03 [Security] Body contains a different user_id → Never replaces verified sub.
 - FR43-AC04 [Failure] Unknown kid/key rotation or JWKS refresh failure → Bounded key refresh, fail closed and safe error; no arbitrary token-supplied key URL.
@@ -123,7 +123,7 @@ Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundati
 
 Factors: Account recovery; provider-managed credentials
 
-Tools: Supabase Auth + Next.js auth client + Laravel JWT guard using project JWKS
+Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
 Use Supabase confirmation/recovery links with configured allowed redirects. Reset password through provider; never store plaintext or recovery tokens in application tables.
 
@@ -140,7 +140,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 JWT verification, account/session isolation and admin privilege boundaries. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
-No second password store; Google OAuth is deferred; Sanctum rubric substitution is unresolved.
+No second password store. Google OAuth is deferred. Auth is Supabase JWT verification in Next.js.
