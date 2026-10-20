@@ -21,4 +21,4 @@ Property card/detail visible; known property UUID. Trigger is the named user act
 Saved property survives reload or is removed; no reservation/contact effect.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

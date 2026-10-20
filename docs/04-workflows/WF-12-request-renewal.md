@@ -21,4 +21,4 @@ Related CONFIRMED/ACTIVE tenancy; no pending/upcoming renewal workflow. Trigger 
 Pending proposal or terminal request rejection/cancellation.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

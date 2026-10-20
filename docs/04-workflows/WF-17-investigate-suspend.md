@@ -21,4 +21,4 @@ Trusted admin privilege, report or direct inspection. Trigger is the named user 
 Audited admin outcome and safe public visibility.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

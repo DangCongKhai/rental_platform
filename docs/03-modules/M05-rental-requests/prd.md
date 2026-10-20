@@ -4,7 +4,7 @@
 Contact snapshots, pending enquiries, owner phone discussion, rejection/withdrawal and age15day availability outcome.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource founda
 
 Factors: Eligibility; no reservation; duplicate semantics
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
 
 Authenticated tenant submits contact_name, contact_phone, desired_move_in_date, desired_end_date, optional preferred_unit_id and message. Store contact snapshots. Status PENDING throughout offline discussion. No calendar, manual discussion acceptance or unit reservation at enquiry creation.
 
@@ -30,7 +30,7 @@ Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource founda
 
 Factors: Concurrent duplication; usable threads
 
-Tools: PostgreSQL partial unique index + shared action
+Tools: PostgreSQL partial unique index + shared server service
 
 At most one PENDING request per tenant/listing; accepted/rejected/withdrawn history remains. Unique partial index is authoritative; retries compare payload.
 
@@ -45,7 +45,7 @@ Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource founda
 
 Factors: Private data; state clarity
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Display private submitted contacts, desired dates, request status/outcome and linked tenancy confirmation state. ACCEPTED means proposal created, not that tenancy contract is mutually confirmed.
 
@@ -61,7 +61,7 @@ Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource founda
 
 Factors: Pending state transitions; withdrawal versus proposal race
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Tenant may withdraw own PENDING request with audit and owner notification. Accepted requests are handled through tenancy proposal actions instead.
 
@@ -76,7 +76,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Ownership; meaningful lead state
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Owner sees own property requests and private tenant contact snapshots, dates and preferred unit. Discuss offline while PENDING. Actions are Reject and Create tenancy proposal; no viewing/calendar or stand-alone Accept.
 
@@ -92,7 +92,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Atomic final acceptance; offline agreement
 
-Tools: Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Create tenancy, immutable ORIGINAL contract version, explicit owner confirmation, temporary reservation, audit and outbox; change rental request PENDING to ACCEPTED in the same transaction. Tenant confirmation follows separately.
 
@@ -108,7 +108,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Explainability; cancellation
 
-Tools: Laravel shared action + DB transaction + lockForUpdate + PostgreSQL constraints
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
 Owner can reject PENDING enquiry with reason; no viewing cancellation or automatic rejection merely because another enquiry was accepted. System auto-rejection uses FR85.
 
@@ -123,7 +123,7 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: Durable business history; transaction consistency
 
-Tools: PostgreSQL audit_logs + shared Laravel actions
+Tools: PostgreSQL audit_logs + shared server services
 
 Append-only audit events record request status, proposal/confirmation/version changes and automatic decisions with actor/system identity, safe before/after, reason and correlation UUID.
 
@@ -139,7 +139,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Laravel Scheduler + database queue worker + shared availability query + Laravel FormRequest + Policies + DB transaction/lockForUpdate + PostgreSQL constraints
+Tools: Next.js scheduler + database queue worker + shared availability query + server validation + server policies + DB transaction/row lock + PostgreSQL constraints
 
 Assumption: a PENDING rental request becomes eligible for auto-rejection at created_at+15 days. Reject with NO_AVAILABLE_UNIT only if no READY/marketed/nonarchived eligible unit in the listing property covers the complete desired interval. A preferred unit is a preference, so consider alternatives. Do not reject only because request aged15 days or another request accepted. Exclude admin/publication visibility from physical availability test; hiding is not occupation.
 
@@ -161,7 +161,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 Request acceptance atomic with tenancy proposal; one pending thread; cron versus withdrawal/create races. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No calendar, chat or separate manual Accept. Another acceptance does not immediately reject other prospects.

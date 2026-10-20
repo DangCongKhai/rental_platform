@@ -21,7 +21,7 @@
 | FR05-AC01 | FR05 | Security | Owner B guesses Owner A property/unit/request UUID | Return 403/404 without private data or mutation. | Not executed |
 | FR05-AC02 | FR05 | Security | Normal user submits is_admin or another owner_id | Reject restricted input; actor comes from verified identity. | Not executed |
 | FR05-AC03 | FR05 | Security | Normal user calls an admin moderation endpoint | 403; no audit outcome or notification is committed. | Not executed |
-| FR05-AC04 | FR05 | Security | Browser directly calls Supabase Data API/storage | Business tables are not writable/readable through unintended grants; storage rules restrict private files. Laravel authorization remains enforced even if DB connection bypasses RLS. | Not executed |
+| FR05-AC04 | FR05 | Security | Browser directly calls Supabase Data API/storage | Business tables are not writable/readable through unintended grants; storage rules restrict private files. Server authorization remains enforced even if DB connection bypasses RLS. | Not executed |
 | FR06-AC01 | FR06 | Positive | User edits allowed contact fields | Validated values saved; dashboard uses current profile. | Not executed |
 | FR06-AC02 | FR06 | Security | Profile PATCH includes admin flag, identity UUID or verification fields | Rejected; privilege fields unchanged. | Not executed |
 | FR06-AC03 | FR06 | Race | Two tabs edit the same profile version | Expected version rejects stale write with 409 rather than silently overwriting. | Not executed |
@@ -154,7 +154,7 @@
 | FR42-AC02 | FR42 | Security | User forges actor_role/version owner | Role derived from tenancy parties; 403. | Not executed |
 | FR42-AC03 | FR42 | Race | Client sends stale tenancy revision or superseded version UUID | 409 without changing confirmations or blocked span. | Not executed |
 | FR42-AC04 | FR42 | Integrity | Equivalent HTTP and worker actions run | Both use same business locks/constraints. | Not executed |
-| FR43-AC01 | FR43 | Positive | Valid project access token | Laravel resolves current profile and then runs Policies. | Not executed |
+| FR43-AC01 | FR43 | Positive | Valid project access token | The Next.js server resolves the current profile and then runs server policies. | Not executed |
 | FR43-AC02 | FR43 | Security | Tampered payload, alg none, wrong issuer/audience/key or expired token | 401, no protected action. | Not executed |
 | FR43-AC03 | FR43 | Security | Body contains a different user_id | Never replaces verified sub. | Not executed |
 | FR43-AC04 | FR43 | Failure | Unknown kid/key rotation or JWKS refresh failure | Bounded key refresh, fail closed and safe error; no arbitrary token-supplied key URL. | Not executed |
@@ -173,7 +173,7 @@
 | FR47-AC02 | FR47 | Security | Inspect log payload | No passwords, access/refresh tokens, full contracts or signed URLs. | Not executed |
 | FR47-AC03 | FR47 | Integrity | Notification provider fails while alerting | Log fallback; do not roll back completed business action. | Not executed |
 | FR48-AC01 | FR48 | Positive | Slow query exceeds configured threshold | Record duration/query fingerprint/correlation; deliver alert once per dedupe window. | Not executed |
-| FR48-AC02 | FR48 | Security | Public visitor requests Telescope | Unavailable or403; query bindings redact sensitive information. | Not executed |
+| FR48-AC02 | FR48 | Security | Public visitor requests development diagnostics | Unavailable or403; query bindings redact sensitive information. | Not executed |
 | FR48-AC03 | FR48 | Failure | Monitor/alert service down | App continues; local diagnostic fallback. | Not executed |
 | FR49-AC01 | FR49 | Positive | User follows valid recovery link and chooses valid password | Provider resets password; user can authenticate normally. | Not executed |
 | FR49-AC02 | FR49 | Security | Expired/replayed recovery link or disallowed redirect | Rejected by provider/application; no arbitrary account reset. | Not executed |
@@ -255,7 +255,7 @@
 | FR75-AC01 | FR75 | Race | Two proposal/renewal/expiry actions use independent connections | Consistent locks avoid lost changes; deadlocks retried boundedly. | Not executed |
 | FR75-AC02 | FR75 | Failure | Action fails after adding version before reservation acceptance | Whole action rolls back; only staged orphan file may remain. | Not executed |
 | FR75-AC03 | FR75 | Integrity | Direct SQL attempts invalid pending pointer or confirmation actor | Composite FK/check/constraint trigger rejects invalid committed state. | Not executed |
-| FR75-AC04 | FR75 | Security | Frontend anon key attempts app table writes | Denied by grants/RLS; Laravel verified actions enforce domain rules. | Not executed |
+| FR75-AC04 | FR75 | Security | Frontend anon key attempts app table writes | Denied by grants/RLS; server-verified services enforce domain rules. | Not executed |
 | FR76-AC01 | FR76 | Integrity | Review MVP screens/API/schema | No mandatory phone verification or removed review/scheduling workflow. | Not executed |
 | FR76-AC02 | FR76 | Integrity | Contract confirmation shown | Describe participant acknowledgement of stored version; do not claim verified legal e-signature. | Not executed |
 | FR76-AC03 | FR76 | Positive | Later extension added | Use explicit requirements/migration rather than reviving removed states implicitly. | Not executed |
@@ -309,7 +309,7 @@
 | FR86-AC04 | FR86 | Integrity | Transaction commits ACCEPTED request without tenancy or confirmed span without matching mutual versions | Deferred constraint trigger rejects inconsistent committed state. | Not executed |
 | FR86-AC05 | FR86 | Race | Two transactions mutate pointers/confirmations | Unique constraints, row locks and commit-time invariant checks preserve one current workflow. | Not executed |
 | FR87-AC01 | FR87 | Positive | Owner selects Wi-Fi and Elevator in property form and AC in unit form | Save canonical wifi/elevator/air_conditioning keys in correct JSONB scope; labels come from code catalog. | Not executed |
-| FR87-AC02 | FR87 | Validation | Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root | Laravel rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details. | Not executed |
+| FR87-AC02 | FR87 | Validation | Payload has unknown standard key, owner_label, wrong scope/type, oversized text or malformed root | the server rejects with field errors; no partial change. Validate configured limits, schema_version, enabled boolean and optional details. | Not executed |
 | FR87-AC03 | FR87 | Positive | Owner enters composed/decomposed Vietnamese text with extra whitespace | NFC-normalize, trim and collapse whitespace; retain Vietnamese accents/display spelling. Deduplicate same-resource custom text via case-folded comparison only. | Not executed |
 | FR87-AC04 | FR87 | Integrity | Owner enters EV Charger but catalog has no matching standard option | Save as custom text after explicit Add additional feature action; do not generate a global slug or automatically match an EV-charging filter. | Not executed |
 | FR87-AC05 | FR87 | Positive | Owner searches AC or aircon through explicitly maintained aliases | Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice. | Not executed |

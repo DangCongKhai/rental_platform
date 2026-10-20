@@ -1,7 +1,7 @@
 # Test strategy and scenarios
 ## Levels
 - Frontend unit/component tests for validation feedback, auth redirects, heart intent serialization, unavailable placeholders, stale-result discard and accessibility.
-- Laravel unit tests for pure date/policy/catalog logic and integration tests for actual resource/action authorization, validation, transaction rollback and DTO privacy.
+- Next.js server unit tests for pure date, policy, and catalog logic and integration tests for actual resource/action authorization, validation, transaction rollback and DTO privacy.
 - PostgreSQL tests with two independent connections/barriers for GiST overlap, adjacent intervals, duplicate favourite/pending-request creation, confirmation versus correction/expiry and cron versus inventory changes. SQLite/sequential mocks cannot establish PostgreSQL exclusion behavior.
 - End-to-end happy paths: property→units→draft→first approval→publication→enquiry→proposal→exact confirmation→move-in→renewal. Keep each operation separately tested.
 - Storage/API provider success,401,403,timeout/retry/failure logging tests with deterministic fakes plus one controlled integration evidence run without exposing secrets.

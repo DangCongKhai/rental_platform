@@ -1,6 +1,6 @@
 # Technical decisions
 
-- [Supabase identity and named course substitutions](ADR-001-identity-and-rubric.md)
+- [Supabase identity](ADR-001-identity-and-rubric.md)
 - [Immutable tenancy contracts with embedded confirmations](ADR-002-contract-versions-confirmations.md)
 - [Database-enforced period allocation](ADR-003-date-availability.md)
 - [Durable after-commit notifications](ADR-004-notification-processing.md)

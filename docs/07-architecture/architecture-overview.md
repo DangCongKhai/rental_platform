@@ -1,5 +1,5 @@
 # Architecture overview
-Controllers/FormRequests/API Resources are thin. Shared action/services own proposals, confirmation, renewal, expiry,15day decisions, initial moderation and visibility. Queue and HTTP paths reuse them; avoid duplicated transition logic.
+Route Handlers and validation schemas are thin. Shared server services own proposals, confirmation, renewal, expiry, 15-day decisions, initial moderation, and visibility. Queue and HTTP paths reuse them.
 
 Use database transactions, fixed lock order and final DB constraints. Availability is a query/projection and never a mutable decrementing count. Media bytes are uploaded before committing references; incomplete orphan cleanup is compensating work, not a DB transaction pretending to roll back remote storage.
 

@@ -21,4 +21,4 @@ PENDING enquiry age>=15days. Trigger is the named user action or due system eval
 Only due and genuinely unavailable enquiry rejected.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

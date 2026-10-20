@@ -33,7 +33,7 @@ Stable task keys first, then actual issue numbers after creation. No cycles.
 ## Ownership and review
 Planning alias, mapped real assignee only if verified, required reviewer, skill/risk and tentative estimate.
 ## Definition of done
-Behavior integrated, tests passing, docs/Scramble synchronized, linked PR and rubric evidence if applicable.
+Behavior integrated, tests passing, docs/OpenAPI synchronized, linked PR and rubric evidence if applicable.
 ```
 
 ## Labels and milestones

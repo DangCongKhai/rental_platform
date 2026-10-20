@@ -21,4 +21,4 @@ First approval not yet granted; complete package. Trigger is the named user acti
 APPROVED or REJECTED initial decision; no independent property/photo review.
 
 ## Consistency boundary
-Use current revisions/Policies and the shared actions; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

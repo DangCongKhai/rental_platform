@@ -10,42 +10,45 @@ A long-term rental management platform for Da Nang, Vietnam.
 - `.github/` — pull request templates and collaboration workflows
 - `public/` — static assets
 - `scripts/` — utility scripts
+- `supabase/` — local Supabase config, created by `supabase init`
 - `package.json` — dependencies and scripts
 - `package-lock.json` — lock file
 - `README.md` — this file
 - `LICENSE` — license
 
-## Getting Started
+## Stack
 
-First, run the development server:
+Next.js serves the UI and the server API. Local Supabase supplies PostgreSQL, Auth, Storage, and Studio. Full setup and the daily run order are in [docs/08-project/local-development.md](docs/08-project/local-development.md).
+
+## Local setup
+
+Install a Docker runtime and the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`brew install supabase/tap/supabase` on macOS). Create a project in the [Supabase dashboard](https://supabase.com/dashboard). The project ref is the id in `https://supabase.com/dashboard/project/<project-ref>`. Start Docker, then from this directory:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+supabase init
+supabase login
+supabase link --project-ref <project-ref> # https://supabase.com/dashboard/project/<project-ref>
+supabase start
+supabase status
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`supabase init` only creates the local `supabase/` folder. `supabase login` uses a token from [account tokens](https://supabase.com/dashboard/account/tokens). `supabase link` attaches this repo to that hosted project. Command reference: [`supabase link`](https://supabase.com/docs/reference/cli/supabase-link).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Put the API URL, anon / publishable key and service role key from `supabase status` in `.env.local`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon or publishable key from supabase status>
+SUPABASE_SERVICE_ROLE_KEY=<service role key from supabase status>
+```
 
-## Learn More
+Keep the service role key on the server. Then:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000). Studio and the local mailbox (Mailpit) URLs are in `supabase status`. `supabase stop` shuts the stack down and keeps the local database.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Route Handlers run inside `npm run dev`. The server reads `DATABASE_URL` and the service role key from `.env.local`. Schema changes live in `supabase/migrations`. See the local development doc for the database URL, worker, and daily order.

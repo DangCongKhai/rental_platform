@@ -7,4 +7,4 @@
 
  Critical review focus: JWT verification, account/session isolation and admin privilege boundaries.
 
- Explicit boundaries: No second password store; Google OAuth is deferred; Sanctum rubric substitution is unresolved.
+ Explicit boundaries: No second password store. Google OAuth is deferred. Auth is Supabase JWT verification in Next.js.

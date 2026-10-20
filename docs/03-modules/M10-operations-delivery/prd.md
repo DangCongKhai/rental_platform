@@ -1,10 +1,10 @@
 # M10 Product requirements
 
 ## Purpose
-Git workflow, CI, migrations/seeds, Scramble, unit/integration coverage, logging/alerts, server metrics, resource loading, cache and demo/report evidence.
+Git workflow, CI, migrations/seeds, OpenAPI, unit/integration coverage, logging/alerts, server metrics, resource loading, cache and demo/report evidence.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,9 +13,9 @@ Priority: P1 Should. Actors: Developer. Dependencies: FR40 FR41 FR42 FR43.
 
 Factors: Usable API contract
 
-Tools: Scramble/OpenAPI + Laravel middleware annotation
+Tools: OpenAPI generated from Next.js Route Handlers
 
-Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Do not label JWT as Sanctum token.
+Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
 
 Acceptance criteria:
 
@@ -28,7 +28,7 @@ Priority: P1 Should. Actors: System; Developer. Dependencies: Shared identity/re
 
 Factors: Traceability; privacy
 
-Tools: Laravel Logging/Monolog + configured alert destination
+Tools: Next.js server logging + configured alert destination
 
 Log request/event ID, actor/resource UUIDs, operation and failure duration/context. Alert configured admin/developer on critical storage, transaction or exhausted job failures. Business audit remains separate.
 
@@ -43,14 +43,14 @@ Priority: P1 Should. Actors: Developer; authorized admin. Dependencies: Shared i
 
 Factors: Performance; restricted diagnostics
 
-Tools: Laravel Telescope + DB query listener + cumulative query monitoring
+Tools: restricted server diagnostics + DB query listener + cumulative query monitoring
 
-Use Telescope in development with restricted access. Capture slow query duration and cumulative query time and configure explicit developer alert thresholds; Telescope display alone is not an alert.
+Use restricted development diagnostics. Capture slow query duration and cumulative query time and configure explicit developer alert thresholds. A diagnostics screen alone is not an alert.
 
 Acceptance criteria:
 
 - FR48-AC01 [Positive] Slow query exceeds configured threshold → Record duration/query fingerprint/correlation; deliver alert once per dedupe window.
-- FR48-AC02 [Security] Public visitor requests Telescope → Unavailable or403; query bindings redact sensitive information.
+- FR48-AC02 [Security] Public visitor requests development diagnostics → Unavailable or403; query bindings redact sensitive information.
 - FR48-AC03 [Failure] Monitor/alert service down → App continues; local diagnostic fallback.
 
 ### FR76 Deferred and excluded MVP scope
@@ -75,7 +75,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 Course-required work cannot be dropped just because an earlier product FR had P1 priority. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No assumed deployment provider, paid tier, installed versions or unapproved stack substitution.

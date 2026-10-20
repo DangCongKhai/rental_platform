@@ -4,7 +4,7 @@
 Text/address search, same-unit filtering, date availability, public cards/details and private saved properties.
 
 ## Actors and permissions
-Use actor/resource Policies from each FR below; UI guards never replace backend checks.
+Use server policies from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource f
 
 Factors: Eligibility; pagination; cost
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel Eloquent + PostgreSQL FTS/indexes
+Tools: Next.js + React + Tailwind + TanStack Query + server queries + PostgreSQL FTS/indexes
 
 Search public eligible listings by text/address and paginated filters. Query units whose full desired interval has no blocking tenancy overlap. Without dates use today through each unit minimum rental term; label this default. Never use property RENTED or a stored availability count.
 
@@ -29,7 +29,7 @@ Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource f
 
 Factors: Same-unit semantics; client response order
 
-Tools: Next.js + React + Tailwind + TanStack Query + Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL
+Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL
 
 Support price, area, type, amenities, occupants and controlled policy filters on the same available unit. Start/end dates are both required when filtering dates; inclusive end is converted to [start,end+1day). Amenity filters use canonical catalog keys with enabled=true on eligible units/property scope; distinguish shared laundry from an in-unit washing machine. Custom descriptions never automatically match standard filters (FR87).
 
@@ -45,7 +45,7 @@ Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource f
 
 Factors: Accurate linked data; privacy
 
-Tools: Next.js + React + Tailwind + TanStack Query + next/image + Laravel Resources
+Tools: Next.js + React + Tailwind + TanStack Query + next/image + response DTOs
 
 Show shared gallery, advertised rules, unit photos/specifications/prices and date-qualified availability. Owner contact enquiry form has contact name/phone/message and desired date range. Never display agreement documents or other prospects contact details. Display canonical localized amenity labels with owner details, separating shared property facilities, private unit features and additional custom text (FR87).
 
@@ -75,7 +75,7 @@ Priority: P2 Defer. Actors: Guest; User. Dependencies: FR22 FR20.
 
 Factors: Consistent query scope
 
-Tools: Next.js + React + Tailwind + TanStack Query + map SDK + shared Laravel search action
+Tools: Next.js + React + Tailwind + TanStack Query + map SDK + shared server search service
 
 Use same normalized filter service for map and list; map bounding changes have explicit URL/query state.
 
@@ -89,7 +89,7 @@ Priority: P0 Must. Actors: Guest; API client. Dependencies: Shared identity/reso
 
 Factors: Consistent DTO; pagination
 
-Tools: Laravel Resource Controllers + API Resources + OpenAPI
+Tools: Next.js resource Route Handlers + response DTOs + OpenAPI
 
 Expose GET listing collection/detail using one public eligibility service; include safe unit/media/policy DTOs, pagination and errors.
 
@@ -104,7 +104,7 @@ Priority: P1 Should. Actors: System. Dependencies: Shared identity/resource foun
 
 Factors: Visibility invalidation; no authority from cache
 
-Tools: Laravel Cache database store + TanStack Query + next/image
+Tools: database-backed server cache + TanStack Query + next/image
 
 Next.js/TanStack Query may cache public reads. Invalidate on content, media, policy, suspension and allocation changes. Public detail/API must gate current hidden/suspended status; availability remains indicative until transactional proposal creation.
 
@@ -119,7 +119,7 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: No stale counters; same-unit search
 
-Tools: Laravel REST + FormRequest + Policies + Eloquent + Supabase PostgreSQL + PostgreSQL queries
+Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + PostgreSQL queries
 
 For each selected interval, eligible unit has complete required listing data, is READY, marketed, nonarchived, minimum-duration compliant and has no overlap with blocking tenancy envelope. Pending-confirmation holds count as blocked until explicit expiry release. Count and rent range derive from same qualifying query. Without dates use each unit minimum term from today.
 
@@ -135,7 +135,7 @@ Priority: P0 Must. Actors: Authenticated user. Dependencies: FR05 FR19 FR21 FR43
 
 Factors: Stable property identity; private data; idempotency; race-safe UI; visibility
 
-Tools: Next.js heart/list UI + TanStack Query + Laravel Policies/REST + PostgreSQL unique pair
+Tools: Next.js heart/list UI + TanStack Query + server policies and Route Handlers + PostgreSQL unique pair
 
 Authenticated users save properties through the heart on listing cards/details, remove saved properties and view a private paginated favourites list and count. Persist favourite_properties keyed to user_profiles and properties, not listings or units. Guests are prompted to sign in. Use PUT desired saved state and DELETE desired unsaved state, not a toggle endpoint. Keep unavailable relations as generic placeholders without hidden listing content. Favouriting is not an enquiry, subscription or reservation. User reports this feature has been added; actual implementation completeness must be checked in the local repository.
 
@@ -159,7 +159,7 @@ Use the shared data dictionary and versioned API contract; do not invent tables/
 No shared-cache private favourite flags, no availability promises, correct unavailable placeholders. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; Scramble and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 Maps deferred. Save properties, not listings/units. Favourites never allocate units or send enquiries.
