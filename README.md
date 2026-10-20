@@ -1,4 +1,19 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# rentOS
+
+A long-term rental management platform for Da Nang, Vietnam.
+
+## Project Structure
+
+- `src/` — source code
+- `docs/` — PRD, requirements, architecture, workflows and testing
+- `design/` — brand guidelines, UI/UX standards and screen specifications
+- `.github/` — pull request templates and collaboration workflows
+- `public/` — static assets
+- `scripts/` — utility scripts
+- `package.json` — dependencies and scripts
+- `package-lock.json` — lock file
+- `README.md` — this file
+- `LICENSE` — license
 
 ## Getting Started
 
