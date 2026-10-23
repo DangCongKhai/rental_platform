@@ -47,7 +47,7 @@ Factors: Completeness; idempotence
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + queued notification
 
-First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision and listing submitted_revision. Rejected initial submissions may be corrected/resubmitted.
+First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision into submitted_content_revision. Rejected initial submissions may be corrected/resubmitted.
 
 Acceptance criteria:
 
@@ -69,7 +69,7 @@ Acceptance criteria:
 
 - FR13-AC01 [Positive] Admin opens pending listing → All linked advertised content is visible in one review screen.
 - FR13-AC02 [Security] Non-admin opens queue → 403; no private review data.
-- FR13-AC03 [Race] Content changes after admin opens screen → Approval compares both listing and property revisions; stale decision returns 409.
+- FR13-AC03 [Race] Content changes after admin opens screen → Approval compares the captured content_revision with the current property content_revision; a stale decision returns 409.
 
 ### FR14 Approve initial listing package
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.

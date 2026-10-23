@@ -172,7 +172,7 @@ Factors: Completeness; idempotence
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + queued notification
 
-First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision and listing submitted_revision. Rejected initial submissions may be corrected/resubmitted.
+First publication requires admin review of listing plus linked property, marketed units, selected media and policies as one package. Validate required address, unit details, at least one shared photo and photo per marketed unit. Capture property content_revision into submitted_content_revision. Rejected initial submissions may be corrected/resubmitted.
 
 - FR12-AC01 [Positive] Complete draft submitted → Initial moderation PENDING; no separate property/image approval.
 - FR12-AC02 [Validation] Missing required address, image, unit or policy values → 422 with field issues; not publicly published.
@@ -191,7 +191,7 @@ Admin queue displays only initial PENDING listings with property/unit details, s
 
 - FR13-AC01 [Positive] Admin opens pending listing → All linked advertised content is visible in one review screen.
 - FR13-AC02 [Security] Non-admin opens queue → 403; no private review data.
-- FR13-AC03 [Race] Content changes after admin opens screen → Approval compares both listing and property revisions; stale decision returns 409.
+- FR13-AC03 [Race] Content changes after admin opens screen → Approval compares the captured content_revision with the current property content_revision; a stale decision returns 409.
 
 ## FR14 Approve initial listing package
 
@@ -344,8 +344,8 @@ Tools: database-backed queue + geocoding API
 
 Optional asynchronous address-to-coordinate conversion after saving address. Manual address remains authoritative when provider fails.
 
-- FR24-AC01 [Positive] Geocode succeeds for current address revision → Save valid latitude/longitude.
-- FR24-AC02 [Race] Old address job completes after newer edit → Discard stale result using revision.
+- FR24-AC01 [Positive] Geocode succeeds for the current address → Save valid latitude/longitude.
+- FR24-AC02 [Race] Old address job completes after a newer edit → Discard the result when the address changed after the job started.
 - FR24-AC03 [Failure] Rate limit/provider failure → Address remains saved; retry bounded and logged.
 
 ## FR25 Submit rental request with contact details
@@ -595,7 +595,7 @@ Tools: Next.js Route Handlers + server validation + server policies + Supabase P
 
 Authorize owner-scoped CRUD for properties, units and gallery selection. Route linked-content writes through property content lock/revision/audit action. No property approval, document-evidence review or image-review endpoints.
 
-- FR41-AC01 [Positive] Owner edits own unit through API → Validated update and audit; increment appropriate revisions.
+- FR41-AC01 [Positive] Owner edits own unit through API → Validated update and audit; increment content_revision when the edit changes reviewed content.
 - FR41-AC02 [Security] Caller alters foreign property/unit or protected moderation fields → 403/422.
 - FR41-AC03 [Race] Stale content revision submitted → 409; no lost update.
 
@@ -611,7 +611,7 @@ Provide authenticated request submit/withdraw/reject, tenancy propose/correct/ca
 
 - FR42-AC01 [Positive] Next.js invokes proposal/confirmation APIs → Documented statuses and UUID links returned; private resources authorized.
 - FR42-AC02 [Security] User forges actor_role/version owner → Role derived from tenancy parties; 403.
-- FR42-AC03 [Race] Client sends stale tenancy revision or superseded version UUID → 409 without changing confirmations or blocked span.
+- FR42-AC03 [Race] Client sends a superseded contract version UUID → 409 without changing confirmations or blocked span.
 - FR42-AC04 [Integrity] Equivalent HTTP and worker actions run → Both use same business locks/constraints.
 
 ## FR43 Verify Supabase JWT in Next.js
@@ -622,7 +622,7 @@ Factors: Signature and claims; single identity authority
 
 Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
+Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as user_profiles.user_id. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
 
 - FR43-AC01 [Positive] Valid project access token → The Next.js server resolves the current profile and then runs server policies.
 - FR43-AC02 [Security] Tampered payload, alg none, wrong issuer/audience/key or expired token → 401, no protected action.
@@ -638,7 +638,7 @@ Factors: Usable API contract
 
 Tools: OpenAPI generated from Next.js Route Handlers
 
-Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
+Document endpoints, payloads, responses, UUIDs, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
 
 - FR44-AC01 [Positive] Open generated docs → Auth and action routes include examples for401/403/404/409/422.
 - FR44-AC02 [Validation] Try documented request flow → Matches implemented field names and state enums.
@@ -742,7 +742,7 @@ Owner edits specifications, marketed price/deposit, minimum duration and control
 
 - FR51-AC01 [Positive] Advertised rent changes 4m to 4.5m → Listing shows new price; existing version rent stays unchanged.
 - FR51-AC02 [Validation] Area/rent <=0 or minimum duration below 3 months → 422; unchanged.
-- FR51-AC03 [Race] Two tabs update same unit revision → One succeeds; stale tab receives 409.
+- FR51-AC03 [Race] Two tabs update the same unit → the later commit is stored.
 - FR51-AC04 [Integrity] Existing contracts have different policy/rent → Never synchronize live unit values into contract versions.
 
 ## FR52 Manage operational status independently of availability
@@ -787,7 +787,7 @@ Owner selects media, sets order and cover, or soft-deletes unused photos. Select
 
 - FR56-AC01 [Positive] Select newly uploaded image on approved published listing → Appears immediately; no review state involved.
 - FR56-AC02 [Validation] Delete cover while keeping listing published without replacement → 422 or explicit hide choice; never broken required cover.
-- FR56-AC03 [Race] Reorder/removal and caption save compete → Media revision prevents stale resurrection; audited changes.
+- FR56-AC03 [Race] Reorder/removal and caption save compete → the later committed gallery state is stored; changes are audited.
 - FR56-AC04 [Integrity] Deselect photo → Hide from gallery; do not physically delete merely because unselected.
 
 ## FR57 Update photos without a replacement-review workflow
@@ -802,7 +802,7 @@ To change photo bytes, upload a new object/media row and switch gallery/cover re
 
 - FR57-AC01 [Positive] Owner uploads new photo and saves gallery change → New image immediately eligible; old image unselected/deleted as requested; audit references both UUIDs.
 - FR57-AC02 [Failure] Upload fails before reference swap → Existing gallery/cover remains valid.
-- FR57-AC03 [Race] Two updates target same gallery/cover revision → One wins; other reloads; no loss of a referenced object.
+- FR57-AC03 [Race] Two updates target the same gallery → the later commit is stored.
 - FR57-AC04 [Security] Owner overwrites a shared object path → Reject path reuse; issue unique object path.
 
 ## FR59 Safely clean orphaned and deleted media
@@ -924,7 +924,7 @@ Owner records negotiated consecutive continuation dates/rent/document from PENDI
 - FR70-AC01 [Positive] Original Jan-June; proposed July-Dec at4.2m → New RENEWAL version, temporary July-Dec extension reservation; current rent unchanged.
 - FR70-AC02 [Validation] Start is not confirmed_end+1day or end not later → Reject; no gaps/overlaps or altered original term.
 - FR70-AC03 [Race] Future tenancy already reserves overlapping extension → Exclusion constraint fails; request stays PENDING; original agreement remains.
-- FR70-AC04 [Race] Two owners tabs propose or correct renewal → One pending version under tenancy lock/revision; no parallel effective renewal.
+- FR70-AC04 [Race] Two owners tabs propose or correct renewal → One pending version under the tenancy lock; no parallel effective renewal.
 - FR70-AC05 [Integrity] Tenant confirms version after owner confirmation → Request ACCEPTED, extension confirmed; future rent activates only on renewal start.
 - FR70-AC06 [Failure] Mutual confirmation transaction fails → No partial ACCEPTED renewal or confirmed extension.
 
@@ -972,7 +972,7 @@ Persist event-keyed in-app messages with safe links; unread/read state per recip
 - FR73-AC02 [Security] Other user reads/marks it → 403/404.
 - FR73-AC03 [Race] Same event delivered twice → Unique recipient/event_key yields one notification.
 
-## FR74 Idempotent writes and stale revisions
+## FR74 Idempotent writes
 
 Module: `M06-tenancies-contracts`. Priority: P0 Must. Actors: System. Dependencies: Shared foundation.
 
@@ -980,11 +980,11 @@ Factors: Retry safety; optimistic concurrency
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + PostgreSQL unique keys
 
-Use client_operation_id UUID on creates and revision checks on mutable resources. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
+Use client_operation_id UUID on creates. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
 
 - FR74-AC01 [Race] Network retry after successful commit → Existing resource/result returned without duplicate audit or notification intent.
 - FR74-AC02 [Security] Other actor uses guessed operation UUID → No cross-actor result disclosure.
-- FR74-AC03 [Race] Two updates with same expected revision → Only one succeeds; losing write409.
+- FR74-AC03 [Race] Two updates of the same resource → the later commit is stored. Create retries still use client_operation_id.
 - FR74-AC04 [Integrity] Concurrency acceptance tests run → Use independent PostgreSQL connections/barrier, not only sequential mocks.
 
 ## FR75 Transactional locking audit and consistency
@@ -1058,7 +1058,7 @@ Tools: Next.js Route Handlers + server validation + server policies + Supabase P
 If reviews are implemented, approve/reject exact submitted revision and allow reported harmful review removal. Required rejection/removal reasons.
 
 - FR79-AC01 [Positive] Approve PENDING review → Visible and included in aggregate.
-- FR79-AC02 [Race] Review edited during moderation → Expected revision prevents stale approval.
+- FR79-AC02 [Race] Review edited during moderation → the decision uses the content currently stored.
 - FR79-AC03 [Security] Normal user moderates review → 403.
 
 ## FR80 Confirm move-in after mutual contract confirmation
@@ -1107,7 +1107,7 @@ Tenant can decline exact current version with reason. Initial tenancy becomes AW
 - FR82-AC02 [Positive] Owner corrects rent as v2 → New UUID/hash/version_number; new owner confirmation; tenant must confirm v2.
 - FR82-AC03 [Race] Correction tries reacquiring dates now reserved elsewhere → 409; no new active hold or false acceptance.
 - FR82-AC04 [Validation] Owner attempts correction after mutual confirmation → Reject; amendments to confirmed terms are deferred.
-- FR82-AC05 [Race] Tenant confirms while owner corrects → Same pending pointer/revision lock; no mismatched version or retroactive change.
+- FR82-AC05 [Race] Tenant confirms while owner corrects → Same pending pointer lock; no mismatched version or retroactive change.
 
 ## FR83 Expire temporary confirmation reservations
 
@@ -1181,7 +1181,7 @@ Module: `M02-property-units-media`. Priority: P0 Must. Actors: Owner; Guest; Sys
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
 
-Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + revision/audit services
+Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + content-revision and audit services
 
 Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. The server owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
 
@@ -1192,7 +1192,7 @@ Owners select standard amenities or add custom text directly in Create/Edit Prop
 - FR87-AC05 [Positive] Owner searches AC or aircon through explicitly maintained aliases → Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice.
 - FR87-AC06 [Integrity] Shared laundry exists but no washing machine inside requested unit → Show shared feature separately; in-unit washing-machine filter does not match the shared facility. Apply all unit filters to same available unit.
 - FR87-AC07 [Integrity] Catalog display label changes or standard enabled=false/absent → Existing stable keys need no row migration; enabled=false/absent does not qualify for filter; absent means not advertised, not verified absent.
-- FR87-AC08 [Race] Two tabs edit amenity JSONB from same property/unit revision → Only one expected-revision update commits; other409. No silent JSON document replacement losing selected/custom entries; audit consistent.
+- FR87-AC08 [Race] Two tabs edit amenity JSONB → the later commit is stored and audited.
 - FR87-AC09 [Race] Initial listing admin approval races with amenity edit → Common property content lock/revision rejects stale first approval. Later approved-listing edits need no reapproval; suspension still respected.
 - FR87-AC10 [Integrity] Migrate old amenity arrays into new JSONB structure → Preserve recognized canonical codes under standard; map legacy labels only via reviewed explicit aliases, keep unknown descriptions under custom and audit migration. Do not conflate shared/private scope or blindly slugify labels.
 

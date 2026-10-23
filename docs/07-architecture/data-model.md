@@ -1,5 +1,5 @@
 # Data model and database enforcement
-Read [dictionary](data-dictionary.md) and [full Mermaid source](database-schema.mmd). All domain primary/foreign keys are UUIDs. `auth_users` denotes managed auth.users only; framework queue/cache and provider internals are not this ERD's complete migrations. property_reviews remains P2 deferred. Do not create contract_versions/contract_confirmations, separate image tables, amenity catalog tables or policy join tables.
+Read [dictionary](data-dictionary.md) and [full Mermaid source](database-schema.mmd). All domain primary/foreign keys are UUIDs. `auth_users` denotes managed auth.users only. `user_profiles.id` is the profile primary key that other tables reference. `user_profiles.user_id` is unique and references `auth.users.id`. A verified JWT `sub` matches `user_profiles.user_id`. `user_profiles.email` is copied from Auth at signup. Framework queue/cache and provider internals are not this ERD's complete migrations. property_reviews remains P2 deferred. Do not create contract_versions/contract_confirmations, separate image tables, amenity catalog tables or policy join tables.
 
 ## Required constraints
 - Normalized unit label unique per property; one current nonarchived listing per property.

@@ -21,4 +21,4 @@ Own property/unit scope. Trigger is the named user action or due system evaluati
 Consistent selected gallery, audit and safe storage lifecycle.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

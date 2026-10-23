@@ -51,7 +51,7 @@
 | FR12-AC04 | FR12 | Integrity | Already initially approved listing updated | Do not submit to initial moderation again; retain audit/reporting flow. | Not executed |
 | FR13-AC01 | FR13 | Positive | Admin opens pending listing | All linked advertised content is visible in one review screen. | Not executed |
 | FR13-AC02 | FR13 | Security | Non-admin opens queue | 403; no private review data. | Not executed |
-| FR13-AC03 | FR13 | Race | Content changes after admin opens screen | Approval compares both listing and property revisions; stale decision returns 409. | Not executed |
+| FR13-AC03 | FR13 | Race | Content changes after admin opens screen | Approval compares the captured content_revision with the current property content_revision; a stale decision returns 409. | Not executed |
 | FR14-AC01 | FR14 | Positive | Admin approves unchanged pending package | APPROVED and approval metadata saved; owner may publish. | Not executed |
 | FR14-AC02 | FR14 | Race | Property/unit/media/policy edit precedes decision commit | Stale revision rejected; no approval of unreviewed initial content. | Not executed |
 | FR14-AC03 | FR14 | Race | Two admins approve/reject concurrently | Only first legal transition commits; second gets current result/409. | Not executed |
@@ -83,8 +83,8 @@
 | FR22-AC02 | FR22 | Failure | Provider unavailable or coordinates missing | List search remains usable. | Not executed |
 | FR23-AC01 | FR23 | Positive | Filters change | Map/list apply identical visibility and unit criteria. | Not executed |
 | FR23-AC02 | FR23 | Race | Map requests finish out of order | Stale result discarded. | Not executed |
-| FR24-AC01 | FR24 | Positive | Geocode succeeds for current address revision | Save valid latitude/longitude. | Not executed |
-| FR24-AC02 | FR24 | Race | Old address job completes after newer edit | Discard stale result using revision. | Not executed |
+| FR24-AC01 | FR24 | Positive | Geocode succeeds for the current address | Save valid latitude/longitude. | Not executed |
+| FR24-AC02 | FR24 | Race | Old address job completes after a newer edit | Discard the result when the address changed after the job started. | Not executed |
 | FR24-AC03 | FR24 | Failure | Rate limit/provider failure | Address remains saved; retry bounded and logged. | Not executed |
 | FR25-AC01 | FR25 | Positive | Tenant submits valid three-month request | PENDING request stored and owner notified with private contact snapshots. | Not executed |
 | FR25-AC02 | FR25 | Validation | Missing/invalid phone or dates, own listing, or unit outside property | Reject with field errors; phone syntax validation is not verification. | Not executed |
@@ -147,12 +147,12 @@
 | FR40-AC01 | FR40 | Positive | Valid search/detail requests | 200 and documented JSON shape. | Not executed |
 | FR40-AC02 | FR40 | Negative | Unavailable/nonexistent UUID | 404; invalid filter422. | Not executed |
 | FR40-AC03 | FR40 | Security | Public response serialized | No private documents, tokens, admin flags or tenant contacts. | Not executed |
-| FR41-AC01 | FR41 | Positive | Owner edits own unit through API | Validated update and audit; increment appropriate revisions. | Not executed |
+| FR41-AC01 | FR41 | Positive | Owner edits own unit through API | Validated update and audit; increment content_revision when the edit changes reviewed content. | Not executed |
 | FR41-AC02 | FR41 | Security | Caller alters foreign property/unit or protected moderation fields | 403/422. | Not executed |
 | FR41-AC03 | FR41 | Race | Stale content revision submitted | 409; no lost update. | Not executed |
 | FR42-AC01 | FR42 | Positive | Next.js invokes proposal/confirmation APIs | Documented statuses and UUID links returned; private resources authorized. | Not executed |
 | FR42-AC02 | FR42 | Security | User forges actor_role/version owner | Role derived from tenancy parties; 403. | Not executed |
-| FR42-AC03 | FR42 | Race | Client sends stale tenancy revision or superseded version UUID | 409 without changing confirmations or blocked span. | Not executed |
+| FR42-AC03 | FR42 | Race | Client sends a superseded contract version UUID | 409 without changing confirmations or blocked span. | Not executed |
 | FR42-AC04 | FR42 | Integrity | Equivalent HTTP and worker actions run | Both use same business locks/constraints. | Not executed |
 | FR43-AC01 | FR43 | Positive | Valid project access token | The Next.js server resolves the current profile and then runs server policies. | Not executed |
 | FR43-AC02 | FR43 | Security | Tampered payload, alg none, wrong issuer/audience/key or expired token | 401, no protected action. | Not executed |
@@ -184,7 +184,7 @@
 | FR50-AC04 | FR50 | Integrity | WHOLE_SPACE owner invokes Add units | Reject second unit; backend auto-unit remains sole unit. | Not executed |
 | FR51-AC01 | FR51 | Positive | Advertised rent changes 4m to 4.5m | Listing shows new price; existing version rent stays unchanged. | Not executed |
 | FR51-AC02 | FR51 | Validation | Area/rent <=0 or minimum duration below 3 months | 422; unchanged. | Not executed |
-| FR51-AC03 | FR51 | Race | Two tabs update same unit revision | One succeeds; stale tab receives 409. | Not executed |
+| FR51-AC03 | FR51 | Race | Two tabs update the same unit | The later commit is stored. | Not executed |
 | FR51-AC04 | FR51 | Integrity | Existing contracts have different policy/rent | Never synchronize live unit values into contract versions. | Not executed |
 | FR52-AC01 | FR52 | Positive | READY unit has active tenancy for January-June | Unavailable for overlapping dates; potentially available from July for a valid period. | Not executed |
 | FR52-AC02 | FR52 | Positive | Owner marks MAINTENANCE | Exclude from new proposals/public qualifying inventory without mutating existing contracts. | Not executed |
@@ -196,11 +196,11 @@
 | FR55-AC04 | FR55 | Integrity | Photo file changed | Use new unique storage object; retain audit metadata/hash rather than overwriting reviewed bytes. | Not executed |
 | FR56-AC01 | FR56 | Positive | Select newly uploaded image on approved published listing | Appears immediately; no review state involved. | Not executed |
 | FR56-AC02 | FR56 | Validation | Delete cover while keeping listing published without replacement | 422 or explicit hide choice; never broken required cover. | Not executed |
-| FR56-AC03 | FR56 | Race | Reorder/removal and caption save compete | Media revision prevents stale resurrection; audited changes. | Not executed |
+| FR56-AC03 | FR56 | Race | Reorder/removal and caption save compete | The later committed gallery state is stored; changes are audited. | Not executed |
 | FR56-AC04 | FR56 | Integrity | Deselect photo | Hide from gallery; do not physically delete merely because unselected. | Not executed |
 | FR57-AC01 | FR57 | Positive | Owner uploads new photo and saves gallery change | New image immediately eligible; old image unselected/deleted as requested; audit references both UUIDs. | Not executed |
 | FR57-AC02 | FR57 | Failure | Upload fails before reference swap | Existing gallery/cover remains valid. | Not executed |
-| FR57-AC03 | FR57 | Race | Two updates target same gallery/cover revision | One wins; other reloads; no loss of a referenced object. | Not executed |
+| FR57-AC03 | FR57 | Race | Two updates target the same gallery | The later commit is stored. | Not executed |
 | FR57-AC04 | FR57 | Security | Owner overwrites a shared object path | Reject path reuse; issue unique object path. | Not executed |
 | FR59-AC01 | FR59 | Positive | Deleted unreferenced media reaches retention cutoff | Delete object and set purged_at idempotently. | Not executed |
 | FR59-AC02 | FR59 | Race | Cleanup races with cover selection | Shared lock/recheck prevents deletion of newly referenced live object. | Not executed |
@@ -234,7 +234,7 @@
 | FR70-AC01 | FR70 | Positive | Original Jan-June; proposed July-Dec at4.2m | New RENEWAL version, temporary July-Dec extension reservation; current rent unchanged. | Not executed |
 | FR70-AC02 | FR70 | Validation | Start is not confirmed_end+1day or end not later | Reject; no gaps/overlaps or altered original term. | Not executed |
 | FR70-AC03 | FR70 | Race | Future tenancy already reserves overlapping extension | Exclusion constraint fails; request stays PENDING; original agreement remains. | Not executed |
-| FR70-AC04 | FR70 | Race | Two owners tabs propose or correct renewal | One pending version under tenancy lock/revision; no parallel effective renewal. | Not executed |
+| FR70-AC04 | FR70 | Race | Two owners tabs propose or correct renewal | One pending version under the tenancy lock; no parallel effective renewal. | Not executed |
 | FR70-AC05 | FR70 | Integrity | Tenant confirms version after owner confirmation | Request ACCEPTED, extension confirmed; future rent activates only on renewal start. | Not executed |
 | FR70-AC06 | FR70 | Failure | Mutual confirmation transaction fails | No partial ACCEPTED renewal or confirmed extension. | Not executed |
 | FR71-AC01 | FR71 | Positive | Original v1 rejected, corrected v2 mutually confirmed, renewal v3 later confirmed | Keep all three; v2 covers original dates; v3 covers continuation; v1 has no contractual effect. | Not executed |
@@ -250,7 +250,7 @@
 | FR73-AC03 | FR73 | Race | Same event delivered twice | Unique recipient/event_key yields one notification. | Not executed |
 | FR74-AC01 | FR74 | Race | Network retry after successful commit | Existing resource/result returned without duplicate audit or notification intent. | Not executed |
 | FR74-AC02 | FR74 | Security | Other actor uses guessed operation UUID | No cross-actor result disclosure. | Not executed |
-| FR74-AC03 | FR74 | Race | Two updates with same expected revision | Only one succeeds; losing write409. | Not executed |
+| FR74-AC03 | FR74 | Race | Two updates of the same resource | The later commit is stored. Create retries still use client_operation_id. | Not executed |
 | FR74-AC04 | FR74 | Integrity | Concurrency acceptance tests run | Use independent PostgreSQL connections/barrier, not only sequential mocks. | Not executed |
 | FR75-AC01 | FR75 | Race | Two proposal/renewal/expiry actions use independent connections | Consistent locks avoid lost changes; deadlocks retried boundedly. | Not executed |
 | FR75-AC02 | FR75 | Failure | Action fails after adding version before reservation acceptance | Whole action rolls back; only staged orphan file may remain. | Not executed |
@@ -269,7 +269,7 @@
 | FR78-AC04 | FR78 | Positive | Admin restores after investigation | Clear suspension with audit; public visibility still requires owner PUBLISHED and all eligibility gates. | Not executed |
 | FR78-AC05 | FR78 | Integrity | Previously public photo URL was downloaded | Normal public listing hidden; remove offending object if needed. Do not claim ability to recall downloaded copies. | Not executed |
 | FR79-AC01 | FR79 | Positive | Approve PENDING review | Visible and included in aggregate. | Not executed |
-| FR79-AC02 | FR79 | Race | Review edited during moderation | Expected revision prevents stale approval. | Not executed |
+| FR79-AC02 | FR79 | Race | Review edited during moderation | The decision uses the content currently stored. | Not executed |
 | FR79-AC03 | FR79 | Security | Normal user moderates review | 403. | Not executed |
 | FR80-AC01 | FR80 | Positive | Both parties confirmed v2, start date reached | Owner marks ACTIVE, same UUID/confirmed span; no duplicate acceptance. | Not executed |
 | FR80-AC02 | FR80 | Validation | Version unconfirmed, before start, or tenancy cancelled | 409/422; no activation. | Not executed |
@@ -285,7 +285,7 @@
 | FR82-AC02 | FR82 | Positive | Owner corrects rent as v2 | New UUID/hash/version_number; new owner confirmation; tenant must confirm v2. | Not executed |
 | FR82-AC03 | FR82 | Race | Correction tries reacquiring dates now reserved elsewhere | 409; no new active hold or false acceptance. | Not executed |
 | FR82-AC04 | FR82 | Validation | Owner attempts correction after mutual confirmation | Reject; amendments to confirmed terms are deferred. | Not executed |
-| FR82-AC05 | FR82 | Race | Tenant confirms while owner corrects | Same pending pointer/revision lock; no mismatched version or retroactive change. | Not executed |
+| FR82-AC05 | FR82 | Race | Tenant confirms while owner corrects | Same pending pointer lock; no mismatched version or retroactive change. | Not executed |
 | FR83-AC01 | FR83 | Boundary | Server time reaches deadline exactly | Confirmation disallowed; due hold released transactionally. | Not executed |
 | FR83-AC02 | FR83 | Race | Two workers expire same hold | One state change/audit/outbox event; retries no-op. | Not executed |
 | FR83-AC03 | FR83 | Race | Expiry competes with final confirmation or correction | Lock/recheck exact pending version/deadline; stale worker cannot expire newer hold. | Not executed |
@@ -315,7 +315,7 @@
 | FR87-AC05 | FR87 | Positive | Owner searches AC or aircon through explicitly maintained aliases | Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice. | Not executed |
 | FR87-AC06 | FR87 | Integrity | Shared laundry exists but no washing machine inside requested unit | Show shared feature separately; in-unit washing-machine filter does not match the shared facility. Apply all unit filters to same available unit. | Not executed |
 | FR87-AC07 | FR87 | Integrity | Catalog display label changes or standard enabled=false/absent | Existing stable keys need no row migration; enabled=false/absent does not qualify for filter; absent means not advertised, not verified absent. | Not executed |
-| FR87-AC08 | FR87 | Race | Two tabs edit amenity JSONB from same property/unit revision | Only one expected-revision update commits; other409. No silent JSON document replacement losing selected/custom entries; audit consistent. | Not executed |
+| FR87-AC08 | FR87 | Race | Two tabs edit amenity JSONB | The later commit is stored and audited. | Not executed |
 | FR87-AC09 | FR87 | Race | Initial listing admin approval races with amenity edit | Common property content lock/revision rejects stale first approval. Later approved-listing edits need no reapproval; suspension still respected. | Not executed |
 | FR87-AC10 | FR87 | Integrity | Migrate old amenity arrays into new JSONB structure | Preserve recognized canonical codes under standard; map legacy labels only via reviewed explicit aliases, keep unknown descriptions under custom and audit migration. Do not conflate shared/private scope or blindly slugify labels. | Not executed |
 | FR88-AC01 | FR88 | Positive | Authenticated user hearts a public property card | Persist favourite_properties for verified user and property; red heart and private badge reflect saved state after reload. | Not executed |

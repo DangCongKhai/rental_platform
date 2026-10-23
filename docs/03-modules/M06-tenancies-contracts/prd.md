@@ -71,7 +71,7 @@ Acceptance criteria:
 
 - FR42-AC01 [Positive] Next.js invokes proposal/confirmation APIs → Documented statuses and UUID links returned; private resources authorized.
 - FR42-AC02 [Security] User forges actor_role/version owner → Role derived from tenancy parties; 403.
-- FR42-AC03 [Race] Client sends stale tenancy revision or superseded version UUID → 409 without changing confirmations or blocked span.
+- FR42-AC03 [Race] Client sends a superseded contract version UUID → 409 without changing confirmations or blocked span.
 - FR42-AC04 [Integrity] Equivalent HTTP and worker actions run → Both use same business locks/constraints.
 
 ### FR66 Cancel proposals and end confirmed tenancies
@@ -123,20 +123,20 @@ Acceptance criteria:
 - FR71-AC03 [Security] Attempt database UPDATE/DELETE on contract terms or existing confirmation metadata → Denied by trigger/privileges, not API convention alone.
 - FR71-AC04 [Boundary] No confirmed segment covers queried date → Show no confirmed terms for this date; proposed terms separately labeled.
 
-### FR74 Idempotent writes and stale revisions
+### FR74 Idempotent writes
 Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
 
 Factors: Retry safety; optimistic concurrency
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + PostgreSQL unique keys
 
-Use client_operation_id UUID on creates and revision checks on mutable resources. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
+Use client_operation_id UUID on creates. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
 
 Acceptance criteria:
 
 - FR74-AC01 [Race] Network retry after successful commit → Existing resource/result returned without duplicate audit or notification intent.
 - FR74-AC02 [Security] Other actor uses guessed operation UUID → No cross-actor result disclosure.
-- FR74-AC03 [Race] Two updates with same expected revision → Only one succeeds; losing write409.
+- FR74-AC03 [Race] Two updates of the same resource → the later commit is stored. Create retries still use client_operation_id.
 - FR74-AC04 [Integrity] Concurrency acceptance tests run → Use independent PostgreSQL connections/barrier, not only sequential mocks.
 
 ### FR75 Transactional locking audit and consistency
@@ -204,7 +204,7 @@ Acceptance criteria:
 - FR82-AC02 [Positive] Owner corrects rent as v2 → New UUID/hash/version_number; new owner confirmation; tenant must confirm v2.
 - FR82-AC03 [Race] Correction tries reacquiring dates now reserved elsewhere → 409; no new active hold or false acceptance.
 - FR82-AC04 [Validation] Owner attempts correction after mutual confirmation → Reject; amendments to confirmed terms are deferred.
-- FR82-AC05 [Race] Tenant confirms while owner corrects → Same pending pointer/revision lock; no mismatched version or retroactive change.
+- FR82-AC05 [Race] Tenant confirms while owner corrects → Same pending pointer lock; no mismatched version or retroactive change.
 
 ### FR83 Expire temporary confirmation reservations
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.

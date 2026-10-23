@@ -1,17 +1,18 @@
 # Data dictionary
 
-Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, including managed auth reference and optional/support entities. This count is descriptive, not a mandate to implement deferred reviews.
+The table below is the current column list, including the managed auth reference and optional entities. Optimistic concurrency `revision` columns are not used. `content_revision` and its submitted and approved snapshots remain for first listing review. This list is descriptive, not a mandate to implement deferred reviews.
 
 | Entity | Scope | Column | PostgreSQL type | Key | Nullable | Default | Description |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | auth_users | Managed external | id | uuid | PK | No |  | Provider managed identity UUID |
 | auth_users | Managed external | email | text |  | Yes |  | Provider managed email; password/session internals intentionally omitted |
-| user_profiles | Core | id | uuid | PK,FK | No |  | References auth.users.id; one profile per identity |
+| user_profiles | Core | id | uuid | PK | No | gen_random_uuid() | Profile row id. Other tables reference this id. |
+| user_profiles | Core | user_id | uuid | FK, UNIQUE | No |  | References auth.users.id. JWT sub matches this column. One profile per identity. |
+| user_profiles | Core | email | text |  | No |  | Address copied from Auth at signup. |
 | user_profiles | Core | full_name | text |  | No |  | Validated display/contact name |
 | user_profiles | Core | phone | text |  | Yes |  | Optional contact number; not OTP ownership verification |
 | user_profiles | Core | is_admin | boolean |  | No | false | Trusted server-managed moderation privilege |
 | user_profiles | Core | account_status | text |  | No | ACTIVE | ACTIVE or SUSPENDED |
-| user_profiles | Core | revision | integer |  | No | 1 | Optimistic concurrency version |
 | user_profiles | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | user_profiles | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | properties | Core | id | uuid | PK | No | gen_random_uuid() | Application UUID |
@@ -33,7 +34,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | properties | Core | archived_at | timestamptz |  | Yes |  | Archive instead of destructive delete |
 | properties | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | properties | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
-| properties | Core | revision | integer |  | No | 1 | Stale property write version |
 | units | Core | id | uuid | PK | No | gen_random_uuid() | Stable unit UUID |
 | units | Core | property_id | uuid | FK | No |  | Parent property |
 | units | Core | client_operation_id | uuid |  | No |  | Per-preview-row idempotency UUID; unique with property_id, including bulk rows |
@@ -53,7 +53,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | units | Core | operational_status | text |  | No | READY | READY MAINTENANCE RETIRED |
 | units | Core | is_marketed | boolean |  | No | false | Explicit owner advertising choice; enable only with complete required unit data |
 | units | Core | policy_overrides | jsonb |  | No | {} | Allowed enum overrides and additional_rules |
-| units | Core | revision | integer |  | No | 1 | Stale write check |
 | units | Core | archived_at | timestamptz |  | Yes |  | Preserve historical references |
 | units | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | units | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
@@ -66,7 +65,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | property_media | Core | caption | text |  | Yes |  | Owner caption; plain text, audited |
 | property_media | Core | sort_order | integer |  | No | 0 | Gallery order |
 | property_media | Core | is_selected_for_listing | boolean |  | No | true | Display intent independent of approval |
-| property_media | Core | revision | integer |  | No | 1 | Stale gallery edit protection |
 | property_media | Core | purged_at | timestamptz |  | Yes |  | Storage file deletion confirmed |
 | property_media | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | property_media | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
@@ -82,8 +80,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | listings | Core | cover_media_id | uuid | FK | Yes |  | Selected nondeleted same-property shared media; required to publish |
 | listings | Core | moderation_status | text |  | No | DRAFT | DRAFT PENDING APPROVED REJECTED |
 | listings | Core | publication_status | text |  | No | DRAFT | DRAFT PUBLISHED HIDDEN |
-| listings | Core | revision | integer |  | No | 1 | Listing optimistic revision; initial submission snapshot |
-| listings | Core | submitted_revision | integer |  | Yes |  | Listing revision awaiting review |
 | listings | Core | submitted_at | timestamptz |  | Yes |  | Review request time |
 | listings | Core | reviewed_by | uuid | FK | Yes |  | Admin reviewer |
 | listings | Core | reviewed_at | timestamptz |  | Yes |  | Decision time |
@@ -105,7 +101,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | rental_requests | Core | message | text |  | No |  | Enquiry text |
 | rental_requests | Core | status | text |  | No | PENDING | PENDING ACCEPTED REJECTED WITHDRAWN; ACCEPTED means tenancy proposal committed |
 | rental_requests | Core | outcome_reason | text |  | Yes |  | Required rejection/automatic closure explanation |
-| rental_requests | Core | revision | integer |  | No | 1 | Concurrent state guard |
 | rental_requests | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | rental_requests | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | rental_requests | Core | contact_name | text |  | No |  | Private submitted contact snapshot |
@@ -121,7 +116,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | tenancies | Core | status | text |  | No | PENDING_CONFIRMATION | PENDING_CONFIRMATION AWAITING_REVISION CONFIRMED ACTIVE EXPIRED CANCELLED ENDED |
 | tenancies | Core | actual_ended_at | timestamptz |  | Yes |  | Actual move-out/end or cancellation action |
 | tenancies | Core | end_reason | text |  | Yes |  | Required when ending/cancelling |
-| tenancies | Core | revision | integer |  | No | 1 | Concurrent lifecycle guard |
 | tenancies | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | tenancies | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | tenancies | Core | owner_id | uuid | FK | No |  | Manager party snapshot for contract confirmation |
@@ -143,7 +137,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | tenancy_renewal_requests | Core | reviewed_by | uuid | FK | Yes |  | Owner for rejection; acceptance derives from final mutual confirmation |
 | tenancy_renewal_requests | Core | reviewed_at | timestamptz |  | Yes |  | Outcome time |
 | tenancy_renewal_requests | Core | review_reason | text |  | Yes |  | Required for rejection |
-| tenancy_renewal_requests | Core | revision | integer |  | No | 1 | Terminal action concurrency |
 | tenancy_renewal_requests | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | tenancy_renewal_requests | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | tenancy_contracts | Core | id | uuid | PK | No | gen_random_uuid() | Immutable version UUID |
@@ -178,7 +171,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | listing_reports | Core | internal_notes | text |  | Yes |  | Admin only investigation details |
 | listing_reports | Core | reviewed_by | uuid | FK | Yes |  | Admin deciding |
 | listing_reports | Core | reviewed_at | timestamptz |  | Yes |  | Decision time |
-| listing_reports | Core | revision | integer |  | No | 1 | Concurrent reviewer guard |
 | listing_reports | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | listing_reports | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | audit_logs | Core | id | uuid | PK | No | gen_random_uuid() | Audit UUID |
@@ -221,7 +213,6 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | property_reviews | P2 deferred | reviewed_by | uuid | FK | Yes |  | Admin reviewer |
 | property_reviews | P2 deferred | reviewed_at | timestamptz |  | Yes |  | Decision time |
 | property_reviews | P2 deferred | review_reason | text |  | Yes |  | Required on rejection/removal |
-| property_reviews | P2 deferred | revision | integer |  | No | 1 | Submitted content guard |
 | property_reviews | P2 deferred | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | property_reviews | P2 deferred | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | idempotency_records | Core | id | uuid | PK | No | gen_random_uuid() | Operation record UUID |
@@ -234,7 +225,7 @@ Baseline workbook229 columns plus4 FR88 columns =233 columns across17 entities, 
 | idempotency_records | Core | response_status | integer |  | No |  | Original successful HTTP status |
 | idempotency_records | Core | created_at | timestamptz |  | No | now() | Commit time; retention must respect supported retry window |
 | favourite_properties | Core | id | uuid | PK | No | gen_random_uuid() | Favourite row identity |
-| favourite_properties | Core | user_id | uuid | FK | No |  | Verified user_profiles.id; never supplied as actor by client |
+| favourite_properties | Core | user_id | uuid | FK | No |  | Verified user_profiles.id, not the Auth user id; never supplied as actor by client |
 | favourite_properties | Core | property_id | uuid | FK | No |  | Saved properties.id; independent of listing/unit |
 | favourite_properties | Core | created_at | timestamptz |  | No | now() | Server save time for private pagination |
 

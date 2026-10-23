@@ -21,4 +21,4 @@ Initial approval and complete valid content; not archived/suspended. Trigger is 
 Publication choice separate from first approval and period-specific inventory.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

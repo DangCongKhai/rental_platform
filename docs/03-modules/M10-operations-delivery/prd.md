@@ -15,7 +15,7 @@ Factors: Usable API contract
 
 Tools: OpenAPI generated from Next.js Route Handlers
 
-Document endpoints, payloads, responses, UUIDs, expected revisions, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
+Document endpoints, payloads, responses, UUIDs, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
 
 Acceptance criteria:
 

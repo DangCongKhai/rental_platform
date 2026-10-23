@@ -21,4 +21,4 @@ Server deadline due; exact current pending version. Trigger is the named user ac
 Expired pending work cannot retain a permanent temporary reservation.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

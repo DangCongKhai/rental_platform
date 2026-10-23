@@ -13,12 +13,13 @@ erDiagram
     }
 
     user_profiles {
-        uuid id PK,FK "References auth.users.id; one profile per identity"
+        uuid id PK "Profile row id. Other tables reference this id."
+        uuid user_id FK,UK "References auth.users.id. JWT sub matches this column. One profile per identity."
+        text email "Address copied from Auth at signup"
         text full_name "Validated display/contact name"
         text phone "Optional. Optional contact number; not OTP ownership verification"
         boolean is_admin "Trusted server-managed moderation privilege"
         text account_status "ACTIVE or SUSPENDED"
-        integer revision "Optimistic concurrency version"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
     }
@@ -43,7 +44,6 @@ erDiagram
         timestamptz archived_at "Optional. Archive instead of destructive delete"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
-        integer revision "Stale property write version"
     }
 
     units {
@@ -66,7 +66,6 @@ erDiagram
         text operational_status "READY MAINTENANCE RETIRED"
         boolean is_marketed "Explicit owner advertising choice; enable only with complete required unit data"
         jsonb policy_overrides "Allowed enum overrides and additional_rules"
-        integer revision "Stale write check"
         timestamptz archived_at "Optional. Preserve historical references"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
@@ -82,7 +81,6 @@ erDiagram
         text caption "Optional. Owner caption; plain text, audited"
         integer sort_order "Gallery order"
         boolean is_selected_for_listing "Owner gallery selection; no photo moderation"
-        integer revision "Stale gallery edit protection"
         timestamptz purged_at "Optional. Storage file deletion confirmed"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
@@ -101,8 +99,6 @@ erDiagram
         uuid cover_media_id FK "Optional. Selected nondeleted same-property shared media; required to publish"
         text moderation_status "DRAFT PENDING APPROVED REJECTED"
         text publication_status "DRAFT PUBLISHED HIDDEN"
-        integer revision "Listing optimistic revision; initial submission snapshot"
-        integer submitted_revision "Optional. Listing revision awaiting review"
         timestamptz submitted_at "Optional. Review request time"
         uuid reviewed_by FK "Optional. Admin reviewer"
         timestamptz reviewed_at "Optional. Decision time"
@@ -127,7 +123,6 @@ erDiagram
         text message "Enquiry text"
         text status "PENDING ACCEPTED REJECTED WITHDRAWN; ACCEPTED means tenancy proposal committed"
         text outcome_reason "Optional. Required rejection/automatic closure explanation"
-        integer revision "Concurrent state guard"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
         text contact_name "Private submitted contact snapshot"
@@ -146,7 +141,6 @@ erDiagram
         text status "PENDING_CONFIRMATION AWAITING_REVISION CONFIRMED ACTIVE EXPIRED CANCELLED ENDED"
         timestamptz actual_ended_at "Optional. Actual move-out/end or cancellation action"
         text end_reason "Optional. Required when ending/cancelling"
-        integer revision "Concurrent lifecycle guard"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
         uuid owner_id FK "Manager party snapshot for contract confirmation"
@@ -171,7 +165,6 @@ erDiagram
         uuid reviewed_by FK "Optional. Owner for rejection; acceptance derives from final mutual confirmation"
         timestamptz reviewed_at "Optional. Outcome time"
         text review_reason "Optional. Required for rejection"
-        integer revision "Terminal action concurrency"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
     }
@@ -212,7 +205,6 @@ erDiagram
         text internal_notes "Optional. Admin only investigation details"
         uuid reviewed_by FK "Optional. Admin deciding"
         timestamptz reviewed_at "Optional. Decision time"
-        integer revision "Concurrent reviewer guard"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
     }
@@ -267,7 +259,6 @@ erDiagram
         uuid reviewed_by FK "Optional. Admin reviewer"
         timestamptz reviewed_at "Optional. Decision time"
         text review_reason "Optional. Required on rejection/removal"
-        integer revision "Submitted content guard"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
     }

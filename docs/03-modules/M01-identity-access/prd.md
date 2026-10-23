@@ -108,7 +108,7 @@ Factors: Signature and claims; single identity authority
 
 Tools: Supabase Auth + Next.js auth client + Next.js server JWT verification using project JWKS
 
-Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as profile UUID. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
+Validate Supabase access JWT using allowed asymmetric algorithm and project JWKS; verify issuer, audience, expiry, subject and account/profile eligibility. Use trusted sub as user_profiles.user_id. The chosen auth path verifies Supabase JWTs in Next.js and does not add a second token table.
 
 Acceptance criteria:
 

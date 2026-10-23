@@ -21,4 +21,4 @@ Signed in; public target; no pending same tenant/listing. Trigger is the named u
 PENDING contact enquiry, no tenancy or allocation.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
