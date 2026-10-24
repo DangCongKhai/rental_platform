@@ -3,7 +3,7 @@ erDiagram
     %% Baseline workbook version 3 plus FR88 favourite_properties,20October2026.
     %% All application primary and foreign keys use UUID.
     %% auth_users is only a managed Supabase auth.users reference.
-    %% property_reviews is P2 deferred; notification tables are P1; idempotency/outbox are support records.
+    %% property_reviews is P2 deferred; notifications are inserted synchronously by each action.
     %% Contract terms/documents are immutable; embedded confirmation fields are write-once.
     %% GiST exclusion, composite FKs and transition triggers are migration rules, not Mermaid syntax.
 
@@ -27,7 +27,6 @@ erDiagram
     properties {
         uuid id PK "Application UUID"
         uuid owner_id FK "Authorized manager profile; MVP one owner"
-        uuid client_operation_id "Idempotent create key scoped to owner"
         text name "Property name"
         text property_type "HOUSE APARTMENT APARTMENT_BUILDING"
         text rental_arrangement "WHOLE_SPACE or SEPARATE_UNITS"
@@ -49,7 +48,6 @@ erDiagram
     units {
         uuid id PK "Stable unit UUID"
         uuid property_id FK "Parent property"
-        uuid client_operation_id "Per-preview-row idempotency UUID; unique with property_id, including bulk rows"
         text label "Room S201 or Entire property; normalized label unique per property"
         text unit_kind "ROOM STUDIO APARTMENT HOUSE"
         text description "Optional. Unit specific description; may be null in incomplete draft, required at listing submission/publication"
@@ -76,16 +74,15 @@ erDiagram
         uuid property_id FK "Parent property"
         uuid unit_id FK "Optional. Optional unit in same property"
         uuid uploaded_by FK "Authorized uploader"
-        uuid client_operation_id "Uploader scoped submission key"
         text storage_path UK "Unique object path; no overwriting referenced bytes"
-        text caption "Optional. Owner caption; plain text, audited"
+        text caption "Optional. Owner caption; plain text"
         integer sort_order "Gallery order"
         boolean is_selected_for_listing "Owner gallery selection; no photo moderation"
         timestamptz purged_at "Optional. Storage file deletion confirmed"
         timestamptz created_at "Record creation time in UTC"
         timestamptz updated_at "Last record update time in UTC"
         timestamptz deleted_at "Optional. Soft removal; hidden from gallery; retention starts"
-        text sha256 "Hash of completed image bytes for audit integrity"
+        text sha256 "Hash of completed image bytes"
         text mime_type "Validated decoded image media type"
         bigint size_bytes "Positive completed file byte count"
     }
@@ -93,7 +90,6 @@ erDiagram
     listings {
         uuid id PK "Listing UUID"
         uuid property_id FK "One nonarchived listing per property"
-        uuid client_operation_id "Property scoped create identity"
         text title "Public title"
         text description "Advertisement copy"
         uuid cover_media_id FK "Optional. Selected nondeleted same-property shared media; required to publish"
@@ -118,7 +114,6 @@ erDiagram
         uuid listing_id FK "Source listing"
         uuid tenant_id FK "Authenticated prospect"
         uuid preferred_unit_id FK "Optional. Optional preference in listing property"
-        uuid client_operation_id "Tenant scoped create identity"
         date desired_move_in_date "Preference not contractual start"
         text message "Enquiry text"
         text status "PENDING ACCEPTED REJECTED WITHDRAWN; ACCEPTED means tenancy proposal committed"
@@ -137,7 +132,6 @@ erDiagram
         uuid unit_id FK "Exact allocated unit"
         uuid tenant_id FK "Primary tenant matches original enquiry"
         uuid rental_request_id FK,UK "One result per accepted enquiry"
-        uuid client_operation_id "Owner scoped record action identity"
         text status "PENDING_CONFIRMATION AWAITING_REVISION CONFIRMED ACTIVE EXPIRED CANCELLED ENDED"
         timestamptz actual_ended_at "Optional. Actual move-out/end or cancellation action"
         text end_reason "Optional. Required when ending/cancelling"
@@ -157,7 +151,6 @@ erDiagram
     tenancy_renewal_requests {
         uuid id PK "Renewal request UUID"
         uuid tenancy_id FK "Existing CONFIRMED or ACTIVE continuing tenancy"
-        uuid client_operation_id "Tenancy scoped submission identity"
         date requested_end_date "Proposed later end date"
         numeric proposed_monthly_rent "Positive NUMERIC(14,0) VND"
         text message "Optional. Tenant explanation"
@@ -197,7 +190,6 @@ erDiagram
         uuid id PK "Report UUID"
         uuid listing_id FK "Reported advertisement"
         uuid reporter_id FK "Authenticated reporter"
-        uuid client_operation_id "Reporter scoped submission key"
         text reason_code "FRAUD MISLEADING HARMFUL OTHER"
         text description "Reporter explanation"
         text status "OPEN REVIEWING RESOLVED DISMISSED"
@@ -209,34 +201,7 @@ erDiagram
         timestamptz updated_at "Last record update time in UTC"
     }
 
-    audit_logs {
-        uuid id PK "Audit UUID"
-        uuid actor_id FK "Optional. Null for explicit system action"
-        text entity_type "Allowlisted table/resource kind"
-        uuid entity_id "Polymorphic UUID validated by backend; not a SQL FK"
-        text action "Transition/action name"
-        jsonb before_values "Optional. Minimal safe prior values"
-        jsonb after_values "Optional. Minimal safe resulting values"
-        text reason "Optional. Decision or operation reason"
-        uuid correlation_id "Request or operation correlation UUID"
-        timestamptz created_at "Audit time in business transaction"
-    }
 
-    notification_outbox {
-        uuid id PK "Outbox UUID"
-        text event_key UK "Stable unique domain event identity"
-        uuid recipient_id FK "Recipient profile"
-        text event_type "Configured notification kind"
-        jsonb payload "Safe resource references; no tokens/documents"
-        text status "PENDING PROCESSING DELIVERED FAILED"
-        integer attempts "Bounded retry count"
-        timestamptz next_attempt_at "Optional. Retry due time"
-        timestamptz locked_until "Optional. Worker claim lease; recover abandoned claims"
-        timestamptz delivered_at "Optional. Delivery handling completed"
-        text last_error "Optional. Redacted failure summary"
-        timestamptz created_at "Record creation time in UTC"
-        timestamptz updated_at "Last record update time in UTC"
-    }
 
     notifications {
         uuid id PK "Inbox UUID"
@@ -263,17 +228,6 @@ erDiagram
         timestamptz updated_at "Last record update time in UTC"
     }
 
-    idempotency_records {
-        uuid id PK "Operation record UUID"
-        uuid actor_id FK "Verified caller; replay must reauthorize current access"
-        text action "Allowlisted action name; unique with actor and operation UUID"
-        uuid client_operation_id "Client generated stable write retry UUID"
-        text request_hash "Server SHA256 of canonical original payload including parent UUID"
-        text result_resource_type "Result entity kind or bulk unit result"
-        uuid[] result_ids "One or more resulting UUIDs; no signed links or secret response bodies"
-        integer response_status "Original successful HTTP status"
-        timestamptz created_at "Commit time; retention must respect supported retry window"
-    }
 
     auth_users ||--o| user_profiles : "id"
     user_profiles ||--o{ properties : "owner_id"
@@ -304,12 +258,9 @@ erDiagram
     listings ||--o{ listing_reports : "listing_id"
     user_profiles ||--o{ listing_reports : "reporter_id"
     user_profiles o|--o{ listing_reports : "reviewed_by"
-    user_profiles o|--o{ audit_logs : "actor_id"
-    user_profiles ||--o{ notification_outbox : "recipient_id"
     user_profiles ||--o{ notifications : "recipient_id"
     tenancies ||--o| property_reviews : "tenancy_id"
     user_profiles o|--o{ property_reviews : "reviewed_by"
-    user_profiles ||--o{ idempotency_records : "actor_id"
 
     favourite_properties {
         uuid id PK "Favourite identity"

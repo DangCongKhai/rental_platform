@@ -1,57 +1,27 @@
 # M10 Product requirements
 
 ## Purpose
-Git workflow, CI, migrations/seeds, OpenAPI, unit/integration coverage, logging/alerts, server metrics, resource loading, cache and demo/report evidence.
+Git workflow, CI, migrations/seeds and unit/integration tests.
 
 ## Actors and permissions
-Use server policies from each FR below. UI guards never replace server checks.
+Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR44 OpenAPI documentation
-Priority: P1 Should. Actors: Developer. Dependencies: FR40 FR41 FR42 FR43.
+Priority: Removed (was Removed (was P1 Should)). Actors: Developer.
 
-Factors: Usable API contract
-
-Tools: OpenAPI generated from Next.js Route Handlers
-
-Document endpoints, payloads, responses, UUIDs, idempotency and Supabase bearer security. Label the credential as a Supabase bearer JWT.
-
-Acceptance criteria:
-
-- FR44-AC01 [Positive] Open generated docs → Auth and action routes include examples for401/403/404/409/422.
-- FR44-AC02 [Validation] Try documented request flow → Matches implemented field names and state enums.
-- FR44-AC03 [Security] Published specification → No secrets or live private document URLs.
+Removed by team decision: OpenAPI documentation is not required for this project. The ID is kept and not reused.
 
 ### FR47 Structured logs and critical alerts
-Priority: P1 Should. Actors: System; Developer. Dependencies: Shared identity/resource foundation.
+Priority: Removed (was Removed (was P1 Should)). Actors: System; Developer.
 
-Factors: Traceability; privacy
-
-Tools: Next.js server logging + configured alert destination
-
-Log request/event ID, actor/resource UUIDs, operation and failure duration/context. Alert configured admin/developer on critical storage, transaction or exhausted job failures. Business audit remains separate.
-
-Acceptance criteria:
-
-- FR47-AC01 [Failure] Simulate storage or exhausted notification failure → Useful structured log with correlation ID; critical alert emitted with deduplication.
-- FR47-AC02 [Security] Inspect log payload → No passwords, access/refresh tokens, full contracts or signed URLs.
-- FR47-AC03 [Integrity] Notification provider fails while alerting → Log fallback; do not roll back completed business action.
+Removed by team decision: Structured logging and alerting are not required for this project. The ID is kept and not reused.
 
 ### FR48 Development monitoring and slow query alerts
-Priority: P1 Should. Actors: Developer; authorized admin. Dependencies: Shared identity/resource foundation.
+Priority: Removed (was Removed (was P1 Should)). Actors: Developer; authorized admin.
 
-Factors: Performance; restricted diagnostics
-
-Tools: restricted server diagnostics + DB query listener + cumulative query monitoring
-
-Use restricted development diagnostics. Capture slow query duration and cumulative query time and configure explicit developer alert thresholds. A diagnostics screen alone is not an alert.
-
-Acceptance criteria:
-
-- FR48-AC01 [Positive] Slow query exceeds configured threshold → Record duration/query fingerprint/correlation; deliver alert once per dedupe window.
-- FR48-AC02 [Security] Public visitor requests development diagnostics → Unavailable or403; query bindings redact sensitive information.
-- FR48-AC03 [Failure] Monitor/alert service down → App continues; local diagnostic fallback.
+Removed by team decision: Diagnostics and slow-query alerts are not required for this project. The ID is kept and not reused.
 
 ### FR76 Deferred and excluded MVP scope
 Priority: P3 Exclude. Actors: Team. Dependencies: Shared identity/resource foundation.
@@ -69,13 +39,13 @@ Acceptance criteria:
 - FR76-AC03 [Positive] Later extension added → Use explicit requirements/migration rather than reviving removed states implicitly.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
-Course-required work cannot be dropped just because an earlier product FR had P1 priority. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
+Keep CI green and migrations reproducible. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
-No assumed deployment provider, paid tier, installed versions or unapproved stack substitution.
+No logging/alerting, monitoring, caching or OpenAPI work; no paid services.

@@ -1,5 +1,3 @@
 # Security requirements
 
-Use architecture security design and FR05/43/74/86/88. Demonstrate private resource isolation, server validation, negative/admin authorization, exact-contract/hash decisions and transport-appropriate CSRF evidence. Prevent XSS/injection, forged actors, public private-contract buckets and shared-cache favourite leakage. Rate-limit report and auth-sensitive actions.
-
-Validation is part of feature/engineering issues and PR evidence. Tool versions/configuration must match the local installed framework; no invented pass result.
+Follow the [security design](../07-architecture/security-design.md) and FR05, FR43, FR86 and FR88. Show that private records are isolated, input is validated on the server, non-owners and non-admins are refused, and contract decisions apply only to the exact version and hash. Server Actions' same-origin check protects writes against CSRF. Prevent XSS and injection, forged actors and public access to private contract files. Rate-limit report submission.

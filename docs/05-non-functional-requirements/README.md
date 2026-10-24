@@ -4,8 +4,6 @@
 - [Security requirements](security.md)
 - [Reliability](reliability.md)
 - [Usability](usability.md)
-- [Logging alerts and monitoring](observability.md)
 - [Deployment and operations](deployment.md)
-- [Caching](caching.md)
 
-Specific production SLOs/hosting budgets remain open; course deliverables and security invariants are not optional.
+Logging/alerting, monitoring and caching work are out of scope for this project. Security rules are not optional.

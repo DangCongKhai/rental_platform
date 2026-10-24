@@ -1,10 +1,10 @@
 # M06 Product requirements
 
 ## Purpose
-Exact unit allocation, immutable tenancy_contracts, embedded confirmations, correction chains, temporary holds and lifecycle actions. Member-C owns tenant/owner screens.
+Exact unit allocation, immutable tenancy_contracts, embedded confirmations, correction chains, temporary holds and lifecycle actions. Screens for both parties are built in the same flow issue as the actions.
 
 ## Actors and permissions
-Use server policies from each FR below. UI guards never replace server checks.
+Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource founda
 
 Factors: Concurrent occupancy; allocation granularity
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + btree_gist exclusion constraint
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints + btree_gist exclusion constraint
 
 PostgreSQL GiST exclusion constraint on tenancies(unit_id, daterange(blocked_start_date, blocked_end_date+1, [))) for PENDING_CONFIRMATION/CONFIRMED/ACTIVE. Different nonoverlapping future tenancies on one unit are permitted. Blocking envelope includes confirmed span plus any proposed renewal extension.
 
@@ -30,7 +30,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Agreement recording; exact unit; snapshots
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + Supabase private Storage
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints + Supabase private Storage
 
 Owner chooses exact READY nonarchived unit in request property, enters final dates/rent/deposit, negotiated policy snapshot and private agreement document, then explicitly confirms version. Create one continuing tenancy with version 1, pending pointer and configured confirmation deadline. Default reservation 48h is a proposed configurable setting.
 
@@ -38,7 +38,7 @@ Acceptance criteria:
 
 - FR34-AC01 [Positive] Owner proposes July1-December31 → PENDING_CONFIRMATION reserves only that period; enquiry ACCEPTED; tenant invited to review exact version.
 - FR34-AC02 [Validation] Tenant mismatch, invalid dates/rent, original period below3calendar months (including month-end/leap-year boundaries), unit unavailable or missing private file → 422/409 and no accepted request.
-- FR34-AC03 [Race] Two owners tabs propose same request → Unique rental_request_id permits one tenancy; idempotent identical replay returns it.
+- FR34-AC03 [Race] Two owner tabs propose for the same request → Unique rental_request_id permits one tenancy; the second submit sees the existing tenancy.
 - FR34-AC04 [Race] Unit put in maintenance while proposal submitted → Shared property/unit locks and eligibility recheck prevent ineligible proposal.
 - FR34-AC05 [Integrity] Move-in date arrives before both confirmations → No automatic activation; reservation expiry still applies.
 
@@ -47,9 +47,9 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Privacy; effective periods
 
-Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL + private Storage
+Tools: Next.js + React + Tailwind + Server Actions + server validation + server access checks + Supabase PostgreSQL + private Storage
 
-Owner and tenant can view all immutable version metadata/documents, each party confirmation/decline, proposed/current/upcoming terms, deadline and supersession links. Derive state from current pending pointer, confirmations and audit events; do not mark old versions confirmed by inference.
+Owner and tenant can view all immutable version metadata/documents, each party confirmation/decline, proposed/current/upcoming terms, deadline and supersession links. Derive state from the current pending pointer, confirmations and timestamps; do not mark old versions confirmed by inference.
 
 Acceptance criteria:
 
@@ -58,21 +58,21 @@ Acceptance criteria:
 - FR35-AC03 [Integrity] Future renewal is mutually confirmed → Show current original rent until renewal start, then renewal rent.
 - FR35-AC04 [Boundary] Date beyond last confirmed term → Show no confirmed term for date; never substitute proposed rent.
 
-### FR42 Rental request tenancy and renewal action APIs
+### FR42 Rental request, tenancy and renewal server actions
 Priority: P0 Must. Actors: Tenant; Owner. Dependencies: Shared identity/resource foundation.
 
-Factors: Explicit transitions; idempotence
+Factors: Explicit transitions
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + shared server service + DB transaction + row lock + PostgreSQL constraints
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + shared server service + DB transaction + row lock + PostgreSQL constraints
 
-Provide authenticated request submit/withdraw/reject, tenancy propose/correct/cancel/end/move-in, exact-version confirm/decline and renewal request/propose actions. Shared actions enforce policies, idempotency and transaction rules. No viewings endpoints.
+Provide authenticated Server Actions for request submit/withdraw/reject, tenancy propose/correct/cancel/end/move-in, exact-version confirm/decline and renewal request/propose. Shared server functions enforce access checks and transaction rules. No viewing actions.
 
 Acceptance criteria:
 
-- FR42-AC01 [Positive] Next.js invokes proposal/confirmation APIs → Documented statuses and UUID links returned; private resources authorized.
-- FR42-AC02 [Security] User forges actor_role/version owner → Role derived from tenancy parties; 403.
-- FR42-AC03 [Race] Client sends a superseded contract version UUID → 409 without changing confirmations or blocked span.
-- FR42-AC04 [Integrity] Equivalent HTTP and worker actions run → Both use same business locks/constraints.
+- FR42-AC01 [Positive] Owner and tenant use proposal/confirmation actions → Documented states and UUID links returned; private resources authorized.
+- FR42-AC02 [Security] User forges role or version owner → Role derived from tenancy parties; refused.
+- FR42-AC03 [Race] Client sends a superseded contract version UUID → Refused without changing confirmations or blocked span.
+- FR42-AC04 [Integrity] Lazy expiry/auto-rejection and user actions touch the same records → Both use the same server functions and database constraints.
 
 ### FR66 Cancel proposals and end confirmed tenancies
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
@@ -89,7 +89,7 @@ Acceptance criteria:
 - FR66-AC02 [Positive] Confirmed occupancy ends early → Set ENDED and actual_ended_at; released future dates available if READY/marketed.
 - FR66-AC03 [Race] Cancel/end races with final confirmation/renewal → One serialized legal outcome; no resurrected tenancy or orphan reservation.
 - FR66-AC04 [Integrity] Request was ACCEPTED before proposal cancellation → Keep historical ACCEPTED; show linked cancelled/expired tenancy, not a fabricated completed rental.
-- FR66-AC05 [Boundary] Contract date ends with no physical move-out confirmation → Do not fabricate actual_ended_at; scheduling follows agreed range. Overstay requires an explicit audited operational block/maintenance action.
+- FR66-AC05 [Boundary] Contract date ends with no physical move-out confirmation → Do not fabricate actual_ended_at; scheduling follows agreed range. Overstay requires an explicit operational block/maintenance action.
 
 ### FR67 Record original immutable agreement version
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
@@ -112,7 +112,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Historical truth; current vs future terms
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
 tenancy_contracts stores immutable submitted agreement versions, agreed terms/document/hash and write-once participant confirmation metadata. ORIGINAL and consecutive RENEWAL segments represent agreed periods; corrections create new rows with supersedes_contract_id. Current agreed rent comes only from the mutually confirmed segment covering the date. No separate contract_confirmations table. Confirmed mid-term amendments remain deferred.
 
@@ -124,45 +124,32 @@ Acceptance criteria:
 - FR71-AC04 [Boundary] No confirmed segment covers queried date → Show no confirmed terms for this date; proposed terms separately labeled.
 
 ### FR74 Idempotent writes
-Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
+Priority: Removed (was Removed (was P0 Must)). Actors: System.
 
-Factors: Retry safety; optimistic concurrency
+Removed by team decision: No client operation IDs. Duplicate submissions are stopped by database unique constraints and by disabling forms while they submit. The ID is kept and not reused.
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + PostgreSQL unique keys
-
-Use client_operation_id UUID on creates. Scope operation key to actor/parent. Reusing key with different canonical payload returns409; terminal action replay never repeats side effects.
-
-Acceptance criteria:
-
-- FR74-AC01 [Race] Network retry after successful commit → Existing resource/result returned without duplicate audit or notification intent.
-- FR74-AC02 [Security] Other actor uses guessed operation UUID → No cross-actor result disclosure.
-- FR74-AC03 [Race] Two updates of the same resource → the later commit is stored. Create retries still use client_operation_id.
-- FR74-AC04 [Integrity] Concurrency acceptance tests run → Use independent PostgreSQL connections/barrier, not only sequential mocks.
-
-### FR75 Transactional locking audit and consistency
+### FR75 Transactional consistency
 Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
 
 Factors: Deadlocks; coordinated critical paths
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints
 
-All writes use shared server services, fixed lock order property then units sorted by UUID then rental request/tenancy/renewal rows. Persist domain/audit/outbox/idempotency in same transaction. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers as specified.
+Each state change runs in one database transaction that re-reads and locks the rows it changes before writing. Direct clients cannot write application tables. Cross-table invariants use composite FKs and deferred constraint triggers.
 
 Acceptance criteria:
 
-- FR75-AC01 [Race] Two proposal/renewal/expiry actions use independent connections → Consistent locks avoid lost changes; deadlocks retried boundedly.
 - FR75-AC02 [Failure] Action fails after adding version before reservation acceptance → Whole action rolls back; only staged orphan file may remain.
 - FR75-AC03 [Integrity] Direct SQL attempts invalid pending pointer or confirmation actor → Composite FK/check/constraint trigger rejects invalid committed state.
-- FR75-AC04 [Security] Frontend anon key attempts app table writes → Denied by grants/RLS; server-verified services enforce domain rules.
 
 ### FR80 Confirm move-in after mutual contract confirmation
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Lifecycle clarity; no duplicate allocation
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind
 
-Owner records move-in on/after first confirmed start date for CONFIRMED tenancy, changes to ACTIVE and audits. PENDING_CONFIRMATION never activates on date arrival. Future nonoverlapping tenancies remain permitted; activation does not extend blocked range.
+Owner records move-in on/after first confirmed start date for CONFIRMED tenancy and changes it to ACTIVE. PENDING_CONFIRMATION never activates on date arrival. Future nonoverlapping tenancies remain permitted; activation does not extend blocked range.
 
 Acceptance criteria:
 
@@ -176,7 +163,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints
 
 Both parties acknowledge the same tenancy_contracts.id and immutable document_sha256. owner_confirmed_at is set only through explicit owner submission; tenant_confirmed_at is set once by the related tenant before deadline on the current pending contract. Tenant may instead set tenant_rejected_at with reason, never both outcomes. The final confirmation promotes confirmed dates and clears the pending pointer/deadline atomically. A new contract version requires fresh confirmation fields.
 
@@ -185,7 +172,7 @@ Acceptance criteria:
 - FR81-AC01 [Positive] Owner confirmed v2; tenant confirms v2/hash → Both confirmation timestamps; initial tenancy CONFIRMED; confirmed dates set; no pending deadline.
 - FR81-AC02 [Validation] Owner confirmed v1 but tenant confirms v2 → No agreement until both independently confirm v2; never mix version decisions.
 - FR81-AC03 [Race] Tenant confirms v1 while owner publishes corrected v2 → Same tenancy lock yields one winner; superseded confirmation rejected 409 or correction disallowed after agreement.
-- FR81-AC04 [Race] Final confirm competes with deadline worker → Compare server now under lock; at/after deadline no confirmation. Worker cannot undo already confirmed agreement.
+- FR81-AC04 [Race] Final confirmation at or after the deadline → Compare server time under lock; no confirmation. Expiry handling never undoes an already confirmed agreement.
 - FR81-AC05 [Race] Double-click confirmation → Write-once confirmation fields gives one write-once decision; same replay returns result.
 - FR81-AC06 [Integrity] Renewal final confirmation succeeds → Renewal request ACCEPTED and confirmed end extended in same transaction; old documents remain.
 
@@ -194,7 +181,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints
 
 Tenant can decline exact current version with reason. Initial tenancy becomes AWAITING_REVISION and releases hold; renewal decline keeps confirmed tenancy/range and request PENDING. Owner creates corrected immutable version linked to superseded version, obtains new explicit owner confirmation and new reservation/deadline after rechecking availability. No correction of already mutually confirmed terms in MVP.
 
@@ -211,16 +198,15 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Next.js scheduler + queue workers + server validation + server policies + DB transaction/row lock + PostgreSQL constraints
+Tools: lazy release when records are opened or acted on (fallback: Supabase Cron → protected Route Handler) + server validation + server access checks + DB transaction/row lock + PostgreSQL constraints
 
-Store confirmation_expires_at using server clock; proposed default48h configurable. Scheduler scans due holds and action paths reap them under locks. No now() in exclusion predicate. Initial expiry sets EXPIRED and clears hold; pending renewal expiry restores confirmed envelope, clears pending pointer and leaves renewal request PENDING for discussion. Accepted enquiry history stays accepted.
+Store confirmation_expires_at using server clock; proposed default 48h configurable. Due holds are released lazily: confirmation is refused at/after the deadline, and any action that needs the unit's dates (proposal, correction, renewal) or opens the tenancy releases expired holds under lock first. Search treats expired holds as free. If background release is ever needed, a Supabase Cron job calls a protected Route Handler that runs the same function. No now() in exclusion predicate. Initial expiry sets EXPIRED and clears hold; pending renewal expiry restores confirmed envelope, clears pending pointer and leaves renewal request PENDING for discussion. Accepted enquiry history stays accepted.
 
 Acceptance criteria:
 
-- FR83-AC01 [Boundary] Server time reaches deadline exactly → Confirmation disallowed; due hold released transactionally.
-- FR83-AC02 [Race] Two workers expire same hold → One state change/audit/outbox event; retries no-op.
-- FR83-AC03 [Race] Expiry competes with final confirmation or correction → Lock/recheck exact pending version/deadline; stale worker cannot expire newer hold.
-- FR83-AC04 [Failure] Scheduler delayed → Hold remains conservatively blocked until reaped; proposal path can reap due conflicts under locks before retry.
+- FR83-AC01 [Boundary] Server time reaches the deadline exactly → Confirmation refused; the hold is released the next time the record is opened or its dates are needed.
+- FR83-AC03 [Race] Expiry release competes with final confirmation or correction → Lock and recheck the exact pending version/deadline; a stale release cannot expire a newer hold.
+- FR83-AC04 [Failure] Nobody opens the record after the deadline → Search already treats the hold as free; the next proposal on that unit releases it under lock before inserting.
 - FR83-AC05 [Integrity] Renewal expires → Original confirmed range/rent unchanged; release extension only.
 
 ### FR84 Reserve renewal extension without releasing current occupancy
@@ -228,7 +214,7 @@ Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource
 
 Factors: Authorization; immutable versions; concurrent transitions
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints
 
 tenancies stores confirmed_start/end and blocked_start/end as transactional projections. Original unconfirmed proposal has only blocked dates. Confirmed tenancy with pending renewal expands blocked_end while confirmed_end stays unchanged. Decline/cancel/expiry restores blocked span to confirmed span; successful agreement promotes confirmed span.
 
@@ -257,13 +243,13 @@ Acceptance criteria:
 - FR86-AC05 [Race] Two transactions mutate pointers/confirmations → Unique constraints, row locks and commit-time invariant checks preserve one current workflow.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
 GiST exclusion, participant/hash/version agreement, deadline races, projections and write-once metadata. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No contract_versions or contract_confirmations table; no legal signature engine; no confirmed mid-term amendment.

@@ -10,7 +10,7 @@ Own inventory. Trigger is the named user action or due system evaluation.
 ## Main flow
 1. Submit editable fields.
 2. Validate operational state/numeric terms; lock common property content.
-3. Audit changed values and increment content_revision when reviewed content changes.
+3. Increment content_revision when reviewed content changes.
 4. First-review snapshot invalidates before approval; later valid content appears directly without reapproval.
 
 ## Alternative and failure flows
@@ -18,7 +18,7 @@ Own inventory. Trigger is the named user action or due system evaluation.
 - Do not alter existing contract terms or auto-cancel occupancies.
 
 ## Postcondition
-Updated inventory and coherent first-review/public caches.
+Updated inventory and coherent first-review state.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

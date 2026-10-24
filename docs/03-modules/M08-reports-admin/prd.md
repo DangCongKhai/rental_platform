@@ -1,10 +1,10 @@
 # M08 Product requirements
 
 ## Purpose
-Admin report table/detail, review queues, required-reason forms, reporter outcome and bounded UI tests; backend transition/policy actions owned by Member-B with Member-A review.
+Admin report table/detail, review queues, required-reason forms and reporter outcome. Kien owns the admin flow; Khai reviews access checks and transactions.
 
 ## Actors and permissions
-Member-D owns bounded presentation/forms/UI tests; Member-B owns state-changing admin backend actions, with Member-A reviewing privilege and transaction logic.
+Admin screens and their Server Actions are built together; every action checks `is_admin` on the server.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P2 Defer. Actors: Tenant. Dependencies: FR35 FR79.
 
 Factors: Eligibility; abuse; uniqueness
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
 Optional one property review per ACTIVE/ENDED tenancy; rating1–5 and comment. Reviews pending manual moderation if enabled.
 
@@ -28,7 +28,7 @@ Priority: P2 Defer. Actors: Guest; User. Dependencies: FR36 FR79.
 
 Factors: Moderated visibility; aggregates
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
 Only display reviews when review feature exists; show approved reviews and consistent rating aggregate.
 
@@ -42,9 +42,9 @@ Priority: P0 Must. Actors: Authenticated user. Dependencies: Shared identity/res
 
 Factors: Abuse limits; synchronous persistence
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + queued notification
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + in-app notification in the same transaction
 
-Submit reason code and description for suspicious published listing. Save OPEN report synchronously; queue admin alert after commit. Do not use Kafka/RabbitMQ for report creation.
+Submit reason code and description for suspicious published listing. Save the OPEN report and notify admins in the same transaction.
 
 Acceptance criteria:
 
@@ -59,13 +59,13 @@ Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundat
 
 Factors: Resolution history; fair moderation
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind
 
-Admin moves OPEN report to REVIEWING then RESOLVED/DISMISSED with required reason. An optional suspension is atomic with resolution and audit; notify reporter with sanitized outcome. Restoration is an explicit admin restriction action, not a new ordinary property/photo review.
+Admin moves OPEN report to REVIEWING then RESOLVED/DISMISSED with required reason. An optional suspension is saved in the same transaction as the resolution; notify reporter with sanitized outcome. Restoration is an explicit admin restriction action, not a new ordinary property/photo review.
 
 Acceptance criteria:
 
-- FR39-AC01 [Positive] Admin resolves valid report and suspends listing → Report outcome, suspension fields, audit and notice intent commit together.
+- FR39-AC01 [Positive] Admin resolves valid report and suspends listing → Report outcome, suspension fields and notifications commit together.
 - FR39-AC02 [Validation] Final decision lacks reason → 422; unchanged.
 - FR39-AC03 [Race] Two admins resolve/dismiss report → One terminal outcome; second stale action gets409.
 - FR39-AC04 [Race] Owner publishes while admin suspends → Shared lock retains suspension; owner cannot clear it.
@@ -75,7 +75,7 @@ Priority: P0 Must. Actors: Authenticated reporter; Admin. Dependencies: Shared i
 
 Factors: Abuse prevention; confidentiality
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + server rate limiter + Notifications
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + simple per-user rate limit + in-app notifications
 
 Reporter can view own reports and sanitized status/outcome. Admin notes remain private. Enforce configured per-user/IP submission limits and one live report per reporter/listing.
 
@@ -83,7 +83,7 @@ Acceptance criteria:
 
 - FR72-AC01 [Positive] Reporter views resolved report → Own status and safe outcome only.
 - FR72-AC02 [Security] Reporter guesses another report or requests internal notes → 403/404; notes omitted.
-- FR72-AC03 [Abuse] Configured limit exceeded → 429 without creating report/outbox.
+- FR72-AC03 [Abuse] Configured limit exceeded → Friendly “too many reports” error without creating a report.
 - FR72-AC04 [Race] Duplicate report while report is REVIEWING → Return existing live report/conflict; no duplicate.
 
 ### FR79 Moderate optional property reviews
@@ -91,7 +91,7 @@ Priority: P2 Defer. Actors: Admin. Dependencies: FR36.
 
 Factors: Public content consistency
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
 If reviews are implemented, approve/reject exact submitted revision and allow reported harmful review removal. Required rejection/removal reasons.
 
@@ -102,13 +102,13 @@ Acceptance criteria:
 - FR79-AC03 [Security] Normal user moderates review → 403.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
 Admin UI is not the authorization boundary; protected actions remain reviewed backend work. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
-Property reviews deferred. Member-D must not implement role-granting, suspension authorization or transaction rules alone.
+Property reviews deferred. Admin UI is never the authorization boundary.

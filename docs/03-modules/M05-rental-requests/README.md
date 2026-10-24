@@ -1,10 +1,10 @@
 # M05 Rental requests and offline contact
- Primary owner: Member-C. Required reviewer: Member-A. This is a proposed allocation, not verified GitHub assignment.
+ Owner: Khai for request submission and the tenant views; Kien for the owner inbox and withdraw/reject/15-day auto-rejection. Each reviews the other.
 
  Contact snapshots, pending enquiries, owner phone discussion, rejection/withdrawal and age15day availability outcome.
 
- Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), [API contract](../../07-architecture/api-design.md) and [course compliance](../../08-project/course-compliance.md). The local AI must inspect existing implementation before creating missing-work issues.
+ Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), and the [action contract](../../07-architecture/api-design.md). Check the existing code before creating issues; the backlog is in [`planning/`](../../../planning/issue-plan.md).
 
- Critical review focus: Request acceptance atomic with tenancy proposal; one pending thread; cron versus withdrawal/create races.
+ Critical review focus: Request acceptance atomic with tenancy proposal; one pending thread; lazy 15-day evaluation versus withdrawal/proposal races.
 
  Explicit boundaries: No calendar, chat or separate manual Accept. Another acceptance does not immediately reject other prospects.

@@ -11,7 +11,7 @@ First approval not yet granted; complete package. Trigger is the named user acti
 1. Validate address, marketed units and required photos/terms.
 2. Capture listing and property content revisions; mark PENDING.
 3. Admin reviews full linked package, approves or rejects with reason.
-4. Store audit/outbox; approval does not publish.
+4. Notify the owner; approval does not publish.
 
 ## Alternative and failure flows
 - Concurrent content edit invalidates stale approval.
@@ -21,4 +21,4 @@ First approval not yet granted; complete package. Trigger is the named user acti
 APPROVED or REJECTED initial decision; no independent property/photo review.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

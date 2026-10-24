@@ -4,7 +4,7 @@
 Tenant renewal request, negotiated consecutive segment proposal, extension hold and mutual confirmation under same tenancy.
 
 ## Actors and permissions
-Use server policies from each FR below. UI guards never replace server checks.
+Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource founda
 
 Factors: One pending request; original proposal integrity
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind
 
 Tenant on CONFIRMED/ACTIVE tenancy requests a later end date and proposed monthly rent. At most one PENDING renewal request per tenancy. Request alone changes no dates/availability. Allow one upcoming renewal workflow at a time; request proposal values remain immutable.
 
@@ -29,7 +29,7 @@ Priority: P0 Must. Actors: Tenant; Owner. Dependencies: Shared identity/resource
 
 Factors: Explicit final states; no approval-only extension
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind
 
 Tenant cancels or owner rejects PENDING renewal request with reason. If a pending renewal contract exists, invalidate its pending pointer and restore blocked envelope to confirmed dates in same transaction; old version/confirmations remain history.
 
@@ -45,7 +45,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Atomic agreement linkage; consecutive terms
 
-Tools: Next.js server validation + server policies + DB transaction/row lock + PostgreSQL constraints + private document Storage
+Tools: Next.js server validation + server access checks + DB transaction/row lock + PostgreSQL constraints + private document Storage
 
 Owner records negotiated consecutive continuation dates/rent/document from PENDING renewal request. Add RENEWAL contract version under same tenancy and owner confirmation, reserve extension via blocked envelope. Renewal request remains PENDING until tenant confirms same version; then mark ACCEPTED atomically with confirmed span expansion.
 
@@ -59,13 +59,13 @@ Acceptance criteria:
 - FR70-AC06 [Failure] Mutual confirmation transaction fails → No partial ACCEPTED renewal or confirmed extension.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
 One pending request; future-booking conflict; expire/decline releases only extension. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 Never rewrite original contract, never accept renewal on owner submission alone; many draft corrections may reference one request.

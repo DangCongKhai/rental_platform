@@ -1,10 +1,10 @@
-# M10 Engineering operations and course delivery
- Primary owner: Member-A. Required reviewer: Member-B. This is a proposed allocation, not verified GitHub assignment.
+# M10 Engineering operations
+ Owner: Khai. Reviewer: Kien.
 
- Git workflow, CI, migrations/seeds, OpenAPI, unit/integration coverage, logging/alerts, server metrics, resource loading, cache and demo/report evidence.
+ Git workflow, CI, migrations/seeds and unit/integration tests.
 
- Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), [API contract](../../07-architecture/api-design.md) and [course compliance](../../08-project/course-compliance.md). The local AI must inspect existing implementation before creating missing-work issues.
+ Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), and the [action contract](../../07-architecture/api-design.md). Check the existing code before creating issues; the backlog is in [`planning/`](../../../planning/issue-plan.md).
 
- Critical review focus: Course-required work cannot be dropped just because an earlier product FR had P1 priority.
+ Critical review focus: Keep CI green and migrations reproducible.
 
- Explicit boundaries: No assumed deployment provider, paid tier, installed versions or unapproved stack substitution.
+ Explicit boundaries: No logging/alerting, monitoring, caching or OpenAPI work; no paid services.

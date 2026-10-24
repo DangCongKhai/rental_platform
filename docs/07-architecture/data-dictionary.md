@@ -17,7 +17,6 @@ The table below is the current column list, including the managed auth reference
 | user_profiles | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | properties | Core | id | uuid | PK | No | gen_random_uuid() | Application UUID |
 | properties | Core | owner_id | uuid | FK | No |  | Authorized manager profile; MVP one owner |
-| properties | Core | client_operation_id | uuid |  | No |  | Idempotent create key scoped to owner |
 | properties | Core | name | text |  | No |  | Property name |
 | properties | Core | property_type | text |  | No |  | HOUSE APARTMENT APARTMENT_BUILDING |
 | properties | Core | rental_arrangement | text |  | No |  | WHOLE_SPACE or SEPARATE_UNITS |
@@ -36,7 +35,6 @@ The table below is the current column list, including the managed auth reference
 | properties | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | units | Core | id | uuid | PK | No | gen_random_uuid() | Stable unit UUID |
 | units | Core | property_id | uuid | FK | No |  | Parent property |
-| units | Core | client_operation_id | uuid |  | No |  | Per-preview-row idempotency UUID; unique with property_id, including bulk rows |
 | units | Core | label | text |  | No |  | Room S201 or Entire property; normalized label unique per property |
 | units | Core | unit_kind | text |  | No |  | ROOM STUDIO APARTMENT HOUSE |
 | units | Core | description | text |  | Yes |  | Unit specific description; may be null in incomplete draft, required at listing submission/publication |
@@ -60,21 +58,19 @@ The table below is the current column list, including the managed auth reference
 | property_media | Core | property_id | uuid | FK | No |  | Parent property |
 | property_media | Core | unit_id | uuid | FK | Yes |  | Optional unit in same property |
 | property_media | Core | uploaded_by | uuid | FK | No |  | Authorized uploader |
-| property_media | Core | client_operation_id | uuid |  | No |  | Uploader scoped submission key |
 | property_media | Core | storage_path | text | UK | No |  | Unique object path; no overwriting referenced bytes |
-| property_media | Core | caption | text |  | Yes |  | Owner caption; plain text, audited |
+| property_media | Core | caption | text |  | Yes |  | Owner caption; plain text |
 | property_media | Core | sort_order | integer |  | No | 0 | Gallery order |
 | property_media | Core | is_selected_for_listing | boolean |  | No | true | Display intent independent of approval |
 | property_media | Core | purged_at | timestamptz |  | Yes |  | Storage file deletion confirmed |
 | property_media | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | property_media | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | property_media | Core | deleted_at | timestamptz |  | Yes |  | Soft removal; hidden from gallery; retention starts |
-| property_media | Core | sha256 | text |  | No |  | Hash of completed image bytes for audit integrity |
+| property_media | Core | sha256 | text |  | No |  | Hash of completed image bytes |
 | property_media | Core | mime_type | text |  | No |  | Validated decoded image media type |
 | property_media | Core | size_bytes | bigint |  | No |  | Positive completed file byte count |
 | listings | Core | id | uuid | PK | No | gen_random_uuid() | Listing UUID |
 | listings | Core | property_id | uuid | FK | No |  | One nonarchived listing per property |
-| listings | Core | client_operation_id | uuid |  | No |  | Property scoped create identity |
 | listings | Core | title | text |  | No |  | Public title |
 | listings | Core | description | text |  | No |  | Advertisement copy |
 | listings | Core | cover_media_id | uuid | FK | Yes |  | Selected nondeleted same-property shared media; required to publish |
@@ -96,7 +92,6 @@ The table below is the current column list, including the managed auth reference
 | rental_requests | Core | listing_id | uuid | FK | No |  | Source listing |
 | rental_requests | Core | tenant_id | uuid | FK | No |  | Authenticated prospect |
 | rental_requests | Core | preferred_unit_id | uuid | FK | Yes |  | Optional preference in listing property |
-| rental_requests | Core | client_operation_id | uuid |  | No |  | Tenant scoped create identity |
 | rental_requests | Core | desired_move_in_date | date |  | No |  | Preference not contractual start |
 | rental_requests | Core | message | text |  | No |  | Enquiry text |
 | rental_requests | Core | status | text |  | No | PENDING | PENDING ACCEPTED REJECTED WITHDRAWN; ACCEPTED means tenancy proposal committed |
@@ -112,7 +107,6 @@ The table below is the current column list, including the managed auth reference
 | tenancies | Core | unit_id | uuid | FK | No |  | Exact allocated unit |
 | tenancies | Core | tenant_id | uuid | FK | No |  | Primary tenant matches original enquiry |
 | tenancies | Core | rental_request_id | uuid | FK,UK | No |  | One result per accepted enquiry |
-| tenancies | Core | client_operation_id | uuid |  | No |  | Owner scoped record action identity |
 | tenancies | Core | status | text |  | No | PENDING_CONFIRMATION | PENDING_CONFIRMATION AWAITING_REVISION CONFIRMED ACTIVE EXPIRED CANCELLED ENDED |
 | tenancies | Core | actual_ended_at | timestamptz |  | Yes |  | Actual move-out/end or cancellation action |
 | tenancies | Core | end_reason | text |  | Yes |  | Required when ending/cancelling |
@@ -129,7 +123,6 @@ The table below is the current column list, including the managed auth reference
 | tenancies | Core | moved_in_at | timestamptz |  | Yes |  | Owner-reported actual move-in event time |
 | tenancy_renewal_requests | Core | id | uuid | PK | No | gen_random_uuid() | Renewal request UUID |
 | tenancy_renewal_requests | Core | tenancy_id | uuid | FK | No |  | Existing CONFIRMED or ACTIVE continuing tenancy |
-| tenancy_renewal_requests | Core | client_operation_id | uuid |  | No |  | Tenancy scoped submission identity |
 | tenancy_renewal_requests | Core | requested_end_date | date |  | No |  | Proposed later end date |
 | tenancy_renewal_requests | Core | proposed_monthly_rent | numeric |  | No |  | Positive NUMERIC(14,0) VND |
 | tenancy_renewal_requests | Core | message | text |  | Yes |  | Tenant explanation |
@@ -163,7 +156,6 @@ The table below is the current column list, including the managed auth reference
 | listing_reports | Core | id | uuid | PK | No | gen_random_uuid() | Report UUID |
 | listing_reports | Core | listing_id | uuid | FK | No |  | Reported advertisement |
 | listing_reports | Core | reporter_id | uuid | FK | No |  | Authenticated reporter |
-| listing_reports | Core | client_operation_id | uuid |  | No |  | Reporter scoped submission key |
 | listing_reports | Core | reason_code | text |  | No |  | FRAUD MISLEADING HARMFUL OTHER |
 | listing_reports | Core | description | text |  | No |  | Reporter explanation |
 | listing_reports | Core | status | text |  | No | OPEN | OPEN REVIEWING RESOLVED DISMISSED |
@@ -173,29 +165,6 @@ The table below is the current column list, including the managed auth reference
 | listing_reports | Core | reviewed_at | timestamptz |  | Yes |  | Decision time |
 | listing_reports | Core | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | listing_reports | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
-| audit_logs | Core | id | uuid | PK | No | gen_random_uuid() | Audit UUID |
-| audit_logs | Core | actor_id | uuid | FK | Yes |  | Null for explicit system action |
-| audit_logs | Core | entity_type | text |  | No |  | Allowlisted table/resource kind |
-| audit_logs | Core | entity_id | uuid |  | No |  | Polymorphic UUID validated by backend; not a SQL FK |
-| audit_logs | Core | action | text |  | No |  | Transition/action name |
-| audit_logs | Core | before_values | jsonb |  | Yes |  | Minimal safe prior values |
-| audit_logs | Core | after_values | jsonb |  | Yes |  | Minimal safe resulting values |
-| audit_logs | Core | reason | text |  | Yes |  | Decision or operation reason |
-| audit_logs | Core | correlation_id | uuid |  | No |  | Request or operation correlation UUID |
-| audit_logs | Core | created_at | timestamptz |  | No | now() | Audit time in business transaction |
-| notification_outbox | P1 infrastructure | id | uuid | PK | No | gen_random_uuid() | Outbox UUID |
-| notification_outbox | P1 infrastructure | event_key | text | UK | No |  | Stable unique domain event identity |
-| notification_outbox | P1 infrastructure | recipient_id | uuid | FK | No |  | Recipient profile |
-| notification_outbox | P1 infrastructure | event_type | text |  | No |  | Configured notification kind |
-| notification_outbox | P1 infrastructure | payload | jsonb |  | No |  | Safe resource references; no tokens/documents |
-| notification_outbox | P1 infrastructure | status | text |  | No | PENDING | PENDING PROCESSING DELIVERED FAILED |
-| notification_outbox | P1 infrastructure | attempts | integer |  | No | 0 | Bounded retry count |
-| notification_outbox | P1 infrastructure | next_attempt_at | timestamptz |  | Yes |  | Retry due time |
-| notification_outbox | P1 infrastructure | locked_until | timestamptz |  | Yes |  | Worker claim lease; recover abandoned claims |
-| notification_outbox | P1 infrastructure | delivered_at | timestamptz |  | Yes |  | Delivery handling completed |
-| notification_outbox | P1 infrastructure | last_error | text |  | Yes |  | Redacted failure summary |
-| notification_outbox | P1 infrastructure | created_at | timestamptz |  | No | now() | Record creation time in UTC |
-| notification_outbox | P1 infrastructure | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | notifications | P1 infrastructure | id | uuid | PK | No | gen_random_uuid() | Inbox UUID |
 | notifications | P1 infrastructure | recipient_id | uuid | FK | No |  | Only this user can read/mark read |
 | notifications | P1 infrastructure | event_key | text |  | No |  | Unique with recipient_id |
@@ -215,15 +184,6 @@ The table below is the current column list, including the managed auth reference
 | property_reviews | P2 deferred | review_reason | text |  | Yes |  | Required on rejection/removal |
 | property_reviews | P2 deferred | created_at | timestamptz |  | No | now() | Record creation time in UTC |
 | property_reviews | P2 deferred | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
-| idempotency_records | Core | id | uuid | PK | No | gen_random_uuid() | Operation record UUID |
-| idempotency_records | Core | actor_id | uuid | FK | No |  | Verified caller; replay must reauthorize current access |
-| idempotency_records | Core | action | text |  | No |  | Allowlisted action name; unique with actor and operation UUID |
-| idempotency_records | Core | client_operation_id | uuid |  | No |  | Client generated stable write retry UUID |
-| idempotency_records | Core | request_hash | text |  | No |  | Server SHA256 of canonical original payload including parent UUID |
-| idempotency_records | Core | result_resource_type | text |  | No |  | Result entity kind or bulk unit result |
-| idempotency_records | Core | result_ids | uuid[] |  | No |  | One or more resulting UUIDs; no signed links or secret response bodies |
-| idempotency_records | Core | response_status | integer |  | No |  | Original successful HTTP status |
-| idempotency_records | Core | created_at | timestamptz |  | No | now() | Commit time; retention must respect supported retry window |
 | favourite_properties | Core | id | uuid | PK | No | gen_random_uuid() | Favourite row identity |
 | favourite_properties | Core | user_id | uuid | FK | No |  | Verified user_profiles.id, not the Auth user id; never supplied as actor by client |
 | favourite_properties | Core | property_id | uuid | FK | No |  | Saved properties.id; independent of listing/unit |

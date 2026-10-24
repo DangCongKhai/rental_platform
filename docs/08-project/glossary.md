@@ -16,8 +16,7 @@
 | Admin suspension | Restriction owner cannot clear |
 | Submission revision | Snapshot checked only for first review |
 | Publication | Owner choice separate from moderation and availability |
-| Product priority | Preserved P0/P1/P2/P3 feature scope |
-| Course required | Printed rubric/submission evidence independent of product priority |
-| Planning alias | Member-A/B/C/D, not a real GitHub handle |
+| Product priority | P0/P1/P2/P3 feature scope; `Removed` marks requirements dropped by team decision |
+| Flow owner | Member responsible for one actor flow end to end (UI + server actions) |
 | Implemented | Only if repository/code/tests substantiate it |
 | Definition of done | Integrated behavior, tests/docs and reviewed issue-linked PR evidence |

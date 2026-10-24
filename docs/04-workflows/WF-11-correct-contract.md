@@ -21,4 +21,4 @@ Unconfirmed segment; original awaiting revision or pending renewal. Trigger is t
 New immutable proposal; previous confirmations do not transfer.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

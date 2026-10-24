@@ -1,52 +1,40 @@
 # M09 Product requirements
 
 ## Purpose
-Transactional outbox, private in-app inbox where supported, event deduplication and after-commit worker delivery.
+In-app notifications inserted synchronously by each action, and a private inbox with read state.
 
 ## Actors and permissions
-Use server policies from each FR below. UI guards never replace server checks.
+Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR45 Asynchronous domain notifications
-Priority: P1 Should. Actors: System. Dependencies: Shared identity/resource foundation.
+Priority: Removed (was Removed (was P1 Should)). Actors: System.
 
-Factors: After-commit reliability; retry semantics
+Removed by team decision: Replaced by synchronous notifications: each action inserts its `notifications` rows in its own transaction (see FR73 and ADR-004). The ID is kept and not reused.
 
-Tools: database-backed queue + Next.js worker + scheduler + transactional outbox + Supabase PostgreSQL
+### FR73 In-app notifications
+Priority: P1 Should. Actors: User. Dependencies: Shared identity/resource foundation.
 
-Write notification_outbox atomically with request/moderation/proposal/confirmation/renewal outcomes. Next.js queue workers deliver notifications after commit, with retry and event deduplication. Use a database-backed queue on Supabase PostgreSQL for MVP; no Kafka, RabbitMQ, or viewing reminders.
+Factors: Recipient isolation; repeat-safe read state
 
-Acceptance criteria:
+Tools: Next.js + React + Tailwind + Server Actions + server validation + server access checks + Supabase PostgreSQL + notifications
 
-- FR45-AC01 [Positive] Owner creates proposal → Tenant notification links exact version/deadline after commit.
-- FR45-AC02 [Failure] Delivery service unavailable → Business transaction remains committed; bounded worker retries and observable failure.
-- FR45-AC03 [Race] Worker repeats event → Recipient inbox event uniqueness prevents duplicate inbox items.
-- FR45-AC04 [Integrity] Proposal replaced before delayed notice delivered → Notice points to historical version and current UI flags superseded; no stale confirm action allowed.
-
-### FR73 Private notification inbox
-Priority: P1 Should. Actors: User. Dependencies: FR45.
-
-Factors: Recipient isolation; idempotent read state
-
-Tools: Next.js + React + Tailwind + TanStack Query + Route Handlers + server validation + server policies + Supabase PostgreSQL + notifications
-
-Persist event-keyed in-app messages with safe links; unread/read state per recipient. Email links navigate through authorized application routes, not permanent document URLs.
+Each action inserts in-app notifications in its own transaction, with safe links and unread/read state per recipient. Links navigate through authorized application pages, not permanent document URLs.
 
 Acceptance criteria:
 
-- FR73-AC01 [Positive] User marks own notification read twice → Idempotent read_at; no duplicate rows.
-- FR73-AC02 [Security] Other user reads/marks it → 403/404.
-- FR73-AC03 [Race] Same event delivered twice → Unique recipient/event_key yields one notification.
+- FR73-AC01 [Positive] User marks own notification read twice → One read_at; no duplicate rows.
+- FR73-AC02 [Security] Other user reads/marks it → Not found.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
-No rolled-back success notice, private links, retry leases and worker duplicate safety. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
+No notice for a rolled-back action (the insert shares the action's transaction); private links. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
-No viewing reminders; logs/outbox remain distinct from notifications; real email transport optional unless chosen for external-API evidence.
+No viewing reminders, outbox or worker. Email delivery is optional; if added later, call the provider after commit, and use a Supabase Cron job hitting a protected Route Handler only if retries are needed.

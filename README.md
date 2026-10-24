@@ -66,4 +66,4 @@ npx prisma generate
 
 `migrate dev` writes a new folder under `prisma/migrations` and applies it. A trigger, a function, or the foreign key from `user_profiles.user_id` to `auth.users` is SQL added in that new migration file before it is applied. `generate` refreshes the client in `generated/prisma`.
 
-Route Handlers run inside `npm run dev`. Day-to-day Supabase commands are in [docs/08-project/local-development.md](docs/08-project/local-development.md).
+Server Actions run inside `npm run dev`. Day-to-day Supabase commands are in [docs/08-project/local-development.md](docs/08-project/local-development.md).

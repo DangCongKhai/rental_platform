@@ -10,7 +10,7 @@ Confirmed original agreement and start date reached. Trigger is the named user a
 ## Main flow
 1. Recheck same tenancy current lifecycle.
 2. Record moved_in_at and set ACTIVE.
-3. Audit without changing agreement/blocking period.
+3. Record moved_in_at without changing agreement/blocking period.
 
 ## Alternative and failure flows
 - Before start/unconfirmed/cancelled denied; cancellation race serialized.
@@ -19,4 +19,4 @@ Confirmed original agreement and start date reached. Trigger is the named user a
 Actual move-in recorded, not inferred from clock.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

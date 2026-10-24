@@ -2,7 +2,7 @@
 
 Actors: Owner
 
-Requirements: FR09 FR56 FR57 FR59
+Requirements: FR09 FR56 FR57
 
 ## Preconditions and trigger
 Own property/unit scope. Trigger is the named user action or due system evaluation.
@@ -11,14 +11,14 @@ Own property/unit scope. Trigger is the named user action or due system evaluati
 1. Validate bytes/MIME/count/size then upload new unique object.
 2. Only completed upload yields selectable row.
 3. Swap cover/gallery after success; photo changes need no per-image review.
-4. Soft-delete and later purge only unreferenced eligible objects; contracts excluded.
+4. Soft-delete removed photos; stored files are kept (no purge job).
 
 ## Alternative and failure flows
 - Failed upload keeps old cover; no overwriting referenced bytes.
-- Cover removal requires replacement or hide; cleanup rechecks references under lock.
+- Cover removal requires replacement or hide.
 
 ## Postcondition
-Consistent selected gallery, audit and safe storage lifecycle.
+Consistent selected gallery and safe storage.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.
