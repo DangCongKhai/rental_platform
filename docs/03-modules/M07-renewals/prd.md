@@ -54,7 +54,7 @@ Acceptance criteria:
 - FR70-AC01 [Positive] Original Jan-June; proposed July-Dec at4.2m → New RENEWAL version, temporary July-Dec extension reservation; current rent unchanged.
 - FR70-AC02 [Validation] Start is not confirmed_end+1day or end not later → Reject; no gaps/overlaps or altered original term.
 - FR70-AC03 [Race] Future tenancy already reserves overlapping extension → Exclusion constraint fails; request stays PENDING; original agreement remains.
-- FR70-AC04 [Race] Two owners tabs propose or correct renewal → One pending version under tenancy lock/revision; no parallel effective renewal.
+- FR70-AC04 [Race] Two owners tabs propose or correct renewal → One pending version under the tenancy lock; no parallel effective renewal.
 - FR70-AC05 [Integrity] Tenant confirms version after owner confirmation → Request ACCEPTED, extension confirmed; future rent activates only on renewal start.
 - FR70-AC06 [Failure] Mutual confirmation transaction fails → No partial ACCEPTED renewal or confirmed extension.
 

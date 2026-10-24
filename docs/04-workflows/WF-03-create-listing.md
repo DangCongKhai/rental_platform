@@ -21,4 +21,4 @@ Own nonarchived property; no current listing. Trigger is the named user action o
 One property-level draft, never one mandatory listing per unit.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

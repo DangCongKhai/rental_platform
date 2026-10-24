@@ -70,7 +70,7 @@ Each FR has exactly one primary module; issues may reference several FRs without
 | FR71 | Keep immutable versions and effective agreement history | P0 Must | M06-tenancies-contracts | FR71-AC01, FR71-AC02, FR71-AC03, FR71-AC04 |
 | FR72 | Reporter outcome and rate limits | P0 Must | M08-reports-admin | FR72-AC01, FR72-AC02, FR72-AC03, FR72-AC04 |
 | FR73 | Private notification inbox | P1 Should | M09-notifications-audit | FR73-AC01, FR73-AC02, FR73-AC03 |
-| FR74 | Idempotent writes and stale revisions | P0 Must | M06-tenancies-contracts | FR74-AC01, FR74-AC02, FR74-AC03, FR74-AC04 |
+| FR74 | Idempotent writes | P0 Must | M06-tenancies-contracts | FR74-AC01, FR74-AC02, FR74-AC03, FR74-AC04 |
 | FR75 | Transactional locking audit and consistency | P0 Must | M06-tenancies-contracts | FR75-AC01, FR75-AC02, FR75-AC03, FR75-AC04 |
 | FR76 | Deferred and excluded MVP scope | P3 Exclude | M10-operations-delivery | FR76-AC01, FR76-AC02, FR76-AC03 |
 | FR77 | Calculate availability counts and rent ranges | P0 Must | M04-discovery-favourites | FR77-AC01, FR77-AC02, FR77-AC03, FR77-AC04 |

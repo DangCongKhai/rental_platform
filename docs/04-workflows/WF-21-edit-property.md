@@ -8,9 +8,9 @@ Requirements: FR08 FR51 FR52 FR55
 Own inventory. Trigger is the named user action or due system evaluation.
 
 ## Main flow
-1. Submit editable fields and expected revision.
+1. Submit editable fields.
 2. Validate operational state/numeric terms; lock common property content.
-3. Audit changed values and bump own/content revisions.
+3. Audit changed values and increment content_revision when reviewed content changes.
 4. First-review snapshot invalidates before approval; later valid content appears directly without reapproval.
 
 ## Alternative and failure flows
@@ -21,4 +21,4 @@ Own inventory. Trigger is the named user action or due system evaluation.
 Updated inventory and coherent first-review/public caches.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

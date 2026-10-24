@@ -21,4 +21,4 @@ Related confirmed pre-start or active tenancy. Trigger is the named user action 
 Historical relationship preserved; scheduling recomputed.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

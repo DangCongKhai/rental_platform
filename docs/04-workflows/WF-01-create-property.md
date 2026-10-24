@@ -21,4 +21,4 @@ Authenticated owner creates physical inventory, not a public advertisement. Trig
 Property exists without property approval or public listing.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

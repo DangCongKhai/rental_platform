@@ -19,4 +19,4 @@ Own listing. Trigger is the named user action or due system evaluation.
 Owner publication choice separate from physical availability.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

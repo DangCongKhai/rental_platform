@@ -21,4 +21,4 @@ Pending enquiry; exact ready unit has compatible dates. Trigger is the named use
 ACCEPTED enquiry plus PENDING_CONFIRMATION tenancy; no mutual agreement yet.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.

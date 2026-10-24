@@ -98,7 +98,7 @@ If reviews are implemented, approve/reject exact submitted revision and allow re
 Acceptance criteria:
 
 - FR79-AC01 [Positive] Approve PENDING review → Visible and included in aggregate.
-- FR79-AC02 [Race] Review edited during moderation → Expected revision prevents stale approval.
+- FR79-AC02 [Race] Review edited during moderation → the decision uses the content currently stored.
 - FR79-AC03 [Security] Normal user moderates review → 403.
 
 ## Data and API boundary

@@ -46,16 +46,17 @@ The first `supabase start` downloads images and can take several minutes. Later 
 
 If those ports are taken, use the values `supabase status` prints.
 
-Create `.env.local` in the repository root (gitignored):
+Copy `.env.example` to `.env` in the repository root (gitignored):
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon or publishable key from supabase status>
-SUPABASE_SERVICE_ROLE_KEY=<service role or secret key from supabase status>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key from supabase status>
+SUPABASE_SECRET_KEY=<secret key from supabase status>
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 ```
 
-The anon / publishable key is the browser key. `SUPABASE_SERVICE_ROLE_KEY` and `DATABASE_URL` stay in server code. Route Handlers use them for Storage and for SQL. The local database role is a direct login, so server policies remain the authorization boundary for product actions.
+The same names are in `.env.example`. The publishable key is the browser key. `SUPABASE_SECRET_KEY`, `DATABASE_URL`, and `DIRECT_URL` stay in server code. Route Handlers use the secret key for Storage and `DATABASE_URL` for SQL. Prisma Migrate uses `DIRECT_URL`. On this local database those two URLs are the same direct connection. A hosted project uses the transaction pooler on port 6543 with `?pgbouncer=true` for `DATABASE_URL`, and the session or direct connection on port 5432 for `DIRECT_URL`. The local database role is a direct login, so server policies remain the authorization boundary for product actions.
 
 In `supabase/config.toml`, set the Auth site URL to the Next.js origin (`http://localhost:3000`) and allow that redirect, so confirmation and recovery links return to the app. Restart with `supabase stop` then `supabase start` after Auth config changes.
 
@@ -70,7 +71,7 @@ Open http://localhost:3000. Route Handlers are part of the same process.
 
 ## Schema and jobs
 
-Business tables, Storage bucket setup, and Auth-related SQL live in `supabase/migrations`. One person coordinates those files. Apply a changed branch with `supabase db reset` when you intend to rebuild local data, or with the migration command the CLI prints for an existing database.
+Business tables live in `prisma/migrations`. You write `prisma/schema.prisma`, then `npx prisma migrate dev --name <change>` writes and applies the next migration. Triggers, functions, and the `user_profiles.user_id` foreign key to `auth.users` are SQL in that new migration file. One person coordinates those files. `npx prisma generate` refreshes the client. `DIRECT_URL` is the migration connection.
 
 Notification delivery uses a database-backed queue and a Next.js worker. Start that worker, and the scheduler, when those scripts are in the repo. They call the same server services as the Route Handlers.
 
@@ -78,14 +79,14 @@ Notification delivery uses a database-backed queue and a Next.js worker. Start t
 
 1. Start the container runtime.
 2. From the repo root, run `supabase start`.
-3. Apply schema changes when the branch added migrations.
+3. Apply schema changes with `npx prisma migrate dev` when the branch added a Prisma migration.
 4. Run `npm run dev`.
 5. Start the queue worker and scheduler when the branch includes them.
 6. Sign up or sign in through the app. Open the Mailpit URL from `supabase status` and use the confirmation link. Local Auth mail stays on your machine.
 7. Inspect rows in Studio.
 8. When you stop for the day, run `supabase stop`. That keeps the local database.
 
-`supabase db reset` drops the local database and reapplies `supabase/migrations` plus `supabase/seed.sql`. Use it when you intend to rebuild local Supabase state.
+`supabase db reset` drops the local database and reapplies `supabase/migrations` plus `supabase/seed.sql`. It does not replay `prisma/migrations`. After a reset, apply the Prisma history with `npx prisma migrate deploy`.
 
 ## What stays local
 

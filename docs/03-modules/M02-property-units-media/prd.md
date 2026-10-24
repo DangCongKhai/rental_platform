@@ -67,8 +67,8 @@ Optional asynchronous address-to-coordinate conversion after saving address. Man
 
 Acceptance criteria:
 
-- FR24-AC01 [Positive] Geocode succeeds for current address revision → Save valid latitude/longitude.
-- FR24-AC02 [Race] Old address job completes after newer edit → Discard stale result using revision.
+- FR24-AC01 [Positive] Geocode succeeds for the current address → Save valid latitude/longitude.
+- FR24-AC02 [Race] Old address job completes after a newer edit → Discard the result when the address changed after the job started.
 - FR24-AC03 [Failure] Rate limit/provider failure → Address remains saved; retry bounded and logged.
 
 ### FR41 Property and unit REST CRUD
@@ -82,7 +82,7 @@ Authorize owner-scoped CRUD for properties, units and gallery selection. Route l
 
 Acceptance criteria:
 
-- FR41-AC01 [Positive] Owner edits own unit through API → Validated update and audit; increment appropriate revisions.
+- FR41-AC01 [Positive] Owner edits own unit through API → Validated update and audit; increment content_revision when the edit changes reviewed content.
 - FR41-AC02 [Security] Caller alters foreign property/unit or protected moderation fields → 403/422.
 - FR41-AC03 [Race] Stale content revision submitted → 409; no lost update.
 
@@ -115,7 +115,7 @@ Acceptance criteria:
 
 - FR51-AC01 [Positive] Advertised rent changes 4m to 4.5m → Listing shows new price; existing version rent stays unchanged.
 - FR51-AC02 [Validation] Area/rent <=0 or minimum duration below 3 months → 422; unchanged.
-- FR51-AC03 [Race] Two tabs update same unit revision → One succeeds; stale tab receives 409.
+- FR51-AC03 [Race] Two tabs update the same unit → the later commit is stored.
 - FR51-AC04 [Integrity] Existing contracts have different policy/rent → Never synchronize live unit values into contract versions.
 
 ### FR52 Manage operational status independently of availability
@@ -163,7 +163,7 @@ Acceptance criteria:
 
 - FR56-AC01 [Positive] Select newly uploaded image on approved published listing → Appears immediately; no review state involved.
 - FR56-AC02 [Validation] Delete cover while keeping listing published without replacement → 422 or explicit hide choice; never broken required cover.
-- FR56-AC03 [Race] Reorder/removal and caption save compete → Media revision prevents stale resurrection; audited changes.
+- FR56-AC03 [Race] Reorder/removal and caption save compete → the later committed gallery state is stored; changes are audited.
 - FR56-AC04 [Integrity] Deselect photo → Hide from gallery; do not physically delete merely because unselected.
 
 ### FR57 Update photos without a replacement-review workflow
@@ -179,7 +179,7 @@ Acceptance criteria:
 
 - FR57-AC01 [Positive] Owner uploads new photo and saves gallery change → New image immediately eligible; old image unselected/deleted as requested; audit references both UUIDs.
 - FR57-AC02 [Failure] Upload fails before reference swap → Existing gallery/cover remains valid.
-- FR57-AC03 [Race] Two updates target same gallery/cover revision → One wins; other reloads; no loss of a referenced object.
+- FR57-AC03 [Race] Two updates target the same gallery → the later commit is stored.
 - FR57-AC04 [Security] Owner overwrites a shared object path → Reject path reuse; issue unique object path.
 
 ### FR59 Safely clean orphaned and deleted media
@@ -235,7 +235,7 @@ Priority: P0 Must. Actors: Owner; Guest; System. Dependencies: FR07 FR20 FR21 FR
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
 
-Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + revision/audit services
+Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + content-revision and audit services
 
 Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. The server owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
 
@@ -248,7 +248,7 @@ Acceptance criteria:
 - FR87-AC05 [Positive] Owner searches AC or aircon through explicitly maintained aliases → Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice.
 - FR87-AC06 [Integrity] Shared laundry exists but no washing machine inside requested unit → Show shared feature separately; in-unit washing-machine filter does not match the shared facility. Apply all unit filters to same available unit.
 - FR87-AC07 [Integrity] Catalog display label changes or standard enabled=false/absent → Existing stable keys need no row migration; enabled=false/absent does not qualify for filter; absent means not advertised, not verified absent.
-- FR87-AC08 [Race] Two tabs edit amenity JSONB from same property/unit revision → Only one expected-revision update commits; other409. No silent JSON document replacement losing selected/custom entries; audit consistent.
+- FR87-AC08 [Race] Two tabs edit amenity JSONB → the later commit is stored and audited.
 - FR87-AC09 [Race] Initial listing admin approval races with amenity edit → Common property content lock/revision rejects stale first approval. Later approved-listing edits need no reapproval; suspension still respected.
 - FR87-AC10 [Integrity] Migrate old amenity arrays into new JSONB structure → Preserve recognized canonical codes under standard; map legacy labels only via reviewed explicit aliases, keep unknown descriptions under custom and audit migration. Do not conflate shared/private scope or blindly slugify labels.
 

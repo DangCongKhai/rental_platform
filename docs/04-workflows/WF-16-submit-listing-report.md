@@ -21,4 +21,4 @@ Visible listing at submission. Trigger is the named user action or due system ev
 Report stored; not automatic takedown.
 
 ## Consistency boundary
-Use current revisions, server policies, and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
