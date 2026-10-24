@@ -1,4 +1,6 @@
 # System context
-Users access Next.js public, tenant, owner, and admin interfaces. Supabase Auth provides identity. The browser calls Next.js Route Handlers with the Supabase access token. The server verifies project JWT claims and signature, resolves the profile, applies server policies, and queries Supabase PostgreSQL. Storage integration manages images and private contract objects. A Next.js worker and scheduler run the same server services and dispatch durable notifications.
+Users reach the public, tenant, owner and admin areas of one Next.js app. Supabase Auth provides identity; `@supabase/ssr` keeps the session in cookies and `getClaims()` verifies it on the server. Server components and Server Actions resolve the profile, check access and query Supabase PostgreSQL through Prisma. Supabase Storage holds photos and private contract files.
 
-No service key, database password, or JWT signing material is sent to the browser. A public/anon key alone must not grant direct application-table access. A direct database login may bypass RLS depending on role. Restrict grants and RLS, and enforce server policies on every product action.
+There is no separate worker. If background work is ever needed, Supabase Cron or a Database Webhook calls a protected Route Handler in the same app.
+
+No service key, database password or signing material is sent to the browser. The publishable key alone must not grant direct application-table access: revoke client grants on business tables and check access in server code for every action.

@@ -4,7 +4,7 @@
 Owner physical inventory, whole-space auto-unit, editable bulk units, image lifecycle and controlled JSONB policies/amenities.
 
 ## Actors and permissions
-Use server policies from each FR below. UI guards never replace server checks.
+Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
@@ -13,7 +13,7 @@ Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundat
 
 Factors: Physical inventory; owner linkage
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
 Owner creates physical property, address, amenities and controlled policies. WHOLE_SPACE atomically creates one backend unit; SEPARATE_UNITS uses explicit unit creation. Incomplete drafts can be saved. No property approval state or mandatory ownership evidence/phone verification in MVP. Amenities use properties.shared_amenities JSONB with schema_version, allowlisted standard key/object entries and custom text array; select or add custom features directly in the property form (FR87).
 
@@ -22,16 +22,15 @@ Acceptance criteria:
 - FR07-AC01 [Positive] Owner creates whole apartment → One property and one Entire apartment unit are saved atomically.
 - FR07-AC02 [Validation] Owner saves incomplete draft → Save permitted; initial listing submission later validates completeness.
 - FR07-AC03 [Security] Caller supplies owner_id belonging to another user → Ignore/reject forged ownership; derive owner from verified JWT.
-- FR07-AC04 [Race] Repeated create with same operation UUID → One property/unit result, or 409 if payload changed.
 
 ### FR08 Manage and archive own property
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: History preservation; optimistic concurrency
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + React + Tailwind
 
-Owner edits own property and archives unused resources. Existing tenancy, request, contract and audit references are preserved. Archive prevents new marketing/proposals but does not erase active agreements.
+Owner edits own property and archives unused resources. Existing tenancy, request and contract references are preserved. Archive prevents new marketing/proposals but does not erase active agreements.
 
 Acceptance criteria:
 
@@ -54,14 +53,13 @@ Acceptance criteria:
 - FR09-AC01 [Positive] Owner uploads valid room image → Completed object linked to correct unit; selected image appears without per-photo reapproval.
 - FR09-AC02 [Validation] Wrong MIME, undecodable file or configured size/count exceeded → Reject; no broken gallery row. Validate bytes, not extension alone.
 - FR09-AC03 [Security] Upload references another owner property/unit → 403/422; no cross-property association.
-- FR09-AC04 [Race] Upload retry uses same operation UUID → One media record; partial object failure never creates a public broken record.
 
 ### FR24 Geocode address
 Priority: P2 Defer. Actors: System; Owner. Dependencies: FR07.
 
 Factors: External service failure; stale jobs
 
-Tools: database-backed queue + geocoding API
+Tools: geocoding API (Supabase Cron calling a protected Route Handler if run in the background)
 
 Optional asynchronous address-to-coordinate conversion after saving address. Manual address remains authoritative when provider fails.
 
@@ -71,27 +69,27 @@ Acceptance criteria:
 - FR24-AC02 [Race] Old address job completes after a newer edit → Discard the result when the address changed after the job started.
 - FR24-AC03 [Failure] Rate limit/provider failure → Address remains saved; retry bounded and logged.
 
-### FR41 Property and unit REST CRUD
+### FR41 Property and unit server actions
 Priority: P0 Must. Actors: Owner; Admin where explicitly allowed. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization parity; archival
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL
 
-Authorize owner-scoped CRUD for properties, units and gallery selection. Route linked-content writes through property content lock/revision/audit action. No property approval, document-evidence review or image-review endpoints.
+Authorize owner-scoped create/update/archive for properties, units and gallery selection through Server Actions. Linked-content writes increment content_revision. No property approval, document-evidence review or image-review actions.
 
 Acceptance criteria:
 
-- FR41-AC01 [Positive] Owner edits own unit through API → Validated update and audit; increment content_revision when the edit changes reviewed content.
+- FR41-AC01 [Positive] Owner edits own unit → Validated update; increment content_revision when the edit changes reviewed content.
 - FR41-AC02 [Security] Caller alters foreign property/unit or protected moderation fields → 403/422.
-- FR41-AC03 [Race] Stale content revision submitted → 409; no lost update.
+- FR41-AC03 [Race] Stale content revision submitted → Refused with a reload message; no lost update.
 
 ### FR50 Create and bulk create units
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Inventory identity; structured input
 
-Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind + TanStack Query
+Tools: shared server service + DB transaction + row lock + PostgreSQL constraints + Next.js + React + Tailwind
 
 SEPARATE_UNITS allows manual or structured bulk creation: count, prefix, starting number and defaults. Generate editable preview rows in Next.js; save final JSON array transactionally. No LLM/SQL generation. Unit amenity defaults use the same controlled JSONB structure as FR87; each preview row gets its own copied value, not linked mutable defaults.
 
@@ -109,7 +107,7 @@ Factors: Unit versus template; stale writes
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
-Owner edits specifications, marketed price/deposit, minimum duration and controlled policy overrides. Valid post-approval edits appear directly with audit; current or proposed contract snapshots are immutable. Unit amenities use units.amenities with allowlisted scope-aware catalog keys and custom text per FR87; no owner-created global amenity key.
+Owner edits specifications, marketed price/deposit, minimum duration and controlled policy overrides. Valid post-approval edits appear directly; current or proposed contract snapshots are immutable. Unit amenities use units.amenities with allowlisted scope-aware catalog keys and custom text per FR87; no owner-created global amenity key.
 
 Acceptance criteria:
 
@@ -134,21 +132,20 @@ Acceptance criteria:
 - FR52-AC03 [Race] Maintenance races with new proposal → Shared locks yield serialized eligibility decision.
 - FR52-AC04 [Integrity] Owner unmarkets unit → Existing tenancy/reservation remains; operational and occupancy data unchanged.
 
-### FR55 Audit property unit and policy updates
+### FR55 Track content revisions for property, unit and policy edits
 Priority: P0 Must. Actors: Owner; System. Dependencies: Shared identity/resource foundation.
 
 Factors: Source-linked public content; revision propagation
 
 Tools: shared server service + DB transaction + row lock + PostgreSQL constraints
 
-Increment property.content_revision for changes to any initial-review content, including units, selected photos and policies. Before first approval invalidate pending snapshot. After approval retain approval and show changes directly; append safe audit before/after with actor/time. Amenity changes increment property content_revision, retain normal post-approval editing and record before/after audit. Standard label changes in the code catalog do not rewrite saved keys (FR87).
+Increment property.content_revision for changes to any initial-review content, including units, selected photos, policies and amenities. Before first approval this invalidates the pending submission. After approval, keep the approval and show changes directly. Standard label changes in the code catalog do not rewrite saved keys (FR87).
 
 Acceptance criteria:
 
-- FR55-AC01 [Positive] Approved property policy/media changes → Public content updates directly; initial approval retained; audit available to admin.
+- FR55-AC01 [Positive] Approved property policy/media changes → Public content updates directly; initial approval retained; content_revision incremented.
 - FR55-AC02 [Race] Initial approval and linked-content edit compete → Common property content lock plus captured revisions prevent stale first approval.
-- FR55-AC03 [Security] Owner attempts audit deletion or admin flag update → Denied.
-- FR55-AC04 [Integrity] Photo file changed → Use new unique storage object; retain audit metadata/hash rather than overwriting reviewed bytes.
+- FR55-AC04 [Integrity] Photo file changed → Use a new unique storage object and keep the old object's hash; never overwrite reviewed bytes.
 
 ### FR56 Select reorder and remove gallery images
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
@@ -163,7 +160,7 @@ Acceptance criteria:
 
 - FR56-AC01 [Positive] Select newly uploaded image on approved published listing → Appears immediately; no review state involved.
 - FR56-AC02 [Validation] Delete cover while keeping listing published without replacement → 422 or explicit hide choice; never broken required cover.
-- FR56-AC03 [Race] Reorder/removal and caption save compete → the later committed gallery state is stored; changes are audited.
+- FR56-AC03 [Race] Reorder/removal and caption save compete → The later committed gallery state is stored.
 - FR56-AC04 [Integrity] Deselect photo → Hide from gallery; do not physically delete merely because unselected.
 
 ### FR57 Update photos without a replacement-review workflow
@@ -177,33 +174,22 @@ To change photo bytes, upload a new object/media row and switch gallery/cover re
 
 Acceptance criteria:
 
-- FR57-AC01 [Positive] Owner uploads new photo and saves gallery change → New image immediately eligible; old image unselected/deleted as requested; audit references both UUIDs.
+- FR57-AC01 [Positive] Owner uploads new photo and saves gallery change → New image immediately eligible; old image unselected or soft-deleted as requested.
 - FR57-AC02 [Failure] Upload fails before reference swap → Existing gallery/cover remains valid.
 - FR57-AC03 [Race] Two updates target the same gallery → the later commit is stored.
 - FR57-AC04 [Security] Owner overwrites a shared object path → Reject path reuse; issue unique object path.
 
 ### FR59 Safely clean orphaned and deleted media
-Priority: P1 Should. Actors: System. Dependencies: Shared identity/resource foundation.
+Priority: Removed (was Removed (was P1 Should)). Actors: System.
 
-Factors: Reference integrity; asynchronous storage
-
-Tools: scheduled server cleanup + Supabase Storage + PostgreSQL
-
-Scheduled cleanup deletes incomplete unreferenced uploads and soft-deleted media after configured retention. Recheck cover/gallery/audit retention references before deleting. Contract documents are excluded from public-photo cleanup.
-
-Acceptance criteria:
-
-- FR59-AC01 [Positive] Deleted unreferenced media reaches retention cutoff → Delete object and set purged_at idempotently.
-- FR59-AC02 [Race] Cleanup races with cover selection → Shared lock/recheck prevents deletion of newly referenced live object.
-- FR59-AC03 [Integrity] Photo only unselected → Retain unless explicitly deleted/eligible orphan; no automatic purge.
-- FR59-AC04 [Security] Cleanup scans contracts bucket → Do not purge immutable agreements under media policy.
+Removed by team decision: No background cleanup. Deleted photos stay soft-deleted. The ID is kept and not reused.
 
 ### FR60 Manage controlled property JSONB policies
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Validated schema; reusable defaults
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + PostgreSQL JSONB + Next.js + React + Tailwind
 
 properties.policies contains schema_version, defaults for predefined pets/smoking, and shared_rules array. Owner uses form fields; backend validates allowlisted keys/enums and limits. No independent policy table in MVP; later migration can preserve stable keys. Approved listings update immediately with audit.
 
@@ -219,7 +205,7 @@ Priority: P0 Must. Actors: Owner; Guest; Tenant. Dependencies: Shared identity/r
 
 Factors: Inheritance; consistency; historical terms
 
-Tools: Next.js Route Handlers + server validation + server policies + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind + TanStack Query
+Tools: Next.js Server Actions + server validation + server access checks + Supabase PostgreSQL + JSONB resolver + Next.js + React + Tailwind
 
 units.policy_overrides contains optional predefined enum overrides and additional_rules array. Missing key inherits property default; shared_rules always retained. Preserve resolved actually agreed policies in immutable version snapshot at proposal, editable only through new version.
 
@@ -235,7 +221,7 @@ Priority: P0 Must. Actors: Owner; Guest; System. Dependencies: FR07 FR20 FR21 FR
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
 
-Tools: Next.js forms + server catalog endpoint/config + validation and server policies + PostgreSQL JSONB + content-revision and audit services
+Tools: Next.js forms + server catalog endpoint/config + validation and server access checks + PostgreSQL JSONB + content-revision checks
 
 Owners select standard amenities or add custom text directly in Create/Edit Property and Unit forms. The server owns a code-managed catalog with stable keys, localized canonical labels, explicit aliases and allowed PROPERTY/UNIT scopes, exposed through GET /amenities. Both amenity columns use controlled JSONB {schema_version:1,standard:{key:{enabled:boolean,details?:text}},custom:[text]}. Standard search matches canonical key and enabled=true; custom text is descriptive only. Backend allowlist/type/limit validation; NFC+trim+whitespace normalization for custom display, case folding only for local duplicate detection. No automatic global slug creation, semantic synonym inference, owner_label or amenity tables in MVP. Catalog changes later require explicit migrations only if keys/meaning change.
 
@@ -248,18 +234,18 @@ Acceptance criteria:
 - FR87-AC05 [Positive] Owner searches AC or aircon through explicitly maintained aliases → Suggest catalog air_conditioning; selection stores canonical key. Do not infer synonyms by slugification or automatically select without owner choice.
 - FR87-AC06 [Integrity] Shared laundry exists but no washing machine inside requested unit → Show shared feature separately; in-unit washing-machine filter does not match the shared facility. Apply all unit filters to same available unit.
 - FR87-AC07 [Integrity] Catalog display label changes or standard enabled=false/absent → Existing stable keys need no row migration; enabled=false/absent does not qualify for filter; absent means not advertised, not verified absent.
-- FR87-AC08 [Race] Two tabs edit amenity JSONB → the later commit is stored and audited.
+- FR87-AC08 [Race] Two tabs edit amenity JSONB → The later commit is stored.
 - FR87-AC09 [Race] Initial listing admin approval races with amenity edit → Common property content lock/revision rejects stale first approval. Later approved-listing edits need no reapproval; suspension still respected.
 - FR87-AC10 [Integrity] Migrate old amenity arrays into new JSONB structure → Preserve recognized canonical codes under standard; map legacy labels only via reviewed explicit aliases, keep unknown descriptions under custom and audit migration. Do not conflate shared/private scope or blindly slugify labels.
 
 ## Data and API boundary
-Use the shared data dictionary and versioned API contract; do not invent tables/enums to suit one screen. Every issue identifies exact routes, schema fields, stale-state behavior and cache invalidation that it changes.
+Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
 Same-property references, complete published data, upload failures and stale content revisions. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
-UI and API integrated where applicable; unit and integration tests; private/public DTO checks; OpenAPI and source docs synchronized; audit/outbox only where required; issue-linked PR and reviewer evidence. No implementation is claimed here.
+UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
 No property or per-image moderation; no amenity/policy management tables; geocoding remains domain-deferred unless separately selected for course evidence.

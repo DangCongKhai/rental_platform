@@ -8,5 +8,5 @@
 - [M06 Tenancies contract versions and reservations](M06-tenancies-contracts/README.md)
 - [M07 Tenancy renewal requests](M07-renewals/README.md)
 - [M08 Reports and administrative screens](M08-reports-admin/README.md)
-- [M09 Notifications and audit delivery](M09-notifications-audit/README.md)
-- [M10 Engineering operations and course delivery](M10-operations-delivery/README.md)
+- [M09 Notifications](M09-notifications-audit/README.md)
+- [M10 Engineering operations](M10-operations-delivery/README.md)

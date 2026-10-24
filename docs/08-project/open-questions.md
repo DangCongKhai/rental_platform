@@ -1,10 +1,7 @@
 # Open questions and decision boundaries
 | Question | Owner | Effect |
 |---|---|---|
-| What exact CSRF demonstration is accepted for bearer-token auth? | A + lecturer | Demonstrate the actual transport defense, not only validation or CORS |
-| Which repo, branch/layout, versions, team GitHub handles and actual implemented features exist? | Local AI + team | Discover before issue publishing/assignment; no invented handles/status |
-| How many days/sprints remain and each member's capacity? | Team | Adjust reference plan; do not promise5weeks remaining |
-| Which host provides CPU/memory/disk/network metrics and real worker/scheduler execution? | A | Choose monitoring deployment with demonstrable alerts |
-| Are proposed48h hold duration and unavailable-favourite placeholder/count semantics accepted? | Product owner/team | Defaults explicitly marked; change docs/tests together if adjusted |
-
-Unknown future production performance budgets are not blockers to writing well-scoped course issues; do not fabricate SLO compliance or time estimates as facts.
+| Are the 48-hour hold and the unavailable-favourite placeholder/count semantics accepted? | Khai + Kien | Defaults are configurable; change docs and tests together if adjusted |
+| Is lazy expiry/auto-rejection enough, or do we need Supabase Cron? | Khai | Add a cron-triggered Route Handler only if holds must be released without anyone opening the record |
+| Where will the app be hosted for the demo? | Khai + Kien | Any standard Next.js host works because there is no worker |
+| What is Kien's GitHub handle? | Kien | Needed before assigning issues |

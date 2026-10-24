@@ -1,8 +1,8 @@
 # Architecture overview
-Route Handlers and validation schemas are thin. Shared server services own proposals, confirmation, renewal, expiry, 15-day decisions, initial moderation, and visibility. Queue and HTTP paths reuse them.
+Next.js serves the UI and all server logic. Server components read data; Server Actions perform every write. Both call shared server functions in `src/server/` that own proposals, confirmation, renewal, expiry, 15-day decisions, initial moderation and visibility.
 
-Use database transactions, fixed lock order and final DB constraints. Availability is a query/projection and never a mutable decrementing count. Media bytes are uploaded before committing references; incomplete orphan cleanup is compensating work, not a DB transaction pretending to roll back remote storage.
+Each write runs in one database transaction that re-reads and locks the rows it changes, then relies on database constraints (unique, exclusion, triggers) as the final guard. Notifications are inserted in the same transaction, so a rolled-back action never leaves a notice behind. Availability is a query, never a stored counter. Photo and contract files are uploaded before their rows are written; a failed upload leaves no row.
 
-Next.js/TanStack Query treats search as indicative. Private profile/favourite/request/contract caches are scoped by authenticated account and cleared on logout; public caches never contain private flags. Frontend writes include stable operation UUIDs where specified. Favourite PUT/DELETE supplies intended state rather than an ambiguous toggle.
+Time-based rules (hold expiry, 15-day auto-rejection) run lazily when a record is opened or acted on. If a rule ever needs to run on its own, Supabase Cron or a Database Webhook calls a protected Route Handler that reuses the same server function (see [API contract](api-design.md)). No long-running worker is deployed.
 
-Repository layout/versioned packages/hosting are discovered locally. Suggested frontend/backend boundaries are logical, not a claim that directories with those names exist. One person coordinates migrations/API contracts; feature owners avoid overlapping unreviewed foundation changes.
+Search results are indicative; the proposal action rechecks availability under lock. User-specific data (favourites, requests, contracts) is never rendered into shared or static output, and client state is cleared on logout. Khai writes the database migrations; the flow owner writes the server functions for their flow.

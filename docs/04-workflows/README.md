@@ -21,7 +21,7 @@
 - [WF-19 Save or remove favourite property](WF-19-save-remove-favourite.md) — FR88
 - [WF-20 View private favourite properties](WF-20-view-favourites.md) — FR88
 - [WF-21 Edit property and units](WF-21-edit-property.md) — FR08 FR51 FR52 FR55
-- [WF-22 Upload select replace or remove photos](WF-22-update-media.md) — FR09 FR56 FR57 FR59
+- [WF-22 Upload select replace or remove photos](WF-22-update-media.md) — FR09 FR56 FR57
 - [WF-23 Manage policies and amenities](WF-23-manage-policies-amenities.md) — FR60 FR61 FR87
 - [WF-24 Withdraw pending enquiry](WF-24-withdraw-enquiry.md) — FR28
 - [WF-25 Record actual move-in](WF-25-record-move-in.md) — FR80

@@ -1,5 +1,3 @@
 # Performance and resource loading
 
-Course Task6b/6d require lazy/code-split noncritical resources, responsive/compressed WebP/AVIF-capable image delivery where supported, reasonable JS/CSS bundles, bounded pagination, batched queries, indexes, and N+1 prevention. Contract document UI downloads on demand. Benchmark a seeded listing query and record query count/latency before/after; exact latency budget and load dataset are to be agreed and measured, not fabricated. Do not introduce an AI thumbnail service. Prevent flash of stale account favourites and cancel/discard out-of-order search responses.
-
-Validation is part of feature/engineering issues and PR evidence. Tool versions/configuration must match the local installed framework; no invented pass result.
+Keep pages reasonably fast without dedicated optimisation work: use `next/image` with sizes for photos, paginate every list, load related rows in one query instead of one query per row, and add indexes for the search filters and the owner inbox. Contract documents download only on demand. Discard out-of-order search results so an older response never replaces a newer one. No AI thumbnail service.

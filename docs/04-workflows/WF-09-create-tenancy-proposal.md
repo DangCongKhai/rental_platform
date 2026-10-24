@@ -11,7 +11,7 @@ Pending enquiry; exact ready unit has compatible dates. Trigger is the named use
 1. Enter actual negotiated dates/rent/deposit/policy snapshot and private document.
 2. Owner explicitly acknowledges exact contract/hash.
 3. Lock and validate; create tenancy, ORIGINAL contract, owner confirmation, blocking span and deadline.
-4. Atomically accept enquiry, audit/outbox/replay; invite tenant after commit.
+4. Atomically accept enquiry and notify the tenant in the same transaction.
 
 ## Alternative and failure flows
 - GiST overlap or validation failure rolls back request acceptance and hold.
@@ -21,4 +21,4 @@ Pending enquiry; exact ready unit has compatible dates. Trigger is the named use
 ACCEPTED enquiry plus PENDING_CONFIRMATION tenancy; no mutual agreement yet.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

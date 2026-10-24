@@ -22,4 +22,4 @@
 | listing_reports | OPEN | REVIEWING | Admin investigation |
 | listing_reports | OPEN/REVIEWING | RESOLVED/DISMISSED | Reasoned authorized outcome |
 
-Admin suspension is a separate timestamp/by/reason restriction, not a new initial review. Contract decisions are fields, not a separate table or a mutable terms status. Favourites use row presence, no status enum. Duplicate terminal replays are idempotent or409, never resurrection.
+Admin suspension is a separate timestamp/by/reason restriction, not a new initial review. Contract decisions are fields, not a separate table or a mutable terms status. Favourites use row presence, no status enum. Repeating a terminal action changes nothing or is refused as a conflict; it never revives the record.

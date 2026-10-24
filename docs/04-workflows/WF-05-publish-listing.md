@@ -10,7 +10,7 @@ Initial approval and complete valid content; not archived/suspended. Trigger is 
 ## Main flow
 1. Recheck owner, publication state, cover and current visibility.
 2. Check ready marketed eligible inventory for displayed date scope.
-3. Set PUBLISHED and invalidate relevant public caches.
+3. Set PUBLISHED; public pages read the new state on the next request.
 4. Use current visibility/availability gates for search and details.
 
 ## Alternative and failure flows
@@ -21,4 +21,4 @@ Initial approval and complete valid content; not archived/suspended. Trigger is 
 Publication choice separate from first approval and period-specific inventory.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

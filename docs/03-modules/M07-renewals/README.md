@@ -1,9 +1,9 @@
 # M07 Tenancy renewal requests
- Primary owner: Member-B. Required reviewer: Member-A. This is a proposed allocation, not verified GitHub assignment.
+ Owner: Kien. Reviewer: Khai.
 
  Tenant renewal request, negotiated consecutive segment proposal, extension hold and mutual confirmation under same tenancy.
 
- Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), [API contract](../../07-architecture/api-design.md) and [course compliance](../../08-project/course-compliance.md). The local AI must inspect existing implementation before creating missing-work issues.
+ Read [PRD](prd.md), [business rules](../../02-domain/business-rules.md), [state transitions](../../02-domain/state-transition.md), and the [action contract](../../07-architecture/api-design.md). Check the existing code before creating issues; the backlog is in [`planning/`](../../../planning/issue-plan.md).
 
  Critical review focus: One pending request; future-booking conflict; expire/decline releases only extension.
 

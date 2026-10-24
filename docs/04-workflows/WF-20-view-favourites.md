@@ -14,11 +14,11 @@ Signed in. Trigger is the named user action or due system evaluation.
 4. Otherwise return generic unavailable placeholder without hidden content; allow removal.
 
 ## Alternative and failure flows
-- Account switch clears private caches.
+- Account switch clears user-specific client state.
 - Saved relation never bypasses suspension/archive/hide; new visible listing for same property reuses same bookmark.
 
 ## Postcondition
 Private consistent saved list, badge and heart state.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

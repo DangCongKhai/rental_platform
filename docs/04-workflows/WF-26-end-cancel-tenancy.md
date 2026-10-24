@@ -11,7 +11,7 @@ Related confirmed pre-start or active tenancy. Trigger is the named user action 
 1. Require reason and actual lifecycle event.
 2. Lock tenancy/pending renewal and transition CANCELLED or ENDED as eligible.
 3. Cancel pending work and release only no-longer-needed scheduling block.
-4. Keep contracts and accepted enquiry/audit history.
+4. Keep contracts and accepted enquiry history.
 
 ## Alternative and failure flows
 - Competing final confirmation/renewal action has one legal result.
@@ -21,4 +21,4 @@ Related confirmed pre-start or active tenancy. Trigger is the named user action 
 Historical relationship preserved; scheduling recomputed.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

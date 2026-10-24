@@ -10,7 +10,7 @@ Signed in; public target; no pending same tenant/listing. Trigger is the named u
 ## Main flow
 1. Collect contact snapshots, desired_start/end, message and optional preferred unit.
 2. Validate ownership/scope/date range.
-3. Persist request PENDING, audit and notification intent.
+3. Persist request PENDING and notify the owner in the same transaction.
 4. Show in tenant/owner inbox; no hold.
 
 ## Alternative and failure flows
@@ -21,4 +21,4 @@ Signed in; public target; no pending same tenant/listing. Trigger is the named u
 PENDING contact enquiry, no tenancy or allocation.
 
 ## Consistency boundary
-Use server policies and the shared server services; state-changing flows capture audit/outbox/replay where required. A read/favourite is never an allocation authority.
+Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.
