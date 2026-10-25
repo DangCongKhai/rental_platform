@@ -17,13 +17,323 @@ model UserProfile {
   userId        String   @unique @map("user_id") @db.Uuid
   email         String
   fullName      String   @map("full_name")
+  avatarUrl     String?  @map("avatar_url")
   phone         String?
   isAdmin       Boolean  @default(false) @map("is_admin")
   accountStatus String   @default("ACTIVE") @map("account_status")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  ownedProperties     Property[]              @relation("PropertyOwner")
+  uploadedMedia       PropertyMedia[]         @relation("MediaUploader")
+  reviewedListings    Listing[]               @relation("ListingReviewer")
+  suspendedListings   Listing[]               @relation("ListingSuspender")
+  rentalRequests      RentalRequest[]         @relation("RequestTenant")
+  tenantTenancies     Tenancy[]               @relation("TenancyTenant")
+  ownerTenancies      Tenancy[]               @relation("TenancyOwner")
+  reviewedRenewals    TenancyRenewalRequest[] @relation("RenewalReviewer")
+  createdContracts    TenancyContract[]       @relation("ContractCreator")
+  filedReports        ListingReport[]         @relation("ReportReporter")
+  reviewedReports     ListingReport[]         @relation("ReportReviewer")
+  notifications       Notification[]
+  favouriteProperties FavouriteProperty[]
+
   @@map("user_profiles")
 }
 
+model Property {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId           String    @map("owner_id") @db.Uuid
+  name              String
+  propertyType      String    @map("property_type")
+  rentalArrangement String    @map("rental_arrangement")
+  addressLine       String?   @map("address_line")
+  ward              String?
+  district          String?
+  city              String?
+  description       String?
+  sharedAmenities   Json      @default("{\"schema_version\":1,\"standard\":{},\"custom\":[]}") @map("shared_amenities") @db.JsonB
+  policies          Json      @default("{\"schema_version\":1,\"defaults\":{\"pets\":\"ASK_OWNER\",\"smoking\":\"NOT_ALLOWED\"},\"shared_rules\":[]}") @db.JsonB
+  contentRevision   Int       @default(1) @map("content_revision")
+  latitude          Decimal?  @db.Decimal(9, 6)
+  longitude         Decimal?  @db.Decimal(9, 6)
+  archivedAt        DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  owner      UserProfile         @relation("PropertyOwner", fields: [ownerId], references: [id])
+  units      Unit[]
+  media      PropertyMedia[]
+  listings   Listing[]
+  favourites FavouriteProperty[]
+
+  @@index([ownerId])
+  @@map("properties")
+}
+
+model Unit {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId            String    @map("property_id") @db.Uuid
+  label                 String
+  unitKind              String    @map("unit_kind")
+  description           String?
+  floor                 String?
+  areaM2                Decimal?  @map("area_m2") @db.Decimal(8, 2)
+  bedrooms              Int
+  bathrooms             Decimal   @db.Decimal(4, 1)
+  bathroomArrangement   String    @map("bathroom_arrangement")
+  amenities             Json      @default("{\"schema_version\":1,\"standard\":{},\"custom\":[]}") @db.JsonB
+  advertisedMonthlyRent Decimal?  @map("advertised_monthly_rent") @db.Decimal(14, 0)
+  deposit               Decimal?  @db.Decimal(14, 0)
+  minimumRentalMonths   Int       @map("minimum_rental_months")
+  maxOccupants          Int?      @map("max_occupants")
+  operationalStatus     String    @default("READY") @map("operational_status")
+  isMarketed            Boolean   @default(false) @map("is_marketed")
+  policyOverrides       Json      @default("{}") @map("policy_overrides") @db.JsonB
+  archivedAt            DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property    Property        @relation(fields: [propertyId], references: [id])
+  media       PropertyMedia[]
+  preferredBy RentalRequest[] @relation("PreferredUnit")
+  tenancies   Tenancy[]
+
+  @@index([propertyId])
+  @@map("units")
+}
+
+model PropertyMedia {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId           String    @map("property_id") @db.Uuid
+  unitId               String?   @map("unit_id") @db.Uuid
+  uploadedById         String    @map("uploaded_by") @db.Uuid
+  storagePath          String    @unique @map("storage_path")
+  caption              String?
+  sortOrder            Int       @default(0) @map("sort_order")
+  isSelectedForListing Boolean   @default(true) @map("is_selected_for_listing")
+  purgedAt             DateTime? @map("purged_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+  sha256               String
+  mimeType             String    @map("mime_type")
+  sizeBytes            BigInt    @map("size_bytes")
+
+  property Property    @relation(fields: [propertyId], references: [id])
+  unit     Unit?       @relation(fields: [unitId], references: [id])
+  uploader UserProfile @relation("MediaUploader", fields: [uploadedById], references: [id])
+  covers   Listing[]   @relation("ListingCover")
+
+  @@index([propertyId])
+  @@index([unitId])
+  @@map("property_media")
+}
+
+model Listing {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId               String    @map("property_id") @db.Uuid
+  title                    String
+  description              String
+  coverMediaId             String?   @map("cover_media_id") @db.Uuid
+  moderationStatus         String    @default("DRAFT") @map("moderation_status")
+  publicationStatus        String    @default("DRAFT") @map("publication_status")
+  submittedAt              DateTime? @map("submitted_at") @db.Timestamptz(6)
+  reviewedById             String?   @map("reviewed_by") @db.Uuid
+  reviewedAt               DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  reviewReason             String?   @map("review_reason")
+  archivedAt               DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  submittedContentRevision Int?      @map("submitted_content_revision")
+  approvedContentRevision  Int?      @map("approved_content_revision")
+  adminSuspendedAt         DateTime? @map("admin_suspended_at") @db.Timestamptz(6)
+  adminSuspendedById       String?   @map("admin_suspended_by") @db.Uuid
+  suspensionReason         String?   @map("suspension_reason")
+
+  property         Property        @relation(fields: [propertyId], references: [id])
+  coverMedia       PropertyMedia?  @relation("ListingCover", fields: [coverMediaId], references: [id])
+  reviewedBy       UserProfile?    @relation("ListingReviewer", fields: [reviewedById], references: [id])
+  adminSuspendedBy UserProfile?    @relation("ListingSuspender", fields: [adminSuspendedById], references: [id])
+  rentalRequests   RentalRequest[]
+  reports          ListingReport[]
+
+  @@index([propertyId])
+  @@index([coverMediaId])
+  @@map("listings")
+}
+
+model RentalRequest {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId             String    @map("listing_id") @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  preferredUnitId       String?   @map("preferred_unit_id") @db.Uuid
+  desiredMoveInDate     DateTime  @map("desired_move_in_date") @db.Date
+  message               String
+  status                String    @default("PENDING")
+  outcomeReason         String?   @map("outcome_reason")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contactName           String    @map("contact_name")
+  contactPhone          String    @map("contact_phone")
+  desiredEndDate        DateTime  @map("desired_end_date") @db.Date
+  availabilityCheckedAt DateTime? @map("availability_checked_at") @db.Timestamptz(6)
+  closedAt              DateTime? @map("closed_at") @db.Timestamptz(6)
+
+  listing       Listing     @relation(fields: [listingId], references: [id])
+  tenant        UserProfile @relation("RequestTenant", fields: [tenantId], references: [id])
+  preferredUnit Unit?       @relation("PreferredUnit", fields: [preferredUnitId], references: [id])
+  tenancy       Tenancy?
+
+  @@index([listingId])
+  @@index([tenantId])
+  @@map("rental_requests")
+}
+
+model Tenancy {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unitId                    String    @map("unit_id") @db.Uuid
+  tenantId                  String    @map("tenant_id") @db.Uuid
+  rentalRequestId           String    @unique @map("rental_request_id") @db.Uuid
+  status                    String    @default("PENDING_CONFIRMATION")
+  actualEndedAt             DateTime? @map("actual_ended_at") @db.Timestamptz(6)
+  endReason                 String?   @map("end_reason")
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ownerId                   String    @map("owner_id") @db.Uuid
+  confirmedStartDate        DateTime? @map("confirmed_start_date") @db.Date
+  confirmedEndDate          DateTime? @map("confirmed_end_date") @db.Date
+  blockedStartDate          DateTime? @map("blocked_start_date") @db.Date
+  blockedEndDate            DateTime? @map("blocked_end_date") @db.Date
+  pendingContractId         String?   @map("pending_contract_id") @db.Uuid
+  latestConfirmedContractId String?   @map("latest_confirmed_contract_id") @db.Uuid
+  confirmationExpiresAt     DateTime? @map("confirmation_expires_at") @db.Timestamptz(6)
+  movedInAt                 DateTime? @map("moved_in_at") @db.Timestamptz(6)
+
+  unit                    Unit                    @relation(fields: [unitId], references: [id])
+  tenant                  UserProfile             @relation("TenancyTenant", fields: [tenantId], references: [id])
+  owner                   UserProfile             @relation("TenancyOwner", fields: [ownerId], references: [id])
+  rentalRequest           RentalRequest           @relation(fields: [rentalRequestId], references: [id])
+  pendingContract         TenancyContract?        @relation("PendingContract", fields: [pendingContractId], references: [id])
+  latestConfirmedContract TenancyContract?        @relation("LatestConfirmedContract", fields: [latestConfirmedContractId], references: [id])
+  contracts               TenancyContract[]       @relation("TenancyContracts")
+  renewalRequests         TenancyRenewalRequest[]
+
+  @@index([unitId])
+  @@index([tenantId])
+  @@map("tenancies")
+}
+
+model TenancyRenewalRequest {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenancyId           String    @map("tenancy_id") @db.Uuid
+  requestedEndDate    DateTime  @map("requested_end_date") @db.Date
+  proposedMonthlyRent Decimal   @map("proposed_monthly_rent") @db.Decimal(14, 0)
+  message             String?
+  status              String    @default("PENDING")
+  reviewedById        String?   @map("reviewed_by") @db.Uuid
+  reviewedAt          DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  reviewReason        String?   @map("review_reason")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenancy    Tenancy           @relation(fields: [tenancyId], references: [id])
+  reviewedBy UserProfile?      @relation("RenewalReviewer", fields: [reviewedById], references: [id])
+  contracts  TenancyContract[]
+
+  @@index([tenancyId])
+  @@map("tenancy_renewal_requests")
+}
+
+model TenancyContract {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenancyId             String    @map("tenancy_id") @db.Uuid
+  versionNumber         Int       @map("version_number")
+  type                  String
+  renewalRequestId      String?   @map("renewal_request_id") @db.Uuid
+  supersedesContractId  String?   @map("supersedes_contract_id") @db.Uuid
+  basisContractId       String?   @map("basis_contract_id") @db.Uuid
+  startDate             DateTime  @map("start_date") @db.Date
+  endDate               DateTime  @map("end_date") @db.Date
+  monthlyRent           Decimal   @map("monthly_rent") @db.Decimal(14, 0)
+  depositAmount         Decimal   @map("deposit_amount") @db.Decimal(14, 0)
+  policiesSnapshot      Json      @map("policies_snapshot") @db.JsonB
+  documentPath          String    @unique @map("document_path")
+  documentSha256        String    @map("document_sha256")
+  signedOn              DateTime? @map("signed_on") @db.Date
+  createdById           String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  ownerConfirmedAt      DateTime  @map("owner_confirmed_at") @db.Timestamptz(6)
+  tenantConfirmedAt     DateTime? @map("tenant_confirmed_at") @db.Timestamptz(6)
+  tenantRejectedAt      DateTime? @map("tenant_rejected_at") @db.Timestamptz(6)
+  tenantRejectionReason String?   @map("tenant_rejection_reason")
+
+  tenancy            Tenancy                @relation("TenancyContracts", fields: [tenancyId], references: [id])
+  renewalRequest     TenancyRenewalRequest? @relation(fields: [renewalRequestId], references: [id])
+  supersedes         TenancyContract?       @relation("ContractSupersedes", fields: [supersedesContractId], references: [id])
+  supersededBy       TenancyContract[]      @relation("ContractSupersedes")
+  basis              TenancyContract?       @relation("ContractBasis", fields: [basisContractId], references: [id])
+  basisFor           TenancyContract[]      @relation("ContractBasis")
+  createdBy          UserProfile            @relation("ContractCreator", fields: [createdById], references: [id])
+  pendingFor         Tenancy[]              @relation("PendingContract")
+  latestConfirmedFor Tenancy[]              @relation("LatestConfirmedContract")
+
+  @@unique([tenancyId, versionNumber])
+  @@index([tenancyId])
+  @@map("tenancy_contracts")
+}
+
+model ListingReport {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId         String    @map("listing_id") @db.Uuid
+  reporterId        String    @map("reporter_id") @db.Uuid
+  reasonCode        String    @map("reason_code")
+  description       String
+  status            String    @default("OPEN")
+  resolutionSummary String?   @map("resolution_summary")
+  internalNotes     String?   @map("internal_notes")
+  reviewedById      String?   @map("reviewed_by") @db.Uuid
+  reviewedAt        DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listing    Listing      @relation(fields: [listingId], references: [id])
+  reporter   UserProfile  @relation("ReportReporter", fields: [reporterId], references: [id])
+  reviewedBy UserProfile? @relation("ReportReviewer", fields: [reviewedById], references: [id])
+
+  @@index([listingId])
+  @@index([reporterId])
+  @@map("listing_reports")
+}
+
+model FavouriteProperty {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     UserProfile @relation(fields: [userId], references: [id])
+  property Property    @relation(fields: [propertyId], references: [id])
+
+  @@unique([userId, propertyId])
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)], map: "favourite_properties_user_pagination")
+  @@map("favourite_properties")
+}
+
+model Notification {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientId  String    @map("recipient_id") @db.Uuid
+  eventKey     String    @map("event_key")
+  title        String
+  body         String
+  resourceType String    @map("resource_type")
+  resourceId   String    @map("resource_id") @db.Uuid
+  readAt       DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient UserProfile @relation(fields: [recipientId], references: [id])
+
+  @@unique([recipientId, eventKey])
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@map("notifications")
+}

@@ -1,3 +1,4 @@
+
 -- CreateTable
 CREATE TABLE "user_profiles" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
