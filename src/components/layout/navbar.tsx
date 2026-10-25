@@ -12,7 +12,7 @@ const NAV_LINKS = [
   { label: "Tìm nhà cho bạn", href: "/" },
   { label: "Hướng dẫn", href: "/" },
   { label: "FAQ", href: "/#faq" },
-  { label: "Quản lý thuê", href: "/" },
+  { label: "Quản lý thuê", href: "/manage/properties" },
 ];
 
 type NavbarProps = {
