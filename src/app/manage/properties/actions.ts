@@ -62,7 +62,7 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
     return result;
 }
 
-function invalidForm(errors: Record<string, string>): ActionResult<CreatedProperty> {
+function invalidForm<T = void>(errors: Record<string, string>): ActionResult<T> {
     return {
         ok: false,
         error: "Dữ liệu không hợp lệ.",
@@ -77,34 +77,33 @@ function nullableText(value: string | null | undefined) {
 
 export async function createProperty(input: unknown): Promise<ActionResult<CreatedProperty>> {
     const auth = await runAction(() => requireUser());
-    if (!auth.ok) 
-        return auth;
+    if (!auth.ok) return auth;
 
     const user = auth.data;
     if (!user) {
-        return { 
-            ok: false, 
-            error: "Vui lòng đăng nhập lại."
+        return {
+            ok: false,
+            error: "Vui lòng đăng nhập lại.",
         };
     }
 
     const parsed = createPropertySchema.safeParse(input);
     if (!parsed.success) {
-        return invalidForm(fieldErrors(parsed.error));
+        return invalidForm<CreatedProperty>(fieldErrors(parsed.error));
     }
 
     const inputAmenities = parsed.data.sharedAmenities === undefined ? EMPTY_AMENITIES : parsed.data.sharedAmenities;
 
     const amenities = validateAmenities(inputAmenities, "PROPERTY");
     if (!amenities.success) {
-        return invalidForm({ sharedAmenities: "Tiện ích không hợp lệ." });
+        return invalidForm<CreatedProperty>({ sharedAmenities: "Tiện ích không hợp lệ." });
     }
 
     const inputPolicies = parsed.data.policies === undefined ? DEFAULT_POLICIES : parsed.data.policies;
 
     const policies = validatePropertyPolicies(inputPolicies);
     if (!policies.success) {
-        return invalidForm({ policies: "Quy định không hợp lệ." });
+        return invalidForm<CreatedProperty>({ policies: "Quy định không hợp lệ." });
     }
 
     const result = await runAction(async () => {
@@ -154,4 +153,147 @@ export async function createProperty(input: unknown): Promise<ActionResult<Creat
     });
 
     return result;
+}
+
+const updatePropertySchema = createPropertySchema.partial().extend({
+    expectedRevision: z.number().int().positive(),
+});
+
+export async function updateProperty(id: string, input: unknown): Promise<ActionResult<{ contentRevision: number }>> {
+    type UpdatePropertyResult = { contentRevision: number };
+
+    const auth = await runAction(() => requireUser());
+    if (!auth.ok) return auth;
+
+    const user = auth.data;
+    if (!user) {
+        return {
+            ok: false,
+            error: "Vui lòng đăng nhập lại.",
+        };
+    }
+
+    const parsed = updatePropertySchema.safeParse(input);
+    if (!parsed.success) {
+        return invalidForm<UpdatePropertyResult>(fieldErrors(parsed.error));
+    }
+
+    const { expectedRevision, ...fields } = parsed.data;
+
+    if (Object.keys(fields).length === 0) {
+        return invalidForm<UpdatePropertyResult>({ form: "Không có nội dung nào để lưu." });
+    }
+
+    const changes: Prisma.PropertyUpdateManyMutationInput = {};
+
+    if (fields.name !== undefined) changes.name = fields.name;
+    if (fields.propertyType !== undefined) changes.propertyType = fields.propertyType;
+    if (fields.rentalArrangement !== undefined) changes.rentalArrangement = fields.rentalArrangement;
+    if (fields.addressLine !== undefined) changes.addressLine = nullableText(fields.addressLine);
+    if (fields.ward !== undefined) changes.ward = nullableText(fields.ward);
+    if (fields.district !== undefined) changes.district = nullableText(fields.district);
+    if (fields.city !== undefined) changes.city = nullableText(fields.city);
+    if (fields.description !== undefined) changes.description = nullableText(fields.description);
+    if (fields.sharedAmenities !== undefined) {
+        const amenities = validateAmenities(fields.sharedAmenities, "PROPERTY");
+        if (!amenities.success) return invalidForm<UpdatePropertyResult>({ sharedAmenities: "Tiện ích không hợp lệ." });
+        changes.sharedAmenities = amenities.data as Prisma.InputJsonValue;
+    }
+    if (fields.policies !== undefined) {
+        const policies = validatePropertyPolicies(fields.policies);
+        if (!policies.success) {
+            return invalidForm<UpdatePropertyResult>({ policies: "Quy định không hợp lệ." });
+        }
+        changes.policies = policies.data as Prisma.InputJsonValue;
+    }
+
+    return runAction(async () => {
+        const updated = await prisma.property.updateMany({
+            where: {
+                id,
+                ownerId: user.profileId,
+                archivedAt: null,
+                contentRevision: expectedRevision,
+            },
+            data: {
+                ...changes,
+                contentRevision: { increment: 1 },
+            },
+        });
+
+        if (updated.count !== 1) {
+            const property = await prisma.property.findFirst({
+                where: { id, ownerId: user.profileId },
+                select: { archivedAt: true },
+            });
+
+            if (!property || property.archivedAt) throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
+
+            throw new ActionError("CONFLICT", "Thông tin đã thay đổi. Hãy tải lại trang và thử lại.");
+        }
+
+        revalidatePath("/manage/properties");
+        revalidatePath(`/manage/properties/${id}`);
+
+        const property = await prisma.property.findFirstOrThrow({
+            where: { id, ownerId: user.profileId },
+            select: { contentRevision: true },
+        });
+
+        return { contentRevision: property.contentRevision };
+    });
+}
+
+export async function archiveProperty(id: string): Promise<ActionResult<void>> {
+    const auth = await runAction(() => requireUser());
+    if (!auth.ok) return auth;
+
+    const user = auth.data;
+    if (!user) {
+        return { ok: false, error: "Vui lòng đăng nhập lại." };
+    }
+
+    const parsedId = z.string().uuid().safeParse(id);
+    if (!parsedId.success) {
+        return invalidForm<void>({ id: "Mã bất động sản không hợp lệ." });
+    }
+
+    return runAction(async () => {
+        await prisma.$transaction(async (tx) => {
+            const rows = await tx.$queryRaw<Array<{ id: string; archivedAt: Date | null }>>`
+            SELECT id, archived_at AS "archivedAt"
+            FROM properties
+            WHERE id = ${id}::uuid
+            AND owner_id = ${user.profileId}::uuid
+            FOR UPDATE
+        `;
+
+            const property = rows[0];
+            if (!property) {
+                throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
+            }
+
+            if (property.archivedAt) return;
+
+            const archivedAt = new Date();
+
+            await tx.property.update({
+                where: { id },
+                data: { archivedAt },
+            });
+
+            await tx.listing.updateMany({
+                where: { propertyId: id, archivedAt: null },
+                data: { archivedAt },
+            });
+
+            await tx.unit.updateMany({
+                where: { propertyId: id, archivedAt: null },
+                data: { isMarketed: false },
+            });
+        });
+
+        revalidatePath("/manage/properties");
+        revalidatePath(`/manage/properties/${id}`);
+    });
 }
