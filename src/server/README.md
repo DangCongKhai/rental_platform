@@ -24,6 +24,8 @@ Server Actions identify the user, check access, validate input, and return one r
 
 `withTransaction` commits only when the callback resolves. Later actions use it so a failed write rolls back.
 
+`createNotification(tx, { recipientId, eventKey, title, body, link })` inserts one `notifications` row on the transaction passed in. `link` is `{ resourceType, resourceId }`. The same pair cannot be inserted twice. Call it from inside `withTransaction` together with the business write. RENT-002 has no page, so there is no loading, empty, or validation UI to exercise.
+
 `withRolledBackTransaction` always rolls the transaction back. The integration test runs only when `DATABASE_URL` is set, against local Supabase:
 
 ```bash

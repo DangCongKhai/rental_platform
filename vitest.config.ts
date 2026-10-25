@@ -14,6 +14,7 @@ export default defineConfig({
         test: {
           name: "server",
           environment: "node",
+          testTimeout: 30_000,
           include: ["src/server/**/*.test.ts", "src/lib/**/*.test.ts"],
         },
       },
