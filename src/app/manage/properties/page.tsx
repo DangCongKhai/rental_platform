@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { getMyProperties } from "@/server/properties";
+import { PropertyActions } from "./property-actions";
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
     dateStyle: "medium",
@@ -66,6 +67,7 @@ export default async function ManagePropertiesPage() {
                                         variant: "secondary",
                                         className: "shrink-0"
                                     })}>Tiếp tục chỉnh sửa</Link>
+                                    <PropertyActions propertyId={property.id} />
                                 </div>
 
                                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-line-soft pt-4 text-sm text-subtle">
