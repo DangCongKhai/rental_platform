@@ -127,10 +127,8 @@ function duplicateKey(value: string): string {
     return normalizeAmenityText(value).toLocaleLowerCase("vi");
 }
 
-export function searchAmenityCatalog(
-query: string,
-scope: AmenityScope
-): AmenityDefinition[] {
+type AmenityCatalogEntry = (typeof AMENITY_CATALOG)[number];
+export function searchAmenityCatalog(query: string, scope: AmenityScope): Array<AmenityCatalogEntry> {
     const needle = normalizeAmenityText(query).toLocaleLowerCase("vi");
     if (!needle) return [];
 
