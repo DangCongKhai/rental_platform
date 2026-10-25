@@ -7,11 +7,11 @@ import { AMENITY_CATALOG, searchAmenityCatalog, type AmenityKey, type Amenities 
 import { createProperty, updateProperty } from "../actions";
 import { buttonClass } from "@/components/ui/button";
 
-type PropertyType = "HOUSE" | "APARTMENT" | "APARTMENT_BUILDING";
-type RentalArrangement = "WHOLE_SPACE" | "SEPARATE_UNITS";
-type PolicyValue = "ALLOWED" | "NOT_ALLOWED" | "ASK_OWNER";
+export type PropertyType = "HOUSE" | "APARTMENT" | "APARTMENT_BUILDING";
+export type RentalArrangement = "WHOLE_SPACE" | "SEPARATE_UNITS";
+export type PolicyValue = "ALLOWED" | "NOT_ALLOWED" | "ASK_OWNER";
 
-type Draft = {
+export type Draft = {
     name: string;
     propertyType: PropertyType | "";
     rentalArrangement: RentalArrangement | "";
@@ -66,12 +66,20 @@ const ARRANGEMENT_LABELS: Record<RentalArrangement, string> = {
     SEPARATE_UNITS: "Cho thuê từng phòng/căn",
 };
 
-export function PropertyWizard() {
+type PropertyWizardProps = {
+    initial?: {
+        propertyId: string;
+        revision: number;
+        draft: Draft
+    };
+};
+
+export function PropertyWizard({ initial }: PropertyWizardProps) {
     const router = useRouter();
-    const [draft, setDraft] = useState<Draft>(INITIAL_DRAFT);
+    const [draft, setDraft] = useState<Draft>(initial?.draft ?? INITIAL_DRAFT);
     const [step, setStep] = useState(0);
-    const [propertyId, setPropertyId] = useState<string | null>(null);
-    const [revision, setRevision] = useState(1);
+    const [propertyId, setPropertyId] = useState<string | null>(initial?.propertyId ?? null);
+    const [revision, setRevision] = useState(initial?.revision ?? 1);
     const [amenitySearch, setAmenitySearch] = useState("");
     const [newAmenity, setNewAmenity] = useState("");
     const [newRule, setNewRule] = useState("");
