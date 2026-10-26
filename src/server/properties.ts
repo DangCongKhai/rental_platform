@@ -1,7 +1,9 @@
+import { connection } from "next/server";
 import { requireUser } from "./auth";
 import { prisma } from "./db";
 
 export async function getMyProperties() {
+    await connection();
     const user = await requireUser();
 
     return prisma.property.findMany({
@@ -22,6 +24,7 @@ export async function getMyProperties() {
     }
 
     export async function getMyProperty(id: string) {
+    await connection();
     const user = await requireUser();
 
     return prisma.property.findFirst({

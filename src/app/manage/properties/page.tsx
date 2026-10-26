@@ -3,6 +3,8 @@ import { buttonClass } from "@/components/ui/button";
 import { getMyProperties } from "@/server/properties";
 import { PropertyActions } from "./property-actions";
 
+export const instant = false;
+
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
     dateStyle: "medium",
     timeZone: "Asia/Ho_Chi_Minh"

@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client/extension";
 import { describe, expect, it } from "vitest";
 
 const databaseUrl = process.env.DATABASE_URL;
-console.log("databaseUrl", databaseUrl);
 describe.skipIf(!databaseUrl)("withRolledBackTransaction integration", () => {
   it("removes an insert after the transaction rolls back", async () => {
     const { prisma } = await import("./db");

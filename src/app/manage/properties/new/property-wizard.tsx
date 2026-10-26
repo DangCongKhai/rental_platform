@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AMENITY_CATALOG, searchAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
@@ -75,7 +74,6 @@ type PropertyWizardProps = {
 };
 
 export function PropertyWizard({ initial }: PropertyWizardProps) {
-    const router = useRouter();
     const [draft, setDraft] = useState<Draft>(initial?.draft ?? INITIAL_DRAFT);
     const [step, setStep] = useState(0);
     const [propertyId, setPropertyId] = useState<string | null>(initial?.propertyId ?? null);

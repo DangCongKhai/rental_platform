@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { buttonClass } from "@/components/ui/button";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { SearchCard } from "./search-card";
+import { connection } from "next/server";
 
 export function Hero() {
   return (
@@ -53,6 +54,7 @@ export function Hero() {
 
 /** Signed-in only: a welcome pill above the headline. */
 async function Greeting() {
+  await connection();
   const user = await getCurrentUser();
   if (!user) return null;
 

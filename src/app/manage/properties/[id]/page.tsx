@@ -4,6 +4,8 @@ import { validatePropertyPolicies } from "@/domain/policies";
 import { getMyProperty } from "@/server/properties";
 import { PropertyWizard, type Draft } from "../new/property-wizard";
 
+export const instant = false;
+
 type PropertyType = NonNullable<Draft["propertyType"]>;
 type RentalArrangement = NonNullable<Draft["rentalArrangement"]>;
 

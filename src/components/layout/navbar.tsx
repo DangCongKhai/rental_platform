@@ -6,6 +6,7 @@ import { buttonClass } from "@/components/ui/button";
 import { ArrowUpRightIcon, GlobeIcon } from "@/components/ui/icons";
 import { Logo } from "@/components/ui/logo";
 import { UserMenu } from "./user-menu";
+import { connection } from "next/server";
 
 // Search, guide and owner pages are not built yet; they point home for now.
 const NAV_LINKS = [
@@ -57,6 +58,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
 }
 
 async function AccountActions() {
+  await connection();
   const user = await getCurrentUser();
   return user ? <UserMenu user={user} /> : <GuestActions />;
 }
