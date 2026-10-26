@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AMENITY_CATALOG, searchAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
@@ -12,6 +12,7 @@ export type PolicyValue = "ALLOWED" | "NOT_ALLOWED" | "ASK_OWNER";
 
 export type Draft = {
     name: string;
+    description: string;
     propertyType: PropertyType | "";
     rentalArrangement: RentalArrangement | "";
     addressLine: string;
@@ -31,6 +32,7 @@ export type Draft = {
 
 const INITIAL_DRAFT: Draft = {
     name: "",
+    description: "",
     propertyType: "",
     rentalArrangement: "",
     addressLine: "",
@@ -52,7 +54,36 @@ const INITIAL_DRAFT: Draft = {
     },
 };
 
-const STEPS = ["Loại hình", "Địa chỉ", "Tiện ích chung", "Nội quy", "Xem lại"];
+const STEPS = [
+    "Thông tin cơ bản",
+    "Hình thức thuê",
+    "Tiện ích chung",
+    "Quy định và nội quy",
+    "Kiểm tra lại",
+];
+
+const STEP_CONTENT = [
+    {
+        title: "Thông tin cơ bản về bất động sản",
+        description: "Cung cấp tên, loại hình, mô tả và địa chỉ của bất động sản.",
+    },
+    {
+        title: "Hình thức thuê",
+        description: "Chọn cho thuê nguyên căn hay từng phòng/căn riêng biệt.",
+    },
+    {
+        title: "Tiện ích chung",
+        description: "Chọn tiện ích có sẵn tại bất động sản và các khu vực dùng chung.",
+    },
+    {
+        title: "Quy định và nội quy",
+        description: "Cho người thuê biết các quy định về thú cưng, hút thuốc và sinh hoạt.",
+    },
+    {
+        title: "Kiểm tra lại thông tin",
+        description: "Xem lại thông tin trước khi lưu bản nháp.",
+    },
+];
 
 const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
     HOUSE: "Nhà riêng",
@@ -65,6 +96,11 @@ const ARRANGEMENT_LABELS: Record<RentalArrangement, string> = {
     SEPARATE_UNITS: "Cho thuê từng phòng/căn",
 };
 
+const ARRANGEMENT_DESCRIPTIONS: Record<RentalArrangement, string> = {
+    WHOLE_SPACE: "Cho thuê nguyên căn hoặc toàn bộ căn hộ cho một hộ thuê.",
+    SEPARATE_UNITS: "Cho thuê từng phòng hoặc căn độc lập trong cùng bất động sản.",
+};
+
 type PropertyWizardProps = {
     initial?: {
         propertyId: string;
@@ -74,6 +110,7 @@ type PropertyWizardProps = {
 };
 
 export function PropertyWizard({ initial }: PropertyWizardProps) {
+    const rentalArrangementGroupName = useId();
     const [draft, setDraft] = useState<Draft>(initial?.draft ?? INITIAL_DRAFT);
     const [step, setStep] = useState(0);
     const [propertyId, setPropertyId] = useState<string | null>(initial?.propertyId ?? null);
@@ -84,6 +121,24 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
     const [pending, startTransition] = useTransition();
+    const resetNewDraftOnHide = useRef(false);
+
+    useLayoutEffect(() => {
+        return () => {
+            if (!initial && resetNewDraftOnHide.current) {
+                resetNewDraftOnHide.current = false;
+                setDraft(INITIAL_DRAFT);
+                setStep(0);
+                setPropertyId(null);
+                setRevision(1);
+                setAmenitySearch("");
+                setNewAmenity("");
+                setNewRule("");
+                setError("");
+                setSaved(false);
+            }
+        };
+    }, [initial]);
 
     const amenitySuggestions = searchAmenityCatalog(amenitySearch, "PROPERTY");
 
@@ -155,9 +210,14 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     function saveDraft() {
         setError("");
 
-        if (!draft.name.trim() || !draft.propertyType || !draft.rentalArrangement) {
+        if (!draft.name.trim() || !draft.propertyType) {
             setError("Hãy nhập tên và chọn loại hình trước khi lưu bản nháp.");
             setStep(0);
+            return;
+        }
+        if (!draft.rentalArrangement) {
+            setError("Hãy chọn hình thức thuê trước khi lưu bản nháp.");
+            setStep(1);
             return;
         }
 
@@ -187,6 +247,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                     }
 
                     setPropertyId(result.data.id);
+                    if (!initial) resetNewDraftOnHide.current = true;
                 }
 
                 setRevision(result.data.contentRevision);
@@ -198,39 +259,61 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     }
 
     return (
-        <section className="mx-auto max-w-3xl space-y-7">
-            <header>
-                <Link href="/manage/properties" className="text-sm font-semibold text-brand hover:text-brand-deep">
-                    ← Danh sách bất động sản
-                </Link>
-                <p className="mt-5 text-sm font-semibold text-brand">TẠO BẢN NHÁP</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Thêm bất động sản</h1>
-                <p className="mt-2 text-muted">Lưu bản nháp ở bất kỳ bước nào và tiếp tục hoàn thiện sau.</p>
+        <section className="space-y-5">
+            <header className="space-y-3">
+                <p className="text-xs text-subtle">Không gian quản lý / Chủ nhà / Bất động sản / Tạo bất động sản</p>
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand">Tạo bản nháp</p>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Thêm bất động sản mới</h1>
+                    <p className="mt-1 text-sm text-muted">Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu tìm người thuê.</p>
+                </div>
             </header>
 
-            <ol aria-label="Các bước tạo bất động sản" className="grid grid-cols-5 gap-2">
-                {STEPS.map((label, index) => (
-                    <li key={label}>
-                        <button
-                            type="button"
-                            aria-current={step === index ? "step" : undefined}
-                            onClick={() => setStep(index)}
-                            className={`min-h-11 w-full rounded-xl px-2 py-2 text-xs font-semibold sm:text-sm ${
-                                step === index ? "bg-brand text-white" : "bg-white text-subtle hover:bg-brand-soft"
-                            }`}
-                        >
-                            <span className="block">{index + 1}</span>
-                            <span className="hidden sm:block">{label}</span>
-                        </button>
-                    </li>
-                ))}
-            </ol>
+            <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+                <aside className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-sm font-semibold text-ink">Các bước đăng ký</h2>
+                        <span className="text-xs text-subtle">Bước {step + 1} / {STEPS.length}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-line">
+                        <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+                    </div>
+                    <ol aria-label="Các bước tạo bất động sản" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                        {STEPS.map((label, index) => (
+                            <li key={label}>
+                                <button
+                                    type="button"
+                                    aria-current={step === index ? "step" : undefined}
+                                    onClick={() => setStep(index)}
+                                    className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors sm:text-sm ${
+                                        step === index
+                                            ? "border-brand bg-brand-soft text-brand-deep"
+                                            : "border-line bg-white text-subtle hover:border-line-brand hover:bg-brand-soft/60"
+                                    }`}
+                                >
+                                    <span className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                        step === index ? "bg-brand text-white" : index < step ? "bg-success-soft text-success" : "bg-canvas text-subtle"
+                                    }`}>
+                                        {index < step ? "✓" : index + 1}
+                                    </span>
+                                    <span>{label}</span>
+                                </button>
+                            </li>
+                        ))}
+                    </ol>
+                    <p className="hidden text-xs leading-5 text-subtle lg:block">
+                        Bạn có thể lưu bản nháp và tiếp tục hoàn thiện bất cứ lúc nào.
+                    </p>
+                </aside>
 
-            <div className="rounded-2xl border border-line bg-white p-5 shadow-card sm:p-7">
+                <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+                    <header className="border-b border-line-soft px-5 py-4 sm:px-6">
+                        <h2 className="text-lg font-bold text-ink sm:text-xl">{STEP_CONTENT[step].title}</h2>
+                        <p className="mt-1 text-xs text-muted sm:text-sm">{STEP_CONTENT[step].description}</p>
+                    </header>
+                    <div className="m-4 space-y-5 rounded-xl bg-canvas p-4 sm:m-5 sm:p-5">
                 {step === 0 && (
                     <div className="space-y-5">
-                        <h2 className="text-xl font-semibold">Loại hình và cách cho thuê</h2>
-
                         <label className="block space-y-2 text-sm font-medium">
                             Tên bất động sản
                             <input
@@ -238,7 +321,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                 onChange={(event) => updateDraft("name", event.target.value)}
                                 maxLength={120}
                                 required
-                                className="min-h-11 w-full rounded-xl border border-line-strong px-3"
+                                className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
                                 placeholder="Ví dụ: Căn hộ gần biển Mỹ Khê"
                             />
                         </label>
@@ -249,7 +332,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                 value={draft.propertyType}
                                 onChange={(event) => updateDraft("propertyType", event.target.value as Draft["propertyType"])}
                                 required
-                                className="min-h-11 w-full rounded-xl border border-line-strong px-3"
+                                className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
                             >
                                 <option value="">Chọn loại bất động sản</option>
                                 <option value="HOUSE">Nhà riêng</option>
@@ -258,50 +341,79 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                             </select>
                         </label>
 
-                        <fieldset className="space-y-2">
-                            <legend className="text-sm font-medium">Cách cho thuê</legend>
-                            {(["WHOLE_SPACE", "SEPARATE_UNITS"] as const).map((arrangement) => (
-                                <label key={arrangement} className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3">
+                        <label className="block space-y-2 text-sm font-medium">
+                            Mô tả chi tiết
+                            <textarea
+                                value={draft.description}
+                                onChange={(event) => updateDraft("description", event.target.value)}
+                                maxLength={2000}
+                                rows={3}
+                                className="w-full rounded-lg border border-line-strong bg-white p-3 text-sm"
+                                placeholder="Mô tả ngắn gọn về bất động sản và điểm nổi bật."
+                            />
+                        </label>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {(
+                                [
+                                    ["city", "Thành phố"],
+                                    ["district", "Quận / huyện"],
+                                    ["ward", "Phường / xã"],
+                                    ["addressLine", "Địa chỉ cụ thể"],
+                                ] as const
+                            ).map(([field, label]) => (
+                                <label key={field} className="block space-y-2 text-sm font-medium">
+                                    {label}
                                     <input
-                                        type="radio"
-                                        name="rentalArrangement"
-                                        checked={draft.rentalArrangement === arrangement}
-                                        onChange={() => updateDraft("rentalArrangement", arrangement)}
+                                        value={draft[field]}
+                                        onChange={(event) => updateDraft(field, event.target.value)}
+                                        maxLength={240}
+                                        className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
                                     />
-                                    {ARRANGEMENT_LABELS[arrangement]}
                                 </label>
                             ))}
-                        </fieldset>
+                        </div>
                     </div>
                 )}
 
                 {step === 1 && (
                     <div className="space-y-5">
-                        <h2 className="text-xl font-semibold">Địa chỉ</h2>
-                        {(
-                            [
-                                ["addressLine", "Địa chỉ cụ thể"],
-                                ["ward", "Phường / xã"],
-                                ["district", "Quận / huyện"],
-                                ["city", "Tỉnh / thành phố"],
-                            ] as const
-                        ).map(([field, label]) => (
-                            <label key={field} className="block space-y-2 text-sm font-medium">
-                                {label}
-                                <input
-                                    value={draft[field]}
-                                    onChange={(event) => updateDraft(field, event.target.value)}
-                                    maxLength={240}
-                                    className="min-h-11 w-full rounded-xl border border-line-strong px-3"
-                                />
-                            </label>
-                        ))}
+                        <fieldset className="space-y-2">
+                            <legend className="mb-2 text-sm font-medium">Hình thức cho thuê của bất động sản</legend>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {(["WHOLE_SPACE", "SEPARATE_UNITS"] as const).map((arrangement) => (
+                                    <label
+                                        key={arrangement}
+                                        className={`flex min-h-24 cursor-pointer items-start gap-3 rounded-lg border bg-white p-3 text-sm transition-colors ${
+                                            draft.rentalArrangement === arrangement ? "border-brand ring-1 ring-brand/30" : "border-line hover:border-line-brand"
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={rentalArrangementGroupName}
+                                            value={arrangement}
+                                            checked={draft.rentalArrangement === arrangement}
+                                            onChange={() => updateDraft("rentalArrangement", arrangement)}
+                                            className="mt-0.5 size-4 shrink-0 accent-brand"
+                                        />
+                                        <span>
+                                            <span className="block font-semibold text-ink">{ARRANGEMENT_LABELS[arrangement]}</span>
+                                            <span className="mt-1 block text-xs leading-5 text-muted">{ARRANGEMENT_DESCRIPTIONS[arrangement]}</span>
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </fieldset>
+                        {draft.rentalArrangement === "WHOLE_SPACE" && (
+                            <p className="rounded-lg border border-line bg-white p-3 text-xs leading-5 text-muted">
+                                Hệ thống sẽ tạo một căn/phòng đại diện cho toàn bộ bất động sản.
+                            </p>
+                        )}
                     </div>
                 )}
 
                 {step === 2 && (
                     <div className="space-y-5">
-                        <h2 className="text-xl font-semibold">Tiện ích chung</h2>
                         <p className="text-sm text-muted">Chọn tiện ích dùng chung cho bất động sản. Tiện ích riêng từng căn có thể được thêm sau.</p>
 
                         <label className="block space-y-2 text-sm font-medium">
@@ -364,8 +476,6 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 {step === 3 && (
                     <div className="space-y-5">
-                        <h2 className="text-xl font-semibold">Nội quy</h2>
-
                         {(
                             [
                                 ["pets", "Thú cưng"],
@@ -441,11 +551,11 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 {step === 4 && (
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold">Kiểm tra thông tin</h2>
                         <dl className="grid gap-3 sm:grid-cols-2">
                             <ReviewItem label="Tên" value={draft.name || "Chưa nhập"} />
                             <ReviewItem label="Loại" value={draft.propertyType ? PROPERTY_TYPE_LABELS[draft.propertyType] : "Chưa chọn"} />
                             <ReviewItem label="Cách cho thuê" value={draft.rentalArrangement ? ARRANGEMENT_LABELS[draft.rentalArrangement] : "Chưa chọn"} />
+                            <ReviewItem label="Mô tả" value={draft.description || "Chưa thêm"} />
                             <ReviewItem
                                 label="Địa chỉ"
                                 value={[draft.addressLine, draft.ward, draft.district, draft.city].filter(Boolean).join(", ") || "Chưa thêm"}
@@ -478,52 +588,64 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                         Bản nháp đã được lưu.
                     </p>
                 )}
+                    </div>
 
-                <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-5">
-                    <button
-                        type="button"
-                        disabled={step === 0 || pending}
-                        onClick={() => setStep((current) => Math.max(0, current - 1))}
-                        className={buttonClass({ variant: "secondary" })}
-                    >
-                        Quay lại
-                    </button>
-
-                    <div className="flex flex-wrap gap-3">
-                        <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass({ variant: "secondary" })}>
-                            {pending ? "Đang lưu…" : "Lưu bản nháp"}
-                        </button>
-
-                        {step < STEPS.length - 1 ? (
+                    <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-4 sm:px-6">
+                        {step === 0 ? (
+                            <Link href="/manage/properties" className={buttonClass({ variant: "secondary" })}>
+                                Hủy
+                            </Link>
+                        ) : (
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setError("");
-                                    if (step === 0 && (!draft.name.trim() || !draft.propertyType || !draft.rentalArrangement)) {
-                                        setError("Hãy nhập tên và chọn loại hình trước khi tiếp tục.");
-                                        return;
-                                    }
-                                    setStep((current) => Math.min(STEPS.length - 1, current + 1));
-                                }}
-                                className={buttonClass()}
+                                disabled={pending}
+                                onClick={() => setStep((current) => Math.max(0, current - 1))}
+                                className={buttonClass({ variant: "secondary" })}
                             >
-                                Tiếp tục
-                            </button>
-                        ) : (
-                            <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass()}>
-                                {pending ? "Đang lưu…" : "Lưu hoàn tất"}
+                                Quay lại
                             </button>
                         )}
-                    </div>
+
+                        <div className="flex flex-wrap gap-3">
+                            <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass({ variant: "secondary" })}>
+                                {pending ? "Đang lưu…" : "Lưu bản nháp"}
+                            </button>
+
+                            {step < STEPS.length - 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setError("");
+                                        if (step === 0 && (!draft.name.trim() || !draft.propertyType)) {
+                                            setError("Hãy nhập tên và chọn loại hình trước khi tiếp tục.");
+                                            return;
+                                        }
+                                        if (step === 1 && !draft.rentalArrangement) {
+                                            setError("Hãy chọn hình thức thuê trước khi tiếp tục.");
+                                            return;
+                                        }
+                                        setStep((current) => Math.min(STEPS.length - 1, current + 1));
+                                    }}
+                                    className={buttonClass()}
+                                >
+                                    Bước tiếp theo <span aria-hidden="true">→</span>
+                                </button>
+                            ) : (
+                                <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass()}>
+                                    {pending ? "Đang lưu…" : "Lưu bản nháp"}
+                                </button>
+                            )}
+                        </div>
+                    </footer>
+
+                    {propertyId && (
+                        <p className="px-5 pb-4 text-xs text-subtle sm:px-6">
+                            Mã bản nháp: {propertyId} · Phiên bản nội dung: {revision}
+                        </p>
+                    )}
+
+                    <p className="sr-only">Danh mục có {AMENITY_CATALOG.length} tiện ích chuẩn.</p>
                 </div>
-
-                {propertyId && (
-                    <p className="text-sm text-subtle">
-                        Mã bản nháp: {propertyId} · Phiên bản nội dung: {revision}
-                    </p>
-                )}
-
-                <p className="sr-only">Danh mục có {AMENITY_CATALOG.length} tiện ích chuẩn.</p>
             </div>
         </section>
     );

@@ -19,13 +19,16 @@ const NAV_LINKS = [
 type NavbarProps = {
   /** Transparent over a hero image (landing) instead of solid dark. */
   transparent?: boolean;
+  /** Compact header for the owner management workspace. */
+  compact?: boolean;
 };
 
-export function Navbar({ transparent = false }: NavbarProps) {
+export function Navbar({ transparent = false, compact = false }: NavbarProps) {
   return (
     <header
       className={cn(
-        "relative z-30 flex min-h-[75px] flex-wrap items-center gap-x-8 gap-y-2 px-4 py-3 text-white sm:px-10",
+        "relative z-30 flex flex-wrap items-center gap-x-8 gap-y-2 px-4 text-white sm:px-8",
+        compact ? "min-h-12 py-1.5" : "min-h-[75px] py-3 sm:px-10",
         transparent ? "border-b border-white/14 bg-transparent" : "bg-ink",
       )}
     >
@@ -38,7 +41,10 @@ export function Navbar({ transparent = false }: NavbarProps) {
           <Link
             key={link.label}
             href={link.href}
-            className="inline-flex min-h-11 items-center text-[15px] font-medium text-on-dark hover:text-white"
+            className={cn(
+              "inline-flex items-center font-medium text-on-dark hover:text-white",
+              compact ? "min-h-9 text-xs" : "min-h-11 text-[15px]",
+            )}
           >
             {link.label}
           </Link>

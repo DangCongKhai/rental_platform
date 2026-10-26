@@ -40,6 +40,7 @@ export default async function EditPropertyPage({params}: {params: Promise<{ id: 
 
     const draft: Draft = {
         name: property.name,
+        description: property.description ?? "",
         propertyType,
         rentalArrangement,
         addressLine: property.addressLine ?? "",

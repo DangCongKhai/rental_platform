@@ -30,7 +30,7 @@ export default async function ManagePropertiesPage() {
                 <div>
                     <p className="text-sm font-semibold text-brand">KHÔNG GIAN CHỦ NHÀ</p>
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Bất động sản của tôi</h1>
-                    <p className="mt-2 max-w-2xl text-muted">Quản lý thông tin nhà cho thuê và tiếp tục hoàn thienj bản nháp bất cứ lúc nào.</p>
+                    <p className="mt-2 max-w-2xl text-muted">Quản lý thông tin nhà cho thuê và tiếp tục hoàn thiện bản nháp bất cứ lúc nào.</p>
                 </div>
 
                 <Link href="/manage/properties/new" className={buttonClass({size: "lg"})}>+ Thêm bất động sản</Link>
@@ -54,7 +54,7 @@ export default async function ManagePropertiesPage() {
 
                         return (
                             <article key={property.id} className="rounded-2xl border border-line bg-white p-5 shadow-card sm:p-6">
-                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-brand">
                                             {propertyTypeLabels[property.propertyType] ?? property.propertyType}
@@ -65,11 +65,13 @@ export default async function ManagePropertiesPage() {
                                         <p className="mt-2 text-sm text-muted">{address || "Chưa thêm địa chỉ"}</p>
                                     </div>
 
-                                    <Link href={`/manage/properties/${property.id}`} className={buttonClass({
-                                        variant: "secondary",
-                                        className: "shrink-0"
-                                    })}>Tiếp tục chỉnh sửa</Link>
-                                    <PropertyActions propertyId={property.id} />
+                                    <div className="flex shrink-0 items-start gap-3">
+                                        <Link href={`/manage/properties/${property.id}`} className={buttonClass({
+                                            variant: "secondary",
+                                            className: "shrink-0"
+                                        })}>Tiếp tục chỉnh sửa</Link>
+                                        <PropertyActions propertyId={property.id} />
+                                    </div>
                                 </div>
 
                                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-line-soft pt-4 text-sm text-subtle">
