@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, buttonClass } from "@/components/ui/button";
 
-const COOLDOWN_SECONDS = 45;
+const COOLDOWN_SECONDS = 20;
 
 /** "Resend email" button that locks for a cooldown after each send. */
 export function ResendButton({ onResend }: { onResend: () => Promise<void> }) {

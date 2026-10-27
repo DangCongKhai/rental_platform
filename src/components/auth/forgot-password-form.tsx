@@ -63,7 +63,7 @@ export function ForgotPasswordForm() {
       </Button>
       {success && (
         <Alert tone="info">
-          Nếu tài khoản tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.
+          Nếu email này tồn tại trong hệ thống, bạn sẽ nhận được một liên kết để đặt lại mật khẩu trong vòng vài phút. Vui lòng kiểm tra hộp thư của bạn.
         </Alert>
       )}
       <AuthSwitch>

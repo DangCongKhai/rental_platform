@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/auth/current-user";
 import { buttonClass } from "@/components/ui/button";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { SearchCard } from "./search-card";
@@ -23,9 +21,6 @@ export function Hero() {
       />
       <div className="relative mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-10 px-4 pb-30 pt-48 sm:px-10">
         <div className="flex max-w-[620px] flex-[1_1_480px] flex-col gap-5">
-          <Suspense>
-            <Greeting />
-          </Suspense>
           <div className="text-xs font-semibold uppercase leading-4 tracking-[.08em] text-cherub">
             Thuê dài hạn tại Đà Nẵng · tối thiểu 3 tháng
           </div>
@@ -51,15 +46,4 @@ export function Hero() {
   );
 }
 
-/** Signed-in only: a welcome pill above the headline. */
-async function Greeting() {
-  const user = await getCurrentUser();
-  if (!user) return null;
 
-  return (
-    <div className="inline-flex min-h-11 items-center gap-2.5 self-start rounded-full border border-white/30 bg-white/14 px-4 text-sm font-semibold">
-      <span className="size-2 rounded-full bg-cherub" />
-      Chào {user.name}, chào mừng bạn trở lại rentOS
-    </div>
-  );
-}

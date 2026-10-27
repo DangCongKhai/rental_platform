@@ -80,6 +80,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
         link: { resourceType: "tenancy" as const, resourceId: profileId },
       };
       await createNotification(tx, input);
+      await createNotification(tx, input);
     })).rejects.toMatchObject({ code: "P2002" });
     expect(await prisma.notification.count({ where: { eventKey } })).toBe(0);
   });

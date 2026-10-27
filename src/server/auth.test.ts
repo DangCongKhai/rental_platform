@@ -47,6 +47,7 @@ const activeProfile = {
   fullName: "Mai Nguyen",
   isAdmin: false,
   accountStatus: "ACTIVE",
+  avatarUrl: null,
 };
 
 function signInAs(profile = activeProfile) {
@@ -110,6 +111,7 @@ describe("requireUser", () => {
       email: "mai@example.com",
       fullName: "Mai Nguyen",
       isAdmin: false,
+      avatarUrl: "",
     });
     expect(formData.get("user_id")).not.toBe(user.userId);
   });

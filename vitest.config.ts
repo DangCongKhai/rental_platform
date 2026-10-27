@@ -26,6 +26,14 @@ export default defineConfig({
           include: ["src/components/**/*.test.tsx"],
         },
       },
+      {
+        extends: true,
+        test: {
+          name: "domain",
+          environment: "node",
+          include: ["src/domain/**/*.test.ts"],
+        },
+      },
     ],
   },
 });
