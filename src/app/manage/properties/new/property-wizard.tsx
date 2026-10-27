@@ -2,7 +2,7 @@
 
 import { useId, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { AMENITY_CATALOG, searchAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
+import { AMENITY_CATALOG, getAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
 import { buttonClass } from "@/components/ui/button";
 
@@ -115,7 +115,6 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     const [step, setStep] = useState(0);
     const [propertyId, setPropertyId] = useState<string | null>(initial?.propertyId ?? null);
     const [revision, setRevision] = useState(initial?.revision ?? 1);
-    const [amenitySearch, setAmenitySearch] = useState("");
     const [newAmenity, setNewAmenity] = useState("");
     const [newRule, setNewRule] = useState("");
     const [error, setError] = useState("");
@@ -131,7 +130,6 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                 setStep(0);
                 setPropertyId(null);
                 setRevision(1);
-                setAmenitySearch("");
                 setNewAmenity("");
                 setNewRule("");
                 setError("");
@@ -140,7 +138,10 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
         };
     }, [initial]);
 
-    const amenitySuggestions = searchAmenityCatalog(amenitySearch, "PROPERTY");
+    const amenityOptions = getAmenityCatalog("PROPERTY");
+    const selectedAmenityCount =
+        Object.values(draft.sharedAmenities.standard).filter((amenity) => amenity.enabled).length +
+        draft.sharedAmenities.custom.length;
 
     function updateDraft<K extends keyof Draft>(key: K, value: Draft[K]) {
         setDraft((current) => ({ ...current, [key]: value }));
@@ -177,7 +178,6 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
             },
         }));
         setNewAmenity("");
-        setAmenitySearch("");
         setSaved(false);
     }
 
@@ -414,47 +414,57 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 {step === 2 && (
                     <div className="space-y-5">
-                        <p className="text-sm text-muted">Chọn tiện ích dùng chung cho bất động sản. Tiện ích riêng từng căn có thể được thêm sau.</p>
+                        <div className="flex flex-wrap items-end justify-between gap-2">
+                            <div>
+                                <h3 className="text-sm font-semibold text-ink">Tiện ích có sẵn</h3>
+                                <p className="mt-1 text-xs text-muted">Chọn một hoặc nhiều tiện ích dùng chung cho bất động sản.</p>
+                            </div>
+                            <p className="text-xs font-medium text-subtle">Đã chọn {selectedAmenityCount}</p>
+                        </div>
 
-                        <label className="block space-y-2 text-sm font-medium">
-                            Tìm tiện ích
-                            <input
-                                value={amenitySearch}
-                                onChange={(event) => setAmenitySearch(event.target.value)}
-                                className="min-h-11 w-full rounded-xl border border-line-strong px-3"
-                                placeholder="Ví dụ: elevator"
-                            />
-                        </label>
-
-                        {amenitySuggestions.length > 0 && (
-                            <ul className="space-y-2">
-                                {amenitySuggestions.map((amenity) => (
+                        {amenityOptions.length > 0 ? (
+                            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                {amenityOptions.map((amenity) => {
+                                    const selected = draft.sharedAmenities.standard[amenity.key]?.enabled === true;
+                                    return (
                                     <li key={amenity.key}>
                                         <button
                                             type="button"
+                                            aria-pressed={selected}
                                             onClick={() => toggleAmenity(amenity.key)}
-                                            className="min-h-11 w-full rounded-xl border border-line px-3 text-left hover:bg-brand-soft"
+                                            className={`flex min-h-12 w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                                                selected
+                                                    ? "border-brand bg-brand-soft font-semibold text-brand-deep ring-1 ring-brand/20"
+                                                    : "border-line bg-white text-ink hover:border-line-brand hover:bg-brand-soft/50"
+                                            }`}
                                         >
-                                            {draft.sharedAmenities.standard[amenity.key]?.enabled ? "✓ " : ""}
-                                            {amenity.label}
+                                            <span className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-xs ${
+                                                selected ? "border-brand bg-brand text-white" : "border-line-strong text-subtle"
+                                            }`} aria-hidden="true">{selected ? "✓" : "+"}</span>
+                                            <span>{amenity.label}</span>
                                         </button>
                                     </li>
-                                ))}
+                                    );
+                                })}
                             </ul>
+                        ) : (
+                            <p className="rounded-lg border border-dashed border-line-strong bg-white p-4 text-sm text-muted">
+                                Không tìm thấy tiện ích phù hợp. Bạn có thể thêm tiện ích riêng bên dưới.
+                            </p>
                         )}
 
-                        <div className="space-y-2">
+                        <div className="space-y-3 border-t border-line-soft pt-4">
                             <label className="block space-y-2 text-sm font-medium">
                                 Tiện ích khác
                                 <input
                                     value={newAmenity}
                                     onChange={(event) => setNewAmenity(event.target.value)}
                                     maxLength={80}
-                                    className="min-h-11 w-full rounded-xl border border-line-strong px-3"
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
                                     placeholder="Nhập tiện ích chưa có trong danh sách"
                                 />
                             </label>
-                            <button type="button" onClick={addCustomAmenity} className={buttonClass({ variant: "secondary" })}>
+                            <button type="button" disabled={!newAmenity.trim()} onClick={addCustomAmenity} className={buttonClass({ variant: "secondary" })}>
                                 Thêm tiện ích khác
                             </button>
                         </div>
@@ -607,9 +617,11 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                         )}
 
                         <div className="flex flex-wrap gap-3">
-                            <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass({ variant: "secondary" })}>
-                                {pending ? "Đang lưu…" : "Lưu bản nháp"}
-                            </button>
+                            {step < STEPS.length - 1 && (
+                                <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass({ variant: "secondary" })}>
+                                    {pending ? "Đang lưu…" : "Lưu bản nháp"}
+                                </button>
+                            )}
 
                             {step < STEPS.length - 1 ? (
                                 <button
