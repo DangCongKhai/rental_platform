@@ -26,7 +26,7 @@ vi.mock("next/navigation", () => ({
     unstable_rethrow: vi.fn(),
 }));
 
-import { archiveProperty, createProperty, updateProperty } from "../app/manage/properties/actions";
+import { archiveProperty, createProperty, updateProperty } from "../app/owner/properties/actions";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;

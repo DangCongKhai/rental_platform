@@ -144,7 +144,7 @@ export async function createProperty(input: unknown): Promise<ActionResult<Creat
             return created;
         });
 
-        revalidatePath("/manage/properties");
+        revalidatePath("/owner/properties");
 
         return {
             id: property.id,
@@ -232,8 +232,8 @@ export async function updateProperty(id: string, input: unknown): Promise<Action
             throw new ActionError("CONFLICT", "Thông tin đã thay đổi. Hãy tải lại trang và thử lại.");
         }
 
-        revalidatePath("/manage/properties");
-        revalidatePath(`/manage/properties/${id}`);
+        revalidatePath("/owner/properties");
+        revalidatePath(`/owner/properties/${id}`);
 
         const property = await prisma.property.findFirstOrThrow({
             where: { id, ownerId: user.profileId },
@@ -293,7 +293,7 @@ export async function archiveProperty(id: string): Promise<ActionResult<void>> {
             });
         });
 
-        revalidatePath("/manage/properties");
-        revalidatePath(`/manage/properties/${id}`);
+        revalidatePath("/owner/properties");
+        revalidatePath(`/owner/properties/${id}`);
     });
 }

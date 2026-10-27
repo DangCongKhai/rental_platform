@@ -10,6 +10,7 @@ export type SessionUser = {
   email: string;
   fullName: string;
   isAdmin: boolean;
+  avatarUrl: string;
 };
 
 const NOT_FOUND = "Không tìm thấy dữ liệu.";
@@ -20,6 +21,7 @@ function toSessionUser(profile: {
   email: string;
   fullName: string;
   isAdmin: boolean;
+  avatarUrl: string | null;
 }): SessionUser {
   return {
     profileId: profile.id,
@@ -27,6 +29,7 @@ function toSessionUser(profile: {
     email: profile.email,
     fullName: profile.fullName,
     isAdmin: profile.isAdmin,
+    avatarUrl: profile.avatarUrl || "",
   };
 }
 

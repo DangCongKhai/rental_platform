@@ -602,7 +602,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-4 sm:px-6">
                         {step === 0 ? (
-                            <Link href="/manage/properties" className={buttonClass({ variant: "secondary" })}>
+                            <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
                                 Hủy
                             </Link>
                         ) : (
