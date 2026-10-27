@@ -25,7 +25,13 @@ export function SiteFooter() {
               {col.links.map((label) => (
                 <Link
                   key={label}
-                  href={label === "FAQ" ? "/#faq" : "/"}
+                  href={
+                    label === "FAQ"
+                      ? "/#faq"
+                      : label === "Không gian quản lý"
+                        ? "/owner/properties"
+                        : "/"
+                  }
                   className="text-on-dark-muted hover:text-white"
                 >
                   {label}

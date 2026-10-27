@@ -60,3 +60,60 @@ export const ContractIcon = icon(
   "M4 1.5h5.5L13 5v9.5H4zM9.5 1.5V5H13M6 9.5l1.4 1.4L10 8.3",
 );
 export const CalendarIcon = icon("M2.5 4h11v9.5h-11zM2.5 7h11M5.5 2v3M10.5 2v3");
+
+export function BellIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3.4 6.3a4.6 4.6 0 019.2 0c0 3 .7 4.1 1.2 4.6H2.2c.5-.5 1.2-1.6 1.2-4.6z" />
+      <path d="M6.3 12.2a1.7 1.7 0 003.4 0" />
+    </Icon>
+  );
+}
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.4 7.2 8 2.6l5.6 4.6V13.4H10V9.2H6v4.2H2.4z" />
+    </Icon>
+  );
+}
+
+export function BuildingIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.6 13.4V3.2h6.2v10.2M8.8 6.4H13.4v7M4.4 5.6h2.2M4.4 8h2.2M4.4 10.4h2.2" />
+    </Icon>
+  );
+}
+
+export function MenuListIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.5 4h11M2.5 8h11M2.5 12h11" />
+    </Icon>
+  );
+}
+
+export function RequestIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 1.6h5.2L13 5.2v9.2H4zM9.2 1.6V5.2H13M6 8.2h4M6 10.6h4" />
+    </Icon>
+  );
+}
+
+export function UserIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 8.3a2.3 2.3 0 100-4.6 2.3 2.3 0 000 4.6zM3.2 13.3c.6-2.1 2.4-3.2 4.8-3.2s4.2 1.1 4.8 3.2" />
+    </Icon>
+  );
+}
+
+export function HelpIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8zM6.5 6.3a1.6 1.6 0 112.9.9c-.4.6-1.4.9-1.4 1.8M8 11.7v.1" />
+    </Icon>
+  );
+}

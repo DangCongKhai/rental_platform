@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { buttonClass } from "@/components/ui/button";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
@@ -24,9 +23,6 @@ export function Hero() {
       />
       <div className="relative mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-10 px-4 pb-30 pt-48 sm:px-10">
         <div className="flex max-w-[620px] flex-[1_1_480px] flex-col gap-5">
-          <Suspense>
-            <Greeting />
-          </Suspense>
           <div className="text-xs font-semibold uppercase leading-4 tracking-[.08em] text-cherub">
             Thuê dài hạn tại Đà Nẵng · tối thiểu 3 tháng
           </div>
