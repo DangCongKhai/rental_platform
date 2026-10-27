@@ -16,12 +16,12 @@ import {
 
 const ITEMS = [
   { href: "/owner", label: "Tổng quan", icon: HomeIcon, exact: true },
-  { href: "/owner/properties", label: "Bất động sản", icon: BuildingIcon },
-  { href: "/owner/listings", label: "Tin đăng", icon: MenuListIcon },
-  { href: "/owner/requests", label: "Yêu cầu thuê", icon: RequestIcon },
-  { href: "/owner/tenancies", label: "Kỳ thuê và hợp đồng", icon: ContractIcon },
-  { href: "/owner/notifications", label: "Thông báo", icon: BellIcon },
-  { href: "/owner/profile", label: "Hồ sơ cá nhân", icon: UserIcon },
+  { href: "/owner/properties", label: "Bất động sản", icon: BuildingIcon, exact: false },
+  { href: "/owner/listings", label: "Tin đăng", icon: MenuListIcon, exact: false },
+  { href: "/owner/requests", label: "Yêu cầu thuê", icon: RequestIcon, exact: false },
+  { href: "/owner/tenancies", label: "Kỳ thuê và hợp đồng", icon: ContractIcon, exact: false },
+  { href: "/owner/notifications", label: "Thông báo", icon: BellIcon, exact: false },
+  { href: "/owner/profile", label: "Hồ sơ cá nhân", icon: UserIcon, exact: false },
 ] as const;
 
 function isCurrent(pathname: string, href: string, exact?: boolean) {

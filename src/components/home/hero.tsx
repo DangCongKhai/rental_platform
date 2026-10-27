@@ -1,10 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/current-user";
 import { buttonClass } from "@/components/ui/button";
 import { ArrowUpRightIcon } from "@/components/ui/icons";
 import { SearchCard } from "./search-card";
-import { connection } from "next/server";
 
 export function Hero() {
   return (
@@ -48,16 +46,4 @@ export function Hero() {
   );
 }
 
-/** Signed-in only: a welcome pill above the headline. */
-async function Greeting() {
-  await connection();
-  const user = await getCurrentUser();
-  if (!user) return null;
 
-  return (
-    <div className="inline-flex min-h-11 items-center gap-2.5 self-start rounded-full border border-white/30 bg-white/14 px-4 text-sm font-semibold">
-      <span className="size-2 rounded-full bg-cherub" />
-      Chào {user.name}, chào mừng bạn trở lại rentOS
-    </div>
-  );
-}
