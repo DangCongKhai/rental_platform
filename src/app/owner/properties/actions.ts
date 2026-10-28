@@ -9,6 +9,7 @@ import { ActionError, runAction } from "@/server/action";
 import { requireUser } from "@/server/auth";
 import { prisma } from "@/server/db";
 import type { ActionResult } from "@/server/validation";
+import { normalizeUnitLabel } from "@/domain/units";
 
 const propertyTypeSchema = z.enum(["HOUSE", "APARTMENT", "APARTMENT_BUILDING"]);
 
@@ -21,7 +22,6 @@ const createPropertySchema = z
         rentalArrangement: rentalArrangementSchema,
         addressLine: z.string().trim().max(240).nullable().optional(),
         ward: z.string().trim().max(120).nullable().optional(),
-        district: z.string().trim().max(120).nullable().optional(),
         city: z.string().trim().max(120).nullable().optional(),
         description: z.string().trim().max(2000).nullable().optional(),
         sharedAmenities: z.unknown().optional(),
@@ -116,7 +116,6 @@ export async function createProperty(input: unknown): Promise<ActionResult<Creat
                     rentalArrangement: parsed.data.rentalArrangement,
                     addressLine: nullableText(parsed.data.addressLine),
                     ward: nullableText(parsed.data.ward),
-                    district: nullableText(parsed.data.district),
                     city: nullableText(parsed.data.city),
                     description: nullableText(parsed.data.description),
                     sharedAmenities: amenities.data as Prisma.InputJsonValue,
@@ -137,6 +136,7 @@ export async function createProperty(input: unknown): Promise<ActionResult<Creat
                         bathrooms: 0,
                         bathroomArrangement: "PRIVATE",
                         minimumRentalMonths: 3,
+                        normalizedLabel: normalizeUnitLabel(unitLabel)
                     },
                 });
             }
@@ -191,7 +191,6 @@ export async function updateProperty(id: string, input: unknown): Promise<Action
     if (fields.rentalArrangement !== undefined) changes.rentalArrangement = fields.rentalArrangement;
     if (fields.addressLine !== undefined) changes.addressLine = nullableText(fields.addressLine);
     if (fields.ward !== undefined) changes.ward = nullableText(fields.ward);
-    if (fields.district !== undefined) changes.district = nullableText(fields.district);
     if (fields.city !== undefined) changes.city = nullableText(fields.city);
     if (fields.description !== undefined) changes.description = nullableText(fields.description);
     if (fields.sharedAmenities !== undefined) {

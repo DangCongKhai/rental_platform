@@ -44,12 +44,11 @@ const badgeClass = {
 
 function locationLine(property: {
   ward: string | null;
-  district: string | null;
   addressLine: string | null;
   city: string | null;
 }) {
-  const place = [property.ward, property.district].filter(Boolean).join(", ");
-  return place || property.addressLine || property.city || "Chưa thêm địa chỉ";
+  const place = [property.ward, property.city].filter(Boolean).join(", ");
+  return place || property.addressLine || "Chưa thêm địa chỉ";
 }
 
 function StatusBadge({ label, tone }: { label: string; tone: keyof typeof badgeClass }) {
@@ -166,6 +165,12 @@ export default async function OwnerPropertiesPage({
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Link
+                          href={`/owner/properties/${property.id}/units`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
+                        >
+                          Căn/phòng
+                        </Link>
                         <Link
                           href={`/owner/properties/${property.id}`}
                           className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-ink px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"

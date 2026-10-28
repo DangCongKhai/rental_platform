@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AMENITY_CATALOG, getAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
@@ -17,7 +17,6 @@ export type Draft = {
     rentalArrangement: RentalArrangement | "";
     addressLine: string;
     ward: string;
-    district: string;
     city: string;
     sharedAmenities: Amenities;
     policies: {
@@ -37,7 +36,6 @@ const INITIAL_DRAFT: Draft = {
     rentalArrangement: "",
     addressLine: "",
     ward: "",
-    district: "",
     city: "",
     sharedAmenities: {
         schema_version: 1,
@@ -101,6 +99,12 @@ const ARRANGEMENT_DESCRIPTIONS: Record<RentalArrangement, string> = {
     SEPARATE_UNITS: "Cho thuê từng phòng hoặc căn độc lập trong cùng bất động sản.",
 };
 
+type AdministrativeDivisionOption = {
+    code: string;
+    name: string;
+    type: string;
+};
+
 type PropertyWizardProps = {
     initial?: {
         propertyId: string;
@@ -120,7 +124,88 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
     const [pending, startTransition] = useTransition();
+    const [provinces, setProvinces] = useState<AdministrativeDivisionOption[]>([]);
+    const [provinceCode, setProvinceCode] = useState("");
+    const [wards, setWards] = useState<AdministrativeDivisionOption[]>([]);
+    const [provinceLoading, setProvinceLoading] = useState(true);
+    const [wardLoading, setWardLoading] = useState(false);
+    const [locationError, setLocationError] = useState("");
+    const [locationLoadKey, setLocationLoadKey] = useState(0);
+    const initialLocation = useRef({ city: draft.city, ward: draft.ward });
+    const initialWardReconciled = useRef(false);
     const resetNewDraftOnHide = useRef(false);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        fetch("/api/locations/provinces", { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Không tải được danh sách tỉnh/thành.");
+                return (await response.json()) as AdministrativeDivisionOption[];
+            })
+            .then((items) => {
+                setProvinces(items);
+                const savedCity = initialLocation.current.city;
+                if (!savedCity) return;
+
+                const matchingProvince = items.find(
+                    (item) => item.name.toLocaleLowerCase("vi") === savedCity.toLocaleLowerCase("vi"),
+                );
+                if (matchingProvince) {
+                    setWardLoading(true);
+                    setProvinceCode(matchingProvince.code);
+                    return;
+                }
+
+                initialWardReconciled.current = true;
+                setDraft((current) => ({ ...current, city: "", ward: "" }));
+                setSaved(false);
+                setLocationError("Địa chỉ đã lưu dùng địa giới cũ. Hãy chọn lại tỉnh/thành và phường/xã theo danh sách mới.");
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setLocationError("Không tải được danh sách tỉnh/thành. Hãy thử tải lại danh sách.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setProvinceLoading(false);
+            });
+
+        return () => controller.abort();
+    }, [locationLoadKey]);
+
+    useEffect(() => {
+        if (!provinceCode) return;
+
+        const controller = new AbortController();
+        fetch(`/api/locations/provinces/${encodeURIComponent(provinceCode)}/wards`, { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Không tải được danh sách phường/xã.");
+                return (await response.json()) as AdministrativeDivisionOption[];
+            })
+            .then((items) => {
+                setWards(items);
+                if (initialWardReconciled.current) return;
+
+                initialWardReconciled.current = true;
+                const savedWard = initialLocation.current.ward;
+                if (savedWard && !items.some((item) => item.name.toLocaleLowerCase("vi") === savedWard.toLocaleLowerCase("vi"))) {
+                    setDraft((current) => ({ ...current, ward: "" }));
+                    setSaved(false);
+                    setLocationError("Phường/xã đã lưu không còn trong danh sách mới. Hãy chọn lại phường/xã.");
+                }
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setLocationError("Không tải được danh sách phường/xã. Hãy thử chọn lại tỉnh/thành.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setWardLoading(false);
+            });
+
+        return () => controller.abort();
+    }, [provinceCode, locationLoadKey]);
 
     useLayoutEffect(() => {
         return () => {
@@ -146,6 +231,22 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     function updateDraft<K extends keyof Draft>(key: K, value: Draft[K]) {
         setDraft((current) => ({ ...current, [key]: value }));
         setSaved(false);
+    }
+
+    function selectProvince(code: string) {
+        const selected = provinces.find((province) => province.code === code);
+        setProvinceCode(code);
+        setWards([]);
+        setWardLoading(Boolean(code));
+        initialWardReconciled.current = true;
+        setDraft((current) => ({ ...current, city: selected?.name ?? "", ward: "" }));
+        setLocationError("");
+        setSaved(false);
+    }
+
+    function selectWard(name: string) {
+        updateDraft("ward", name);
+        setLocationError("");
     }
 
     function toggleAmenity(key: AmenityKey) {
@@ -218,6 +319,21 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
         if (!draft.rentalArrangement) {
             setError("Hãy chọn hình thức thuê trước khi lưu bản nháp.");
             setStep(1);
+            return;
+        }
+        if (initialLocation.current.city && (provinceLoading || wardLoading)) {
+            setError("Đang tải địa chỉ theo danh sách mới. Hãy đợi hoàn tất rồi lưu lại.");
+            setStep(0);
+            return;
+        }
+        if (locationError) {
+            setError("Không thể xác nhận địa chỉ theo danh sách mới. Hãy tải lại danh sách hoặc chọn lại địa chỉ.");
+            setStep(0);
+            return;
+        }
+        if ((draft.city && !draft.ward) || (!draft.city && draft.ward)) {
+            setError("Hãy chọn cả tỉnh/thành và phường/xã, hoặc để trống cả hai.");
+            setStep(0);
             return;
         }
 
@@ -354,25 +470,76 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                         </label>
 
                         <div className="grid gap-3 sm:grid-cols-2">
-                            {(
-                                [
-                                    ["city", "Thành phố"],
-                                    ["district", "Quận / huyện"],
-                                    ["ward", "Phường / xã"],
-                                    ["addressLine", "Địa chỉ cụ thể"],
-                                ] as const
-                            ).map(([field, label]) => (
-                                <label key={field} className="block space-y-2 text-sm font-medium">
-                                    {label}
-                                    <input
-                                        value={draft[field]}
-                                        onChange={(event) => updateDraft(field, event.target.value)}
-                                        maxLength={240}
-                                        className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
-                                    />
-                                </label>
-                            ))}
+                            <label className="block space-y-2 text-sm font-medium">
+                                Tỉnh / thành phố
+                                <select
+                                    value={provinceCode}
+                                    onChange={(event) => selectProvince(event.target.value)}
+                                    disabled={provinceLoading || provinces.length === 0}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm disabled:bg-surface disabled:text-subtle"
+                                >
+                                    <option value="">
+                                        {provinceLoading ? "Đang tải tỉnh/thành…" : "Chọn tỉnh/thành phố"}
+                                    </option>
+                                    {provinces.map((province) => (
+                                        <option key={province.code} value={province.code}>
+                                            {province.type} {province.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="block space-y-2 text-sm font-medium">
+                                Phường / xã / đặc khu
+                                <select
+                                    value={wards.some((ward) => ward.name === draft.ward) ? draft.ward : ""}
+                                    onChange={(event) => selectWard(event.target.value)}
+                                    disabled={!provinceCode || wardLoading || wards.length === 0}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm disabled:bg-surface disabled:text-subtle"
+                                >
+                                    <option value="">
+                                        {!provinceCode
+                                            ? "Chọn tỉnh/thành trước"
+                                            : wardLoading
+                                              ? "Đang tải phường/xã…"
+                                              : "Chọn phường/xã"}
+                                    </option>
+                                    {wards.map((ward) => (
+                                        <option key={ward.code} value={ward.name}>
+                                            {ward.type} {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="block space-y-2 text-sm font-medium sm:col-span-2">
+                                Địa chỉ cụ thể
+                                <input
+                                    value={draft.addressLine}
+                                    onChange={(event) => updateDraft("addressLine", event.target.value)}
+                                    maxLength={240}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
+                                    placeholder="Số nhà, tên đường, tòa nhà"
+                                />
+                            </label>
                         </div>
+                        {locationError && (
+                            <div role="alert" className="rounded-lg border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">
+                                <p>{locationError}</p>
+                                {locationError.includes("tải") && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProvinceLoading(true);
+                                            setWardLoading(Boolean(provinceCode));
+                                            setLocationError("");
+                                            setLocationLoadKey((current) => current + 1);
+                                        }}
+                                        className="mt-2 font-semibold underline"
+                                    >
+                                        Tải lại danh sách
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -568,7 +735,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                             <ReviewItem label="Mô tả" value={draft.description || "Chưa thêm"} />
                             <ReviewItem
                                 label="Địa chỉ"
-                                value={[draft.addressLine, draft.ward, draft.district, draft.city].filter(Boolean).join(", ") || "Chưa thêm"}
+                                value={[draft.addressLine, draft.ward, draft.city].filter(Boolean).join(", ") || "Chưa thêm"}
                             />
                             <ReviewItem
                                 label="Tiện ích chung"

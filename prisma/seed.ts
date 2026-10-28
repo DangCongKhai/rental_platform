@@ -143,7 +143,7 @@ async function insertInventory(tx: Tx) {
   const now = new Date().toISOString();
   const properties: Record<string, unknown[]> = {
     id: [], owner: [], name: [], description: [], type: [], arrangement: [],
-    address: [], district: [], latitude: [], longitude: [], amenities: [], policies: [],
+    address: [], latitude: [], longitude: [], amenities: [], policies: [],
   };
   const units: Record<string, unknown[]> = {
     id: [], property: [], label: [], kind: [], area: [], bedrooms: [], amenities: [], rent: [], overrides: [],
@@ -170,7 +170,6 @@ async function insertInventory(tx: Tx) {
     properties.type.push(index === 0 ? "APARTMENT_BUILDING" : "APARTMENT");
     properties.arrangement.push(index === 0 || index === 5 ? "SEPARATE_UNITS" : "WHOLE_SPACE");
     properties.address.push(place.addressLine ?? name);
-    properties.district.push(place.district);
     properties.latitude.push(place.latitude);
     properties.longitude.push(place.longitude);
     properties.amenities.push(JSON.stringify(index === 0 ? SHARED_AMENITIES : { schema_version: 1, standard: {}, custom: [] }));
@@ -260,19 +259,19 @@ async function insertInventory(tx: Tx) {
   await exec(
     tx,
     `INSERT INTO properties (
-       id, owner_id, name, description, property_type, rental_arrangement, address_line, district,
+       id, owner_id, name, description, property_type, rental_arrangement, address_line,
        city, latitude, longitude, shared_amenities, policies
      )
-     SELECT id, owner_id, name, description, property_type, rental_arrangement, address_line, district,
+     SELECT id, owner_id, name, description, property_type, rental_arrangement, address_line,
             'Đà Nẵng', latitude, longitude, shared_amenities::jsonb, policies::jsonb
      FROM unnest(
-       $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
-       $9::numeric[], $10::numeric[], $11::text[], $12::text[]
-     ) AS row(id, owner_id, name, description, property_type, rental_arrangement, address_line, district,
+       $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[],
+       $8::numeric[], $9::numeric[], $10::text[], $11::text[]
+     ) AS row(id, owner_id, name, description, property_type, rental_arrangement, address_line,
               latitude, longitude, shared_amenities, policies)`,
     properties.id, properties.owner, properties.name, properties.description, properties.type,
-    properties.arrangement, properties.address, properties.district, properties.latitude,
-    properties.longitude, properties.amenities, properties.policies,
+    properties.arrangement, properties.address, properties.latitude, properties.longitude,
+    properties.amenities, properties.policies,
   );
   await exec(
     tx,

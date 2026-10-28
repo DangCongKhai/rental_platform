@@ -21,9 +21,8 @@ The table below is the current column list, including the managed auth reference
 | properties | Core | property_type | text |  | No |  | HOUSE APARTMENT APARTMENT_BUILDING |
 | properties | Core | rental_arrangement | text |  | No |  | WHOLE_SPACE or SEPARATE_UNITS |
 | properties | Core | address_line | text |  | Yes |  | Street and building address; may be null in incomplete draft, required at listing submission/publication |
-| properties | Core | ward | text |  | Yes |  | Optional local ward |
-| properties | Core | district | text |  | Yes |  | Searchable district or area; may be null in incomplete draft, required at listing submission/publication |
-| properties | Core | city | text |  | Yes |  | City; may be null in incomplete draft, required at listing submission/publication |
+| properties | Core | ward | text |  | Yes |  | Optional current ward/commune selected from the administrative division list |
+| properties | Core | city | text |  | Yes |  | Optional current province/city selected from the administrative division list |
 | properties | Core | description | text |  | Yes |  | Shared property description; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | shared_amenities | jsonb |  | No | {"schema_version":1,"standard":{},"custom":[]} | Shared property facilities. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}},custom:[text]}. Standard keys/scopes from the server catalog; canonical labels from catalog, no owner_label. Custom text NFC/trim/whitespace-normalized and deduplicated locally using case folding; never auto-promoted to standard search keys. Absent key means not advertised. |
 | properties | Core | policies | jsonb |  | No |  | schema_version defaults pets/smoking and shared_rules |
@@ -36,6 +35,7 @@ The table below is the current column list, including the managed auth reference
 | units | Core | id | uuid | PK | No | gen_random_uuid() | Stable unit UUID |
 | units | Core | property_id | uuid | FK | No |  | Parent property |
 | units | Core | label | text |  | No |  | Room S201 or Entire property; normalized label unique per property |
+| units | Core | normalized_label | text |  | No |  | NFC-normalized, trimmed, whitespace-collapsed lowercase label; unique with property_id |
 | units | Core | unit_kind | text |  | No |  | ROOM STUDIO APARTMENT HOUSE |
 | units | Core | description | text |  | Yes |  | Unit specific description; may be null in incomplete draft, required at listing submission/publication |
 | units | Core | floor | text |  | Yes |  | Flexible floor label |
