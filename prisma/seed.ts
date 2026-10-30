@@ -4,6 +4,7 @@ import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../src/server/db";
 import { createNotification } from "../src/server/notifications";
 import { daNangPlaces } from "./seed-data/da-nang-places";
+import { libraryFileMeta, libraryImagesFor } from "./seed-data/image-library";
 import { adminId, haoId, lanId, linhId, maiId, seedId, seedPeople } from "./seed-data/ids";
 
 if (!process.env.DATABASE_URL && process.env.DIRECT_URL) {
@@ -146,10 +147,10 @@ async function insertInventory(tx: Tx) {
     address: [], latitude: [], longitude: [], amenities: [], policies: [],
   };
   const units: Record<string, unknown[]> = {
-    id: [], property: [], label: [], kind: [], area: [], bedrooms: [], amenities: [], rent: [], overrides: [],
+    id: [], property: [], label: [], normalized: [], kind: [], area: [], bedrooms: [], description: [], amenities: [], rent: [], overrides: [],
   };
   const media: Record<string, unknown[]> = {
-    id: [], property: [], owner: [], path: [], sha: [],
+    id: [], property: [], unit: [], owner: [], path: [], caption: [], sort: [], sha: [], mime: [], size: [],
   };
   const listings: Record<string, unknown[]> = {
     id: [], property: [], title: [], description: [], cover: [], moderation: [], publication: [],
@@ -157,6 +158,7 @@ async function insertInventory(tx: Tx) {
     suspendedAt: [], suspendedBy: [], suspensionReason: [], archivedAt: [],
   };
 
+  let mediaNumber = 1;
   for (let index = 0; index < daNangPlaces.length; index += 1) {
     const place = daNangPlaces[index];
     const propertyId = seedId(3, index + 1);
@@ -198,6 +200,8 @@ async function insertInventory(tx: Tx) {
       units.id.push(unit.id);
       units.property.push(propertyId);
       units.label.push(unit.label);
+      units.normalized.push(unit.label.normalize("NFC").trim().toLocaleLowerCase("vi"));
+      units.description.push(`Phòng ${unit.label} tại ${name}.`);
       units.kind.push(unit.kind);
       units.area.push(unit.area);
       units.bedrooms.push(unit.bedrooms);
@@ -206,12 +210,24 @@ async function insertInventory(tx: Tx) {
       units.overrides.push(JSON.stringify(unit.label === "S205" ? S205_OVERRIDES : {}));
     }
 
-    const mediaId = seedId(5, index + 1);
-    media.id.push(mediaId);
-    media.property.push(propertyId);
-    media.owner.push(owner);
-    media.path.push(`seed/properties/${propertyId}/cover.jpg`);
-    media.sha.push(hex64(index + 1));
+    const images = libraryImagesFor(properties.type.at(-1) as string, rows[0].kind, index + 1);
+    let coverId: string | null = null;
+    for (const [imageIndex, image] of images.entries()) {
+      const mediaId = seedId(5, mediaNumber);
+      mediaNumber += 1;
+      const file = libraryFileMeta(image.file);
+      media.id.push(mediaId);
+      media.property.push(propertyId);
+      media.unit.push(image.level === "unit" ? rows[0].id : "");
+      media.owner.push(owner);
+      media.path.push(image.storage_path);
+      media.caption.push(`${image.caption} — ${name}`);
+      media.sort.push(imageIndex);
+      media.sha.push(file.sha256);
+      media.mime.push("image/webp");
+      media.size.push(file.sizeBytes);
+      if (image.level === "property" && coverId == null) coverId = mediaId;
+    }
 
     const draft = index === 1;
     const pending = index === 2;
@@ -223,7 +239,7 @@ async function insertInventory(tx: Tx) {
     listings.property.push(propertyId);
     listings.title.push(name);
     listings.description.push(`${name} is available through rentOS.`);
-    listings.cover.push(draft ? null : mediaId);
+    listings.cover.push(draft ? null : coverId);
     listings.moderation.push(moderation);
     listings.publication.push(draft || pending || rejected ? "DRAFT" : hidden ? "HIDDEN" : "PUBLISHED");
     listings.submittedAt.push(draft ? null : now);
@@ -276,26 +292,30 @@ async function insertInventory(tx: Tx) {
   await exec(
     tx,
     `INSERT INTO units (
-       id, property_id, label, unit_kind, floor, area_m2, bedrooms, bathrooms, bathroom_arrangement,
+       id, property_id, label, normalized_label, unit_kind, description, floor, area_m2, bedrooms, bathrooms, bathroom_arrangement,
        amenities, advertised_monthly_rent, deposit, minimum_rental_months, max_occupants,
        operational_status, is_marketed, policy_overrides
      )
-     SELECT id, property_id, label, unit_kind, '2', area_m2, bedrooms, 1, 'PRIVATE', amenities::jsonb,
+     SELECT id, property_id, label, normalized_label, unit_kind, description, '2', area_m2, bedrooms, 1, 'PRIVATE', amenities::jsonb,
             rent, rent, 3, 2, 'READY', true, overrides::jsonb
      FROM unnest(
-       $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::numeric[], $6::int[], $7::text[],
-       $8::numeric[], $9::text[]
-     ) AS row(id, property_id, label, unit_kind, area_m2, bedrooms, amenities, rent, overrides)`,
-    units.id, units.property, units.label, units.kind, units.area, units.bedrooms,
+       $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::numeric[], $8::int[], $9::text[],
+       $10::numeric[], $11::text[]
+     ) AS row(id, property_id, label, normalized_label, unit_kind, description, area_m2, bedrooms, amenities, rent, overrides)`,
+    units.id, units.property, units.label, units.normalized, units.kind, units.description, units.area, units.bedrooms,
     units.amenities, units.rent, units.overrides,
   );
   await exec(
     tx,
-    `INSERT INTO property_media (id, property_id, uploaded_by, storage_path, sha256, mime_type, size_bytes)
-     SELECT id, property_id, uploaded_by, storage_path, sha256, 'image/jpeg', 120000
-     FROM unnest($1::uuid[], $2::uuid[], $3::uuid[], $4::text[], $5::text[])
-       AS row(id, property_id, uploaded_by, storage_path, sha256)`,
-    media.id, media.property, media.owner, media.path, media.sha,
+    `INSERT INTO property_media (
+       id, property_id, unit_id, uploaded_by, storage_path, caption, sort_order, sha256, mime_type, size_bytes
+     )
+     SELECT id, property_id, NULLIF(unit_id, '')::uuid, uploaded_by, storage_path, caption, sort_order,
+            sha256, mime_type, size_bytes
+     FROM unnest(
+       $1::uuid[], $2::uuid[], $3::text[], $4::uuid[], $5::text[], $6::text[], $7::int[], $8::text[], $9::text[], $10::bigint[]
+     ) AS row(id, property_id, unit_id, uploaded_by, storage_path, caption, sort_order, sha256, mime_type, size_bytes)`,
+    media.id, media.property, media.unit, media.owner, media.path, media.caption, media.sort, media.sha, media.mime, media.size,
   );
   await exec(
     tx,

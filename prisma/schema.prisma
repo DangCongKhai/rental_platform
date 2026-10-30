@@ -109,7 +109,7 @@ model PropertyMedia {
   propertyId           String    @map("property_id") @db.Uuid
   unitId               String?   @map("unit_id") @db.Uuid
   uploadedById         String    @map("uploaded_by") @db.Uuid
-  storagePath          String    @unique @map("storage_path")
+  storagePath          String    @map("storage_path")
   caption              String?
   sortOrder            Int       @default(0) @map("sort_order")
   isSelectedForListing Boolean   @default(true) @map("is_selected_for_listing")
@@ -128,6 +128,7 @@ model PropertyMedia {
 
   @@index([propertyId])
   @@index([unitId])
+  @@index([storagePath])
   @@map("property_media")
 }
 

@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   {
     label: "Tìm nhà cho bạn",
-    href: "/",
-    isActive: (pathname: string) => pathname === "/",
+    href: "/listings",
+    isActive: (pathname: string) => pathname === "/listings" || pathname.startsWith("/listings/"),
   },
   {
     label: "Hướng dẫn",
