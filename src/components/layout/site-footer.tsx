@@ -30,9 +30,7 @@ export function SiteFooter() {
                       ? "/#faq"
                       : label === "Không gian quản lý"
                         ? "/owner/properties"
-                        : label === "Tất cả tin đăng"
-                          ? "/listings"
-                          : "/"
+                        : "/"
                   }
                   className="text-on-dark-muted hover:text-white"
                 >

@@ -17,6 +17,7 @@ export type Draft = {
     rentalArrangement: RentalArrangement | "";
     addressLine: string;
     ward: string;
+    district: string;
     city: string;
     sharedAmenities: Amenities;
     policies: {
@@ -36,6 +37,7 @@ const INITIAL_DRAFT: Draft = {
     rentalArrangement: "",
     addressLine: "",
     ward: "",
+    district: "",
     city: "",
     sharedAmenities: {
         schema_version: 1,
@@ -355,6 +357,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                             {(
                                 [
                                     ["city", "Thành phố"],
+                                    ["district", "Quận / huyện"],
                                     ["ward", "Phường / xã"],
                                     ["addressLine", "Địa chỉ cụ thể"],
                                 ] as const
@@ -565,7 +568,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                             <ReviewItem label="Mô tả" value={draft.description || "Chưa thêm"} />
                             <ReviewItem
                                 label="Địa chỉ"
-                                value={[draft.addressLine, draft.ward, draft.city].filter(Boolean).join(", ") || "Chưa thêm"}
+                                value={[draft.addressLine, draft.ward, draft.district, draft.city].filter(Boolean).join(", ") || "Chưa thêm"}
                             />
                             <ReviewItem
                                 label="Tiện ích chung"

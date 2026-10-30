@@ -3,6 +3,7 @@ export type DaNangPlace = {
   name: string | null;
   latitude: string;
   longitude: string;
+  district: string | null;
   addressLine: string | null;
 };
 
@@ -12,6 +13,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "Chung cư Hoàng Anh Gia Lai",
     "latitude": "16.062588",
     "longitude": "108.210201",
+    "district": null,
     "addressLine": "Hàm Nghi"
   },
   {
@@ -19,6 +21,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.076652",
     "longitude": "108.218142",
+    "district": null,
     "addressLine": null
   },
   {
@@ -26,6 +29,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035480",
     "longitude": "108.242410",
+    "district": null,
     "addressLine": null
   },
   {
@@ -33,6 +37,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.044380",
     "longitude": "108.175231",
+    "district": null,
     "addressLine": null
   },
   {
@@ -40,6 +45,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.044528",
     "longitude": "108.175726",
+    "district": null,
     "addressLine": "5"
   },
   {
@@ -47,6 +53,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "Azura",
     "latitude": "16.071706",
     "longitude": "108.229390",
+    "district": null,
     "addressLine": "Cầu Sông Hàn"
   },
   {
@@ -54,6 +61,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "True Friends Tower 1",
     "latitude": "16.090531",
     "longitude": "108.215740",
+    "district": null,
     "addressLine": null
   },
   {
@@ -61,6 +69,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.079417",
     "longitude": "108.222678",
+    "district": null,
     "addressLine": null
   },
   {
@@ -68,6 +77,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "Iot Space",
     "latitude": "16.036363",
     "longitude": "108.218169",
+    "district": "Hải Châu",
     "addressLine": "73 Phan Đăng Lưu"
   },
   {
@@ -75,6 +85,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081210",
     "longitude": "108.229821",
+    "district": null,
     "addressLine": "36 Đường Lê Phụng Hiếu"
   },
   {
@@ -82,6 +93,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080960",
     "longitude": "108.230535",
+    "district": null,
     "addressLine": "16 Đường Hoàng Việt"
   },
   {
@@ -89,6 +101,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081865",
     "longitude": "108.229380",
+    "district": null,
     "addressLine": "Đường Nại Tú 2"
   },
   {
@@ -96,6 +109,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081667",
     "longitude": "108.229059",
+    "district": null,
     "addressLine": "79 Đường Trần Hưng Đạo"
   },
   {
@@ -103,6 +117,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080739",
     "longitude": "108.229100",
+    "district": null,
     "addressLine": "105 Đường Trần Hưng Đạo"
   },
   {
@@ -110,6 +125,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080654",
     "longitude": "108.229098",
+    "district": null,
     "addressLine": "109 Đường Trần Hưng Đạo"
   },
   {
@@ -117,6 +133,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.079080",
     "longitude": "108.229097",
+    "district": null,
     "addressLine": "169 Đường Trần Hưng Đạo"
   },
   {
@@ -124,6 +141,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.075059",
     "longitude": "108.229135",
+    "district": null,
     "addressLine": "301 Đường Trần Hưng Đạo"
   },
   {
@@ -131,6 +149,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.074515",
     "longitude": "108.229144",
+    "district": null,
     "addressLine": "321 Đường Trần Hưng Đạo"
   },
   {
@@ -138,6 +157,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081540",
     "longitude": "108.230636",
+    "district": null,
     "addressLine": "Đường Nguyễn Trung Trực"
   },
   {
@@ -145,6 +165,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081451",
     "longitude": "108.230729",
+    "district": null,
     "addressLine": "123 Đường Nguyễn Trung Trực"
   },
   {
@@ -152,6 +173,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.081324",
     "longitude": "108.230841",
+    "district": null,
     "addressLine": "128 Đường Nguyễn Thị Định"
   },
   {
@@ -159,6 +181,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.083647",
     "longitude": "108.229506",
+    "district": null,
     "addressLine": "57 Đường Nguyễn Trung Trực"
   },
   {
@@ -166,6 +189,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.083294",
     "longitude": "108.229474",
+    "district": null,
     "addressLine": "67 Đường Nguyễn Trung Trực"
   },
   {
@@ -173,6 +197,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.082741",
     "longitude": "108.229619",
+    "district": null,
     "addressLine": "81 Đường Nguyễn Trung Trực"
   },
   {
@@ -180,6 +205,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.086748",
     "longitude": "108.232637",
+    "district": null,
     "addressLine": "85 Đường Hoàng Quốc Việt"
   },
   {
@@ -187,6 +213,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.084796",
     "longitude": "108.230528",
+    "district": null,
     "addressLine": "Đường Hoàng Quốc Việt"
   },
   {
@@ -194,6 +221,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.086191",
     "longitude": "108.232546",
+    "district": null,
     "addressLine": "118 Đường Hoàng Quốc Việt"
   },
   {
@@ -201,6 +229,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.087222",
     "longitude": "108.233796",
+    "district": null,
     "addressLine": "59 Đường Trần Thánh Tông"
   },
   {
@@ -208,6 +237,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.084389",
     "longitude": "108.236993",
+    "district": null,
     "addressLine": "09 Đường Trần Thánh Tông"
   },
   {
@@ -215,6 +245,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.084281",
     "longitude": "108.237096",
+    "district": null,
     "addressLine": "03 Đường Trần Thánh Tông"
   },
   {
@@ -222,6 +253,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "WinMart+",
     "latitude": "16.072697",
     "longitude": "108.174358",
+    "district": null,
     "addressLine": "Đường Lý Thái Tông"
   },
   {
@@ -229,6 +261,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.078958",
     "longitude": "108.168338",
+    "district": null,
     "addressLine": "402 Đường Dũng Sĩ Thanh Khê"
   },
   {
@@ -236,6 +269,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.077493",
     "longitude": "108.165017",
+    "district": null,
     "addressLine": "299 Đường Kinh Dương Vương"
   },
   {
@@ -243,6 +277,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.077768",
     "longitude": "108.165252",
+    "district": null,
     "addressLine": "288 Đường Kinh Dương Vương"
   },
   {
@@ -250,6 +285,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072594",
     "longitude": "108.166382",
+    "district": null,
     "addressLine": "Đường Phùng Hưng"
   },
   {
@@ -257,6 +293,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.075101",
     "longitude": "108.167713",
+    "district": null,
     "addressLine": "Đường Phùng Hưng"
   },
   {
@@ -264,6 +301,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053637",
     "longitude": "108.235193",
+    "district": null,
     "addressLine": "53 Đường Ngọc Hân"
   },
   {
@@ -271,6 +309,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.077763",
     "longitude": "108.170655",
+    "district": null,
     "addressLine": "69 Đường Nguyễn Thị Bảy"
   },
   {
@@ -278,6 +317,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053528",
     "longitude": "108.234583",
+    "district": null,
     "addressLine": "33 Đường Nguyễn Thiếp"
   },
   {
@@ -285,6 +325,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053584",
     "longitude": "108.234888",
+    "district": null,
     "addressLine": "41 Đường Ngọc Hân"
   },
   {
@@ -292,6 +333,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053598",
     "longitude": "108.234993",
+    "district": null,
     "addressLine": "45 Đường Ngọc Hân"
   },
   {
@@ -299,6 +341,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053619",
     "longitude": "108.235040",
+    "district": null,
     "addressLine": "47 Đường Ngọc Hân"
   },
   {
@@ -306,6 +349,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053634",
     "longitude": "108.235085",
+    "district": null,
     "addressLine": "49 Đường Ngọc Hân"
   },
   {
@@ -313,6 +357,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.077973",
     "longitude": "108.170738",
+    "district": null,
     "addressLine": "90 Đường Nguyễn Thị Bảy"
   },
   {
@@ -320,6 +365,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053653",
     "longitude": "108.234562",
+    "district": null,
     "addressLine": "29 Đường Nguyễn Thiếp"
   },
   {
@@ -327,6 +373,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.053597",
     "longitude": "108.234571",
+    "district": null,
     "addressLine": "31 Đường Nguyễn Thiếp"
   },
   {
@@ -334,6 +381,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.076215",
     "longitude": "108.173651",
+    "district": null,
     "addressLine": "25 Đường Phan Nhu"
   },
   {
@@ -341,6 +389,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.054192",
     "longitude": "108.234194",
+    "district": null,
     "addressLine": "12 Đường Nguyễn Thiếp"
   },
   {
@@ -348,6 +397,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.054106",
     "longitude": "108.234207",
+    "district": null,
     "addressLine": "14 Đường Nguyễn Thiếp"
   },
   {
@@ -355,6 +405,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.074938",
     "longitude": "108.173175",
+    "district": null,
     "addressLine": "07 Đường Phú Lộc 19"
   },
   {
@@ -362,6 +413,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072528",
     "longitude": "108.180128",
+    "district": null,
     "addressLine": "130 Đường Yên Khê 1"
   },
   {
@@ -369,6 +421,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.054362",
     "longitude": "108.238975",
+    "district": null,
     "addressLine": "89 Đường Nguyễn Văn Thoại"
   },
   {
@@ -376,6 +429,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.071648",
     "longitude": "108.182250",
+    "district": null,
     "addressLine": "171 Đường Yên Khê 2"
   },
   {
@@ -383,6 +437,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.073988",
     "longitude": "108.180026",
+    "district": null,
     "addressLine": "07 Đường Nguyễn Huy Lượng"
   },
   {
@@ -390,6 +445,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.066578",
     "longitude": "108.180666",
+    "district": null,
     "addressLine": "33 Đường Mẹ Nhu"
   },
   {
@@ -397,6 +453,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.069567",
     "longitude": "108.220943",
+    "district": null,
     "addressLine": "110 Đường Nguyễn Chí Thanh"
   },
   {
@@ -404,6 +461,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.069488",
     "longitude": "108.220934",
+    "district": null,
     "addressLine": null
   },
   {
@@ -411,6 +469,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.069369",
     "longitude": "108.220929",
+    "district": null,
     "addressLine": "116 Đường Nguyễn Chí Thanh"
   },
   {
@@ -418,6 +477,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.067025",
     "longitude": "108.182322",
+    "district": null,
     "addressLine": "916 Đường Trần Cao Vân"
   },
   {
@@ -425,6 +485,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.068987",
     "longitude": "108.176823",
+    "district": null,
     "addressLine": "15 Đường Nguyễn Văn Huề"
   },
   {
@@ -432,6 +493,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.031529",
     "longitude": "108.213163",
+    "district": null,
     "addressLine": "135 Đường Xô Viết Nghệ Tĩnh"
   },
   {
@@ -439,6 +501,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.065773",
     "longitude": "108.184642",
+    "district": null,
     "addressLine": "552 Đường Điện Biên Phủ"
   },
   {
@@ -446,6 +509,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.060554",
     "longitude": "108.173174",
+    "district": null,
     "addressLine": "26 Đường Đồng Khởi"
   },
   {
@@ -453,6 +517,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.061205",
     "longitude": "108.172461",
+    "district": null,
     "addressLine": "34 Đường Thanh Tịnh"
   },
   {
@@ -460,6 +525,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.084169",
     "longitude": "108.222001",
+    "district": null,
     "addressLine": "6 Đường Đức Lợi 3"
   },
   {
@@ -467,6 +533,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080825",
     "longitude": "108.214868",
+    "district": null,
     "addressLine": "24 Đường Hải Sơn"
   },
   {
@@ -474,6 +541,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.065661",
     "longitude": "108.166406",
+    "district": null,
     "addressLine": "207 Đường Tô Hiệu"
   },
   {
@@ -481,6 +549,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.064005",
     "longitude": "108.166539",
+    "district": null,
     "addressLine": "181 Đường Tô Hiệu"
   },
   {
@@ -488,6 +557,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.063694",
     "longitude": "108.166600",
+    "district": null,
     "addressLine": "175 Đường Tô Hiệu"
   },
   {
@@ -495,6 +565,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.064306",
     "longitude": "108.166867",
+    "district": null,
     "addressLine": "194 Đường Tô Hiệu"
   },
   {
@@ -502,6 +573,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.063413",
     "longitude": "108.166991",
+    "district": null,
     "addressLine": "172 Đường Tô Hiệu"
   },
   {
@@ -509,6 +581,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059329",
     "longitude": "108.168024",
+    "district": null,
     "addressLine": "69 Đường Tô Hiệu"
   },
   {
@@ -516,6 +589,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.042064",
     "longitude": "108.211435",
+    "district": null,
     "addressLine": "72 Đường Lương Nhữ Hộc"
   },
   {
@@ -523,6 +597,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059716",
     "longitude": "108.168159",
+    "district": null,
     "addressLine": "80 Đường Tô Hiệu"
   },
   {
@@ -530,6 +605,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.058719",
     "longitude": "108.168561",
+    "district": null,
     "addressLine": "60 Đường Tô Hiệu"
   },
   {
@@ -537,6 +613,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.060659",
     "longitude": "108.161796",
+    "district": null,
     "addressLine": "Đường Tôn Đức Thắng"
   },
   {
@@ -544,6 +621,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.060768",
     "longitude": "108.161644",
+    "district": null,
     "addressLine": "Đường Tôn Đức Thắng"
   },
   {
@@ -551,6 +629,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059247",
     "longitude": "108.164615",
+    "district": null,
     "addressLine": "412 Đường Tôn Đức Thắng"
   },
   {
@@ -558,6 +637,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059129",
     "longitude": "108.164833",
+    "district": null,
     "addressLine": "410 Đường Tôn Đức Thắng"
   },
   {
@@ -565,6 +645,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.073687",
     "longitude": "108.212626",
+    "district": null,
     "addressLine": "150 Đường Ông Ích Khiêm"
   },
   {
@@ -572,6 +653,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022036",
     "longitude": "108.201192",
+    "district": null,
     "addressLine": "201 Đường Lê Đại Hành"
   },
   {
@@ -579,6 +661,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.057104",
     "longitude": "108.175778",
+    "district": null,
     "addressLine": "50 Đường Bắc Sơn"
   },
   {
@@ -586,6 +669,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080947",
     "longitude": "108.214941",
+    "district": null,
     "addressLine": "26 Đường Hải Sơn"
   },
   {
@@ -593,6 +677,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021293",
     "longitude": "108.197414",
+    "district": null,
     "addressLine": "79 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -600,6 +685,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021274",
     "longitude": "108.197371",
+    "district": null,
     "addressLine": "83 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -607,6 +693,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021254",
     "longitude": "108.197323",
+    "district": null,
     "addressLine": "85 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -614,6 +701,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021200",
     "longitude": "108.197204",
+    "district": null,
     "addressLine": "91 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -621,6 +709,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021179",
     "longitude": "108.197158",
+    "district": null,
     "addressLine": "93 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -628,6 +717,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021417",
     "longitude": "108.197742",
+    "district": null,
     "addressLine": "63 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -635,6 +725,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021317",
     "longitude": "108.197454",
+    "district": null,
     "addressLine": "77 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -642,6 +733,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021848",
     "longitude": "108.198031",
+    "district": null,
     "addressLine": "36 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -649,6 +741,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021822",
     "longitude": "108.197979",
+    "district": null,
     "addressLine": "38 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -656,6 +749,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021622",
     "longitude": "108.197423",
+    "district": null,
     "addressLine": "64 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -663,6 +757,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021506",
     "longitude": "108.197118",
+    "district": null,
     "addressLine": "74 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -670,6 +765,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021222",
     "longitude": "108.195911",
+    "district": null,
     "addressLine": "106 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -677,6 +773,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021264",
     "longitude": "108.196165",
+    "district": null,
     "addressLine": "94 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -684,6 +781,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021263",
     "longitude": "108.196240",
+    "district": null,
     "addressLine": "92 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -691,6 +789,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021312",
     "longitude": "108.196415",
+    "district": null,
     "addressLine": "84 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -698,6 +797,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020991",
     "longitude": "108.195986",
+    "district": null,
     "addressLine": "123 Đường Nguyễn Khoa Chiêm"
   },
   {
@@ -705,6 +805,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.080540",
     "longitude": "108.213869",
+    "district": null,
     "addressLine": "26 Đường Thanh Sơn"
   },
   {
@@ -712,6 +813,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.048058",
     "longitude": "108.180144",
+    "district": null,
     "addressLine": "165 Đường Đoàn Hữu Trưng"
   },
   {
@@ -719,6 +821,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.045407",
     "longitude": "108.178340",
+    "district": null,
     "addressLine": "46 Đường Nguyễn Công Triều"
   },
   {
@@ -726,6 +829,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.045624",
     "longitude": "108.178273",
+    "district": null,
     "addressLine": "36 Đường Nguyễn Công Triều"
   },
   {
@@ -733,6 +837,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.045680",
     "longitude": "108.178250",
+    "district": null,
     "addressLine": "34 Đường Nguyễn Công Triều"
   },
   {
@@ -740,6 +845,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.045994",
     "longitude": "108.178642",
+    "district": null,
     "addressLine": "32 Đường Bùi Giáng"
   },
   {
@@ -747,6 +853,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.047072",
     "longitude": "108.178835",
+    "district": null,
     "addressLine": "08 Đường Phan Khoang"
   },
   {
@@ -754,6 +861,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020228",
     "longitude": "108.206115",
+    "district": null,
     "addressLine": "82 Đường Bùi Xương Trạch"
   },
   {
@@ -761,6 +869,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020276",
     "longitude": "108.206117",
+    "district": null,
     "addressLine": "80 Đường Bùi Xương Trạch"
   },
   {
@@ -768,6 +877,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020596",
     "longitude": "108.205915",
+    "district": null,
     "addressLine": "64 Đường Bùi Xương Trạch"
   },
   {
@@ -775,6 +885,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020443",
     "longitude": "108.206368",
+    "district": null,
     "addressLine": "79 Đường Bùi Xương Trạch"
   },
   {
@@ -782,6 +893,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020676",
     "longitude": "108.206281",
+    "district": null,
     "addressLine": "69 Đường Bùi Xương Trạch"
   },
   {
@@ -789,6 +901,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020626",
     "longitude": "108.206314",
+    "district": null,
     "addressLine": "71 Đường Bùi Xương Trạch"
   },
   {
@@ -796,6 +909,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020088",
     "longitude": "108.206116",
+    "district": null,
     "addressLine": "88 Đường Bùi Xương Trạch"
   },
   {
@@ -803,6 +917,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020288",
     "longitude": "108.206416",
+    "district": null,
     "addressLine": "85 Đường Bùi Xương Trạch"
   },
   {
@@ -810,6 +925,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020340",
     "longitude": "108.206410",
+    "district": null,
     "addressLine": "83 Đường Bùi Xương Trạch"
   },
   {
@@ -817,6 +933,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.019986",
     "longitude": "108.206739",
+    "district": null,
     "addressLine": "118 Đường Hà Tông Quyền"
   },
   {
@@ -824,6 +941,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.049455",
     "longitude": "108.184703",
+    "district": null,
     "addressLine": "51 Kiệt 243 Trường Chinh"
   },
   {
@@ -831,6 +949,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022113",
     "longitude": "108.203030",
+    "district": null,
     "addressLine": "7 Đường Phước Hòa 3"
   },
   {
@@ -838,6 +957,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022063",
     "longitude": "108.203044",
+    "district": null,
     "addressLine": "9 Đường Phước Hòa 3"
   },
   {
@@ -845,6 +965,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021966",
     "longitude": "108.203059",
+    "district": null,
     "addressLine": "17 Đường Phước Hòa 3"
   },
   {
@@ -852,6 +973,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021807",
     "longitude": "108.203080",
+    "district": null,
     "addressLine": "23 Đường Phước Hòa 3"
   },
   {
@@ -859,6 +981,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021784",
     "longitude": "108.203245",
+    "district": null,
     "addressLine": "32 Đường Đào Công Chính"
   },
   {
@@ -866,6 +989,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021832",
     "longitude": "108.203232",
+    "district": null,
     "addressLine": "30 Đường Đào Công Chính"
   },
   {
@@ -873,6 +997,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021976",
     "longitude": "108.203188",
+    "district": null,
     "addressLine": "24 Đường Đào Công Chính"
   },
   {
@@ -880,6 +1005,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022199",
     "longitude": "108.203176",
+    "district": null,
     "addressLine": "14 Đường Đào Công Chính"
   },
   {
@@ -887,6 +1013,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022306",
     "longitude": "108.203171",
+    "district": null,
     "addressLine": "10 Đường Đào Công Chính"
   },
   {
@@ -894,6 +1021,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022498",
     "longitude": "108.203006",
+    "district": null,
     "addressLine": "23 Đường Đào Công Chính"
   },
   {
@@ -901,6 +1029,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022512",
     "longitude": "108.203060",
+    "district": null,
     "addressLine": "25 Đường Đào Công Chính"
   },
   {
@@ -908,6 +1037,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022455",
     "longitude": "108.202927",
+    "district": null,
     "addressLine": "21 Đường Đào Công Chính"
   },
   {
@@ -915,6 +1045,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022019",
     "longitude": "108.202799",
+    "district": null,
     "addressLine": "4 Đường Phước Hòa 3"
   },
   {
@@ -922,6 +1053,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021601",
     "longitude": "108.203242",
+    "district": null,
     "addressLine": "37 Đường Đào Công Chính"
   },
   {
@@ -929,6 +1061,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020802",
     "longitude": "108.204096",
+    "district": null,
     "addressLine": "25 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -936,6 +1069,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020797",
     "longitude": "108.204044",
+    "district": null,
     "addressLine": "27 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -943,6 +1077,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020780",
     "longitude": "108.203502",
+    "district": null,
     "addressLine": "31 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -950,6 +1085,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020757",
     "longitude": "108.203445",
+    "district": null,
     "addressLine": "33 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -957,6 +1093,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020946",
     "longitude": "108.204794",
+    "district": null,
     "addressLine": "1 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -964,6 +1101,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020862",
     "longitude": "108.204670",
+    "district": null,
     "addressLine": "5 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -971,6 +1109,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020859",
     "longitude": "108.204415",
+    "district": null,
     "addressLine": "11 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -978,6 +1117,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020866",
     "longitude": "108.204368",
+    "district": null,
     "addressLine": "15 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -985,6 +1125,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020852",
     "longitude": "108.204320",
+    "district": null,
     "addressLine": "17 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -992,6 +1133,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020822",
     "longitude": "108.204274",
+    "district": null,
     "addressLine": "19 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -999,6 +1141,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020814",
     "longitude": "108.204227",
+    "district": null,
     "addressLine": "21 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1006,6 +1149,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020936",
     "longitude": "108.203412",
+    "district": null,
     "addressLine": "36 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1013,6 +1157,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020928",
     "longitude": "108.203362",
+    "district": null,
     "addressLine": "38 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1020,6 +1165,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021058",
     "longitude": "108.204228",
+    "district": null,
     "addressLine": "22 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1027,6 +1173,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021049",
     "longitude": "108.204180",
+    "district": null,
     "addressLine": "24 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1034,6 +1181,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021020",
     "longitude": "108.204014",
+    "district": null,
     "addressLine": "30 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1041,6 +1189,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021118",
     "longitude": "108.204470",
+    "district": null,
     "addressLine": "14 Kiệt 64 Phước Hòa 4"
   },
   {
@@ -1048,6 +1197,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021751",
     "longitude": "108.206274",
+    "district": null,
     "addressLine": "64 Đường Hà Tông Quyền"
   },
   {
@@ -1055,6 +1205,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021780",
     "longitude": "108.206228",
+    "district": null,
     "addressLine": "62 Đường Hà Tông Quyền"
   },
   {
@@ -1062,6 +1213,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021594",
     "longitude": "108.206323",
+    "district": null,
     "addressLine": "72 Đường Hà Tông Quyền"
   },
   {
@@ -1069,6 +1221,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021495",
     "longitude": "108.206296",
+    "district": null,
     "addressLine": "76 Đường Hà Tông Quyền"
   },
   {
@@ -1076,6 +1229,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021436",
     "longitude": "108.206282",
+    "district": null,
     "addressLine": "78 Đường Hà Tông Quyền"
   },
   {
@@ -1083,6 +1237,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021474",
     "longitude": "108.205397",
+    "district": null,
     "addressLine": "33 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1090,6 +1245,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021382",
     "longitude": "108.205533",
+    "district": null,
     "addressLine": "29 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1097,6 +1253,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021450",
     "longitude": "108.205477",
+    "district": null,
     "addressLine": "31 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1104,6 +1261,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021357",
     "longitude": "108.205704",
+    "district": null,
     "addressLine": "23 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1111,6 +1269,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021356",
     "longitude": "108.205616",
+    "district": null,
     "addressLine": "25 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1118,6 +1277,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021421",
     "longitude": "108.205982",
+    "district": null,
     "addressLine": "17 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1125,6 +1285,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021457",
     "longitude": "108.206100",
+    "district": null,
     "addressLine": "15 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1132,6 +1293,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021188",
     "longitude": "108.205334",
+    "district": null,
     "addressLine": "82 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1139,6 +1301,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021151",
     "longitude": "108.205491",
+    "district": null,
     "addressLine": "80 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1146,6 +1309,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021131",
     "longitude": "108.205580",
+    "district": null,
     "addressLine": "78 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1153,6 +1317,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021111",
     "longitude": "108.205629",
+    "district": null,
     "addressLine": "76 Đường Đỗ Đăng Tuyển"
   },
   {
@@ -1160,6 +1325,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022068",
     "longitude": "108.203909",
+    "district": null,
     "addressLine": "23 Đường Nguyễn Trung Ngạn"
   },
   {
@@ -1167,6 +1333,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.022021",
     "longitude": "108.203916",
+    "district": null,
     "addressLine": "27 Đường Nguyễn Trung Ngạn"
   },
   {
@@ -1174,6 +1341,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.021779",
     "longitude": "108.204767",
+    "district": null,
     "addressLine": "127 Đường Trần Huy Liệu"
   },
   {
@@ -1181,6 +1349,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059244",
     "longitude": "108.186898",
+    "district": null,
     "addressLine": "46 Đường Trần Xuân Lê"
   },
   {
@@ -1188,6 +1357,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020017",
     "longitude": "108.204891",
+    "district": null,
     "addressLine": "87 Đường Trần Huy Liệu"
   },
   {
@@ -1195,6 +1365,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.059034",
     "longitude": "108.185253",
+    "district": null,
     "addressLine": "338 Đường Hà Huy Tập"
   },
   {
@@ -1202,6 +1373,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020716",
     "longitude": "108.205112",
+    "district": null,
     "addressLine": "54 Đường Trần Huy Liệu"
   },
   {
@@ -1209,6 +1381,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.020187",
     "longitude": "108.205156",
+    "district": null,
     "addressLine": "44 Đường Trần Huy Liệu"
   },
   {
@@ -1216,6 +1389,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.071655",
     "longitude": "108.187262",
+    "district": null,
     "addressLine": "722 Đường Trần Cao Vân"
   },
   {
@@ -1223,6 +1397,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.041675",
     "longitude": "108.207510",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1230,6 +1405,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "BMW Đà Nẵng",
     "latitude": "16.066255",
     "longitude": "108.191720",
+    "district": null,
     "addressLine": "356 Đường Điện Biên Phủ"
   },
   {
@@ -1237,6 +1413,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.066134",
     "longitude": "108.189802",
+    "district": null,
     "addressLine": "398 Đường Điện Biên Phủ"
   },
   {
@@ -1244,6 +1421,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.029718",
     "longitude": "108.208352",
+    "district": null,
     "addressLine": "466 Đường Nguyễn Hữu Thọ"
   },
   {
@@ -1251,6 +1429,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.066000",
     "longitude": "108.200441",
+    "district": null,
     "addressLine": "96 Đường Điện Biên Phủ"
   },
   {
@@ -1258,6 +1437,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035029",
     "longitude": "108.180734",
+    "district": null,
     "addressLine": "161 Đường Lê Trọng Tấn"
   },
   {
@@ -1265,6 +1445,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035553",
     "longitude": "108.175093",
+    "district": null,
     "addressLine": "06 Đường Phước Tướng 10"
   },
   {
@@ -1272,6 +1453,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "VietinBank",
     "latitude": "16.065322",
     "longitude": "108.196816",
+    "district": null,
     "addressLine": "Đường Điện Biên Phủ"
   },
   {
@@ -1279,6 +1461,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.036933",
     "longitude": "108.174500",
+    "district": null,
     "addressLine": "59 Đường Phước Tướng 5"
   },
   {
@@ -1286,6 +1469,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.036775",
     "longitude": "108.174521",
+    "district": null,
     "addressLine": "69 Đường Phước Tướng 5"
   },
   {
@@ -1293,6 +1477,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.036650",
     "longitude": "108.174532",
+    "district": null,
     "addressLine": "75 Đường Phước Tướng 5"
   },
   {
@@ -1300,6 +1485,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.036141",
     "longitude": "108.174572",
+    "district": null,
     "addressLine": "83 Đường Phước Tướng 5"
   },
   {
@@ -1307,6 +1493,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035341",
     "longitude": "108.174909",
+    "district": null,
     "addressLine": "17 Đường Phước Tướng 10"
   },
   {
@@ -1314,6 +1501,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035333",
     "longitude": "108.175008",
+    "district": null,
     "addressLine": "11 Đường Phước Tướng 10"
   },
   {
@@ -1321,6 +1509,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.035307",
     "longitude": "108.175092",
+    "district": null,
     "addressLine": "07 Đường Phước Tướng 10"
   },
   {
@@ -1328,6 +1517,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.045329",
     "longitude": "108.165903",
+    "district": null,
     "addressLine": "79 Đường Lê Hiến Mai"
   },
   {
@@ -1335,6 +1525,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.066972",
     "longitude": "108.229629",
+    "district": null,
     "addressLine": "363 Đường Trần Hưng Đạo"
   },
   {
@@ -1342,6 +1533,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": "My Thai",
     "latitude": "16.066396",
     "longitude": "108.229760",
+    "district": null,
     "addressLine": "389 Đường Trần Hưng Đạo"
   },
   {
@@ -1349,6 +1541,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.087012",
     "longitude": "108.233919",
+    "district": null,
     "addressLine": "37 Đường Đào Duy Kỳ"
   },
   {
@@ -1356,6 +1549,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.055087",
     "longitude": "108.211668",
+    "district": null,
     "addressLine": "104 Đường Lê Đình Lý"
   },
   {
@@ -1363,6 +1557,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.041620",
     "longitude": "108.239502",
+    "district": null,
     "addressLine": "Đường Hoài Thanh"
   },
   {
@@ -1370,6 +1565,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072022",
     "longitude": "108.201744",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1377,6 +1573,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072329",
     "longitude": "108.201494",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1384,6 +1581,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072699",
     "longitude": "108.201447",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1391,6 +1589,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072731",
     "longitude": "108.201364",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1398,6 +1597,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.072801",
     "longitude": "108.201432",
+    "district": null,
     "addressLine": null
   },
   {
@@ -1405,6 +1605,7 @@ export const daNangPlaces: DaNangPlace[] = [
     "name": null,
     "latitude": "16.071605",
     "longitude": "108.202288",
+    "district": null,
     "addressLine": null
   }
 ];

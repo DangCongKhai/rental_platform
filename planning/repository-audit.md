@@ -23,7 +23,7 @@ Next.js 16.4.2 (App Router, `cacheComponents` and `partialPrefetching` on, `src/
 | M01 Identity | **Partial** | Sign-up (with full name), confirm route, login (wrong-password and unconfirmed-email states), forgot/update password, logout from the account menu: `src/app/auth/*`, `src/components/auth/*`, `src/components/layout/user-menu.tsx`. Profile row created by the `on_auth_user_created` trigger in `prisma/migrations/20261023155000_user_profiles`. **Missing:** reusable server access checks, profile editing, tests, Auth redirect config | RENT-001, RENT-007 |
 | M02 Inventory | Missing | Only `UserProfile` in `prisma/schema.prisma` | RENT-002, RENT-009–RENT-011 |
 | M03 Listings | Missing | — | RENT-012, RENT-014, RENT-015 |
-| M04 Discovery & favourites | **Browse UI** | Homepage `src/components/home/home-page.tsx`, browse in `src/features/discovery`, listing detail in `src/components/listings`. Favourites are not implemented | RENT-003, RENT-004 |
+| M04 Discovery & favourites | **UI only** | Landing page `src/app/page.tsx` with navbar, hero, features, listings, areas, steps, FAQ, footer. Listing cards come from static demo data (`src/components/home/content.ts`); the search card is visual only. Favourites are not implemented, even though the docs say they were recently added | RENT-003, RENT-004 |
 | M05 Enquiries | Missing | — | RENT-005, RENT-008, RENT-013, RENT-019 |
 | M06 Tenancies | Missing | — | RENT-002, RENT-017, RENT-018, RENT-021 |
 | M07 Renewals | Missing | — | RENT-020 |

@@ -46,10 +46,3 @@ next-env.d.ts
 
 # ignore local supabase
 supabase/
-
-
-# ignore local plan
-.local_plans/
-
-# Ignore .cursor
-.cursor/

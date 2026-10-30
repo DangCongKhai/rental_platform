@@ -7,5 +7,3 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
-
-Path segments are English words (`/listings`, `/auth/login`, `/owner/properties`). Do not add routes whose segments are Vietnamese (`/tim-nha`, `/tin-dang`). Visible labels can stay Vietnamese.
