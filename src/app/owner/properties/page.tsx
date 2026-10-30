@@ -44,11 +44,10 @@ const badgeClass = {
 
 function locationLine(property: {
   ward: string | null;
-  district: string | null;
   addressLine: string | null;
   city: string | null;
 }) {
-  const place = [property.ward, property.district].filter(Boolean).join(", ");
+  const place = [property.ward, property.city].filter(Boolean).join(", ");
   return place || property.addressLine || property.city || "Chưa thêm địa chỉ";
 }
 

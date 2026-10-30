@@ -45,7 +45,6 @@ export default async function EditPropertyPage({params}: {params: Promise<{ id: 
         rentalArrangement,
         addressLine: property.addressLine ?? "",
         ward: property.ward ?? "",
-        district: property.district ?? "",
         city: property.city ?? "",
         sharedAmenities: amenities.data,
         policies: policies.data,

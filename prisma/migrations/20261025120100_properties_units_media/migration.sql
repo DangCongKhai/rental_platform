@@ -6,7 +6,6 @@ CREATE TABLE "properties" (
     "rental_arrangement" TEXT NOT NULL,
     "address_line" TEXT,
     "ward" TEXT,
-    "district" TEXT,
     "city" TEXT,
     "description" TEXT,
     "shared_amenities" JSONB NOT NULL DEFAULT '{"schema_version":1,"standard":{},"custom":[]}',

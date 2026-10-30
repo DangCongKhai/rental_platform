@@ -20,11 +20,11 @@ A visitor searches by area or keyword from the home page, filters results by dat
 - Workflows: [WF-06](../../../docs/04-workflows/WF-06-search-listings.md)
 
 ## Current repository evidence
-- Landing page exists, but listings come from static `src/components/home/content.ts` and the search card does nothing.
+- The homepage is `src/components/home/home-page.tsx`. Browse is `src/features/discovery`. Listing detail layout is `src/components/listings`.
 - No search query, results page, detail page or guide page.
 
 ## Scope and non-goals
-**In scope:** Availability search query, `isPubliclyVisible` gate, `/tim-nha` results (filter sidebar / mobile bottom sheet), `/tin-dang/[id]` detail, S08 page, S09 guide page, landing wired to real listings. Reads happen in server components.
+**In scope:** Availability search query, `isPubliclyVisible` gate, `/listings` results (filter sidebar / mobile bottom sheet), `/listings/[id]` detail, S08 page, S09 guide page, landing wired to real listings. Reads happen in server components.
 
 **Not in scope:** Favourites (RENT-004), request form (RENT-005), report dialog (RENT-006), map (P2).
 
@@ -36,7 +36,7 @@ A visitor searches by area or keyword from the home page, filters results by dat
 - [ ] Free-unit count and rent range come from the same query; paginate; load relations in one query
 - [ ] Filters live in the URL; a date range needs both ends
 - [ ] Detail: shared amenities vs private unit features vs custom text; advertised rules labelled as advertising
-- [ ] Replace static `LISTINGS`; hero search submits to `/tim-nha`
+- [ ] Replace static `LISTINGS`; hero search submits to `/listings`
 
 ## API and data contract
 Server-side `searchListings(filters)` and `getPublicListing(id, dates)` in `src/server/listings/`.
