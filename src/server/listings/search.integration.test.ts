@@ -13,7 +13,7 @@ function filters(query = "") {
   return parseListingSearchParams(new URLSearchParams(query));
 }
 
-describe.skipIf(!databaseUrl)("public listing search", { timeout: 30_000, hookTimeout: 30_000 }, () => {
+describe.skipIf(!databaseUrl)("public listing search", { timeout: 30_000 }, () => {
   afterEach(async () => {
     await cleanupPublicListings();
   });

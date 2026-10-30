@@ -5,7 +5,7 @@ import { blockUnit, cleanupPublicListings, publishedListing } from "./public-lis
 
 const databaseUrl = process.env.DATABASE_URL;
 
-describe.skipIf(!databaseUrl)("public listing fixture", { timeout: 30_000, hookTimeout: 30_000 }, () => {
+describe.skipIf(!databaseUrl)("public listing fixture", { timeout: 30_000 }, () => {
   afterEach(async () => {
     await cleanupPublicListings();
   });
