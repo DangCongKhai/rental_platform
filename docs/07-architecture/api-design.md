@@ -1,6 +1,6 @@
 # Server action contract
 
-The app has no public REST API. Pages read data in server components, and every write is a Next.js Server Action. Each action resolves the user from the Supabase session, checks access on the server, validates input with a schema, runs in one database transaction, and inserts any notifications in that same transaction. Read the Server Functions guide in `node_modules/next/dist/docs/` before adding actions; this Next.js version differs from older releases.
+The app has no public REST API. Pages read data in server components, and every write is a Next.js Server Action. Each action resolves the user from the Supabase session, checks access on the server, and validates input with a schema. Database changes run in a transaction; actions that upload files first store a unique object, then create/update media rows transactionally and attempt to remove the new object if the database transaction fails. Read the Server Functions guide in `node_modules/next/dist/docs/` before adding actions; this Next.js version differs from older releases.
 
 Names below are the planned function names. They are targets, not verified existing code.
 
@@ -12,6 +12,7 @@ Names below are the planned function names. They are targets, not verified exist
 | `getAmenityCatalog()` | Public | Code-managed stable catalog labels, aliases and scopes |
 | `getMyProfile()` | Signed in | Own profile |
 | `getMyProperties()`, `getMyProperty(id)`, `getUnits(propertyId)` | Owner | Own inventory only |
+| `getPropertyMedia(propertyId)` | Owner | Own property's active gallery with short-lived signed Storage URLs |
 | `getMyRentalRequests()`, `getMyRentalRequest(id)`, `getMyTenancies()` | Tenant | Own requests and tenancies only |
 | `getOwnerRequests(filters)`, `getOwnerRequest(id)`, `getOwnerOverview()` | Owner | Requests and summaries for managed properties only |
 | `getTenancy(id)` | Tenancy parties | Agreement timeline and effective segment |
@@ -27,7 +28,7 @@ Names below are the planned function names. They are targets, not verified exist
 | `updateProfile` | Signed in | Only `full_name` and `phone`; stale form refused |
 | `createProperty`, `updateProperty`, `archiveProperty` | Owner | WHOLE_SPACE creates its single unit; edits bump `content_revision`; archive keeps history |
 | `createUnits(propertyId, rows[])`, `updateUnit` | Owner | All-or-nothing batch; whole-space guard; normalized labels unique per property |
-| `uploadPhoto`, `updateGallery`, `removePhoto`, `replacePhoto` | Owner | Row created only after the file is stored; cover rules; soft delete |
+| `uploadPhoto(propertyId, formData)`, `updateGallery(propertyId, changes)`, `removePhoto(propertyId, mediaId, replacementCoverId?)`, `replacePhoto(propertyId, mediaId, formData)` | Owner | Decode and validate image bytes; unique private object path; row created after upload; property/unit ownership; gallery changes bump `content_revision`; cover rules; replacement is a new upload; removal is soft delete |
 | `saveListing`, `submitListing`, `publishListing`, `hideListing`, `archiveListing` | Owner | One current listing per property; first-review submission captures the content revision |
 | `saveFavourite(propertyId)`, `removeFavourite(propertyId)` | Signed in | Desired state, safe to repeat; no toggle |
 | `createRentalRequest(listingId, input)` | Tenant | Contact snapshots; PENDING; no hold; owner notified |

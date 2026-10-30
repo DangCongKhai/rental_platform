@@ -38,9 +38,14 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
                     <h1 className="text-2xl font-bold tracking-tight text-ink">Căn/phòng của bất động sản</h1>
                     <p className="mt-1 text-sm text-subtle">Tạo nhiều căn cùng lúc, sau đó chỉnh sửa từng căn riêng.</p>
                 </div>
-                <Link href={`/owner/properties/${property.id}`} className={buttonClass({ variant: "secondary" })}>
-                    Quay lại bất động sản
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                    <Link href={`/owner/properties/${property.id}/media`} className={buttonClass({ variant: "secondary" })}>
+                        Hình ảnh
+                    </Link>
+                    <Link href={`/owner/properties/${property.id}`} className={buttonClass({ variant: "secondary" })}>
+                        Quay lại bất động sản
+                    </Link>
+                </div>
             </header>
 
             {property.rentalArrangement === "SEPARATE_UNITS" ? (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AMENITY_CATALOG, getAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
+import { uploadPhoto } from "../media-actions";
 import { buttonClass } from "@/components/ui/button";
 
 export type PropertyType = "HOUSE" | "APARTMENT" | "APARTMENT_BUILDING";
@@ -125,6 +126,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     const [newRule, setNewRule] = useState("");
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
+    const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
     const [pending, startTransition] = useTransition();
     const [provinces, setProvinces] = useState<AdministrativeDivisionOption[]>([]);
     const [provinceCode, setProvinceCode] = useState("");
@@ -221,6 +223,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                 setNewRule("");
                 setError("");
                 setSaved(false);
+                setPendingPhotos([]);
             }
         };
     }, [initial]);
@@ -370,6 +373,36 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 setRevision(result.data.contentRevision);
                 if (step === STEPS.length - 1) {
+                    const savedPropertyId = "id" in result.data && typeof result.data.id === "string"
+                        ? result.data.id
+                        : propertyId;
+                    if (typeof savedPropertyId !== "string" || !savedPropertyId) {
+                        setError("Đã lưu bản nháp nhưng không nhận được mã bất động sản để tải ảnh.");
+                        return;
+                    }
+
+                    const failedPhotos: File[] = [];
+                    let uploadedCount = 0;
+                    for (const photo of pendingPhotos) {
+                        try {
+                            const formData = new FormData();
+                            formData.set("file", photo);
+                            const uploadResult = await uploadPhoto(savedPropertyId, formData);
+                            if (!uploadResult.ok) {
+                                failedPhotos.push(photo);
+                                continue;
+                            }
+                            uploadedCount += 1;
+                        } catch {
+                            failedPhotos.push(photo);
+                        }
+                    }
+                    setRevision(result.data.contentRevision + uploadedCount);
+                    setPendingPhotos(failedPhotos);
+                    if (failedPhotos.length > 0) {
+                        setError(`Đã lưu bản nháp${uploadedCount ? ` và tải lên ${uploadedCount} ảnh` : ""}, nhưng ${failedPhotos.length} ảnh chưa tải được. Hãy thử lưu lại để tải tiếp.`);
+                        return;
+                    }
                     router.replace("/owner/properties?saved=1");
                     return;
                 }
@@ -734,6 +767,44 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 {step === 4 && (
                     <div className="space-y-4">
+                        <section className="space-y-3 rounded-xl border border-line bg-white p-4" aria-labelledby="creation-photos-title">
+                            <div>
+                                <h3 id="creation-photos-title" className="font-semibold text-ink">Ảnh bất động sản</h3>
+                                <p className="mt-1 text-sm text-muted">Chọn ảnh ngay trong quá trình tạo. Ảnh sẽ được tải lên khi bạn lưu bản nháp.</p>
+                            </div>
+                            <label className="inline-flex min-h-10 cursor-pointer items-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-brand-deep hover:bg-brand-soft">
+                                Chọn ảnh
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    multiple
+                                    disabled={pending}
+                                    className="sr-only"
+                                    onChange={(event) => {
+                                        const chosen = Array.from(event.currentTarget.files ?? []);
+                                        setPendingPhotos((current) => [...current, ...chosen].slice(0, 40));
+                                        setError(chosen.length > 0 && pendingPhotos.length + chosen.length > 40 ? "Mỗi bất động sản được chọn tối đa 40 ảnh." : "");
+                                        setSaved(false);
+                                        event.currentTarget.value = "";
+                                    }}
+                                />
+                            </label>
+                            {pendingPhotos.length > 0 ? (
+                                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    {pendingPhotos.map((photo, index) => (
+                                        <li key={`${photo.name}-${photo.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas p-3 text-sm">
+                                            <span className="min-w-0 truncate text-ink" title={photo.name}>{photo.name}</span>
+                                            <button type="button" disabled={pending} onClick={() => setPendingPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index))} className="shrink-0 font-semibold text-danger-ink hover:underline">
+                                                Xóa
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm text-subtle">Chưa chọn ảnh. Bạn cũng có thể thêm ảnh sau trong trang quản lý ảnh.</p>
+                            )}
+                            <p className="text-xs text-subtle">JPEG, PNG hoặc WebP · tối đa 10 MB mỗi ảnh · tối đa 40 ảnh.</p>
+                        </section>
                         <dl className="grid gap-3 sm:grid-cols-2">
                             <ReviewItem label="Tên" value={draft.name || "Chưa nhập"} />
                             <ReviewItem label="Loại" value={draft.propertyType ? PROPERTY_TYPE_LABELS[draft.propertyType] : "Chưa chọn"} />

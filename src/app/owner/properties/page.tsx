@@ -168,6 +168,12 @@ export default async function OwnerPropertiesPage({
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         <Link
+                          href={`/owner/properties/${property.id}/media`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
+                        >
+                          Hình ảnh
+                        </Link>
+                        <Link
                           href={`/owner/properties/${property.id}/units`}
                           className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
                         >

@@ -2,7 +2,7 @@ import { unstable_rethrow } from "next/navigation";
 import type { ActionResult } from "./validation";
 
 export class ActionError extends Error {
-  readonly code: "SUSPENDED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT";
+  readonly code: "SUSPENDED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "STORAGE";
 
   constructor(code: ActionError["code"], message: string, readonly fieldErrors?: Record<string, string>) {
     super(message);
