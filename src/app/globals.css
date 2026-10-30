@@ -20,6 +20,13 @@
   --color-on-dark-muted: #c9d3e0;
 
   --color-canvas: #f0f4f7;
+  --color-surface-app: #f0f4f7;
+  --color-surface-card: #ffffff;
+  --color-surface-brand-soft: #eaf1f7;
+  --color-heading: #091216;
+  --color-primary: #091216;
+  --color-border-default: #e1e7ed;
+  --color-action-primary: #3368a0;
   --color-line: #e1e7ed;
   --color-line-soft: #e7ebf1;
   --color-line-strong: #c9d3e0;
