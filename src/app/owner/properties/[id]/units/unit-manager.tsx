@@ -93,6 +93,7 @@ export function UnitManager({ propertyId, initialUnits }: { propertyId: string; 
     const [minimumMonths, setMinimumMonths] = useState("3");
     const [occupants, setOccupants] = useState("2");
     const [rows, setRows] = useState<PreviewRow[]>([]);
+    const [showBulkForm, setShowBulkForm] = useState(initialUnits.length === 0);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [message, setMessage] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -200,7 +201,14 @@ export function UnitManager({ propertyId, initialUnits }: { propertyId: string; 
                         <h2 className="text-xl font-bold text-ink">Căn/phòng đã tạo</h2>
                         <p className="mt-1 text-sm text-subtle">Quản lý giá thuê, tình trạng vận hành và trạng thái quảng bá.</p>
                     </div>
-                    <span className="rounded-full bg-brand-soft px-3 py-1.5 text-sm font-semibold text-brand-deep">{initialUnits.length} căn/phòng</span>
+                    <div className="flex items-center gap-3">
+                        <span className="rounded-full bg-brand-soft px-3 py-1.5 text-sm font-semibold text-brand-deep">{initialUnits.length} căn/phòng</span>
+                        {!showBulkForm && (
+                            <button type="button" onClick={() => setShowBulkForm(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 font-semibold text-white hover:bg-brand-hover">
+                                Thêm căn/phòng
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {initialUnits.length === 0 ? (
@@ -257,10 +265,15 @@ export function UnitManager({ propertyId, initialUnits }: { propertyId: string; 
                 )}
             </section>
 
-            <section className="rounded-2xl border border-line bg-white p-5 sm:p-7">
-                <div>
-                    <h2 className="text-xl font-bold text-ink">Tạo hàng loạt căn/phòng</h2>
-                    <p className="mt-1 text-sm text-subtle">Nhập quy tắc đặt tên và thông tin mặc định, sau đó kiểm tra từng dòng trước khi lưu.</p>
+            {showBulkForm && <section className="rounded-2xl border border-line bg-white p-5 sm:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-xl font-bold text-ink">Tạo hàng loạt căn/phòng</h2>
+                        <p className="mt-1 text-sm text-subtle">Nhập quy tắc đặt tên và thông tin mặc định, sau đó kiểm tra từng dòng trước khi lưu.</p>
+                    </div>
+                    <button type="button" onClick={() => { setShowBulkForm(false); setRows([]); setMessage(null); setErrors({}); }} className="inline-flex min-h-10 items-center justify-center rounded-xl border border-line-brand bg-white px-4 font-semibold text-brand-deep hover:bg-brand-soft">
+                        Đóng
+                    </button>
                 </div>
 
                 <div className="mt-5 rounded-2xl bg-surface p-4 sm:p-6">
@@ -502,7 +515,7 @@ export function UnitManager({ propertyId, initialUnits }: { propertyId: string; 
                         </div>
                     </div>
                 )}
-            </section>
+            </section>}
         </div>
     );
 }

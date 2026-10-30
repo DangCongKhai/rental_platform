@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AMENITY_CATALOG, getAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
 import { buttonClass } from "@/components/ui/button";
@@ -114,6 +115,7 @@ type PropertyWizardProps = {
 };
 
 export function PropertyWizard({ initial }: PropertyWizardProps) {
+    const router = useRouter();
     const rentalArrangementGroupName = useId();
     const [draft, setDraft] = useState<Draft>(initial?.draft ?? INITIAL_DRAFT);
     const [step, setStep] = useState(0);
@@ -367,6 +369,10 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                 }
 
                 setRevision(result.data.contentRevision);
+                if (step === STEPS.length - 1) {
+                    router.replace("/owner/properties?saved=1");
+                    return;
+                }
                 setSaved(true);
             } catch {
                 setError("Không thể lưu bản nháp. Vui lòng thử lại.");
@@ -811,7 +817,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                 </button>
                             ) : (
                                 <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass()}>
-                                    {pending ? "Đang lưu…" : "Lưu bản nháp"}
+                                    {pending ? "Đang lưu…" : "Lưu"}
                                 </button>
                             )}
                         </div>

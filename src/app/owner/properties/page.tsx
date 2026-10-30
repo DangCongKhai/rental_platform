@@ -3,6 +3,7 @@ import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getMyProperties } from "@/server/properties";
 import { PropertyActions } from "./property-actions";
+import { PropertySaveNotice } from "./property-save-notice";
 
 export const instant = false;
 
@@ -62,14 +63,15 @@ function StatusBadge({ label, tone }: { label: string; tone: keyof typeof badgeC
 export default async function OwnerPropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>;
+  searchParams: Promise<{ archived?: string; saved?: string }>;
 }) {
-  const { archived } = await searchParams;
+  const { archived, saved } = await searchParams;
   const showArchived = archived === "1";
   const properties = await getMyProperties(showArchived);
 
   return (
     <section className="space-y-5">
+      {saved === "1" && <PropertySaveNotice />}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Bất động sản</h1>
         <div className="flex flex-wrap items-center gap-4">
