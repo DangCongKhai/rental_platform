@@ -22,7 +22,6 @@ The table below is the current column list, including the managed auth reference
 | properties | Core | rental_arrangement | text |  | No |  | WHOLE_SPACE or SEPARATE_UNITS |
 | properties | Core | address_line | text |  | Yes |  | Street and building address; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | ward | text |  | Yes |  | Optional local ward |
-| properties | Core | district | text |  | Yes |  | Searchable district or area; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | city | text |  | Yes |  | City; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | description | text |  | Yes |  | Shared property description; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | shared_amenities | jsonb |  | No | {"schema_version":1,"standard":{},"custom":[]} | Shared property facilities. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}},custom:[text]}. Standard keys/scopes from the server catalog; canonical labels from catalog, no owner_label. Custom text NFC/trim/whitespace-normalized and deduplicated locally using case folding; never auto-promoted to standard search keys. Absent key means not advertised. |
