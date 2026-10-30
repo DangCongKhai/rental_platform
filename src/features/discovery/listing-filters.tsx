@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { debounce, searchInputDebounceMs } from "@/lib/debounce";
 import { clearLocation, parseListingSearchParams, toListingSearchParams, type ListingSearchState } from "./listing-search-params";
 import type { AmenityCatalogItem } from "./listings-api";
 
@@ -39,12 +40,34 @@ export function ListingFilters({
   const router = useRouter();
   const state = parseListingSearchParams(new URLSearchParams(query));
   const [panel, setPanel] = useState<BarPanel | null>(null);
+  const [locationDraft, setLocationDraft] = useState(state.location);
+  const committedLocation = useRef(state.location);
 
   function visit(next: ListingSearchState) {
     const params = toListingSearchParams({ ...next, page: 1 });
     const text = params.toString();
     router.replace(text ? `/listings?${text}` : "/listings");
   }
+
+  useEffect(() => {
+    if (state.location === committedLocation.current) return;
+    committedLocation.current = state.location;
+    setLocationDraft(state.location);
+  }, [state.location]);
+
+  useEffect(() => {
+    const search = debounce(() => {
+      const location = locationDraft.trim().replace(/\s+/g, " ");
+      if (location === committedLocation.current) return;
+      committedLocation.current = location;
+      const current = parseListingSearchParams(new URLSearchParams(query));
+      const params = toListingSearchParams({ ...current, location, page: 1 });
+      const text = params.toString();
+      router.replace(text ? `/listings?${text}` : "/listings");
+    }, searchInputDebounceMs);
+    search();
+    return () => search.cancel();
+  }, [locationDraft, query, router]);
 
   function togglePanel(next: BarPanel) {
     setPanel((current) => (current === next ? null : next));
@@ -60,17 +83,19 @@ export function ListingFilters({
           <label htmlFor="listing-location" className="sr-only">Địa điểm</label>
           <input
             id="listing-location"
-            value={state.location}
-            onChange={(event) => visit({ ...state, location: event.target.value })}
+            value={locationDraft}
+            onChange={(event) => setLocationDraft(event.target.value)}
             placeholder="Sơn Trà, Đà Nẵng"
             className="h-11 w-full rounded-full border border-[#e1e7ed] bg-white pr-10 pl-4 text-sm"
           />
-          {state.location ? (
+          {locationDraft ? (
             <button
               type="button"
               aria-label="Xóa địa điểm"
               className="absolute top-1/2 right-1.5 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-lg text-[#5b6676]"
               onClick={() => {
+                setLocationDraft("");
+                committedLocation.current = "";
                 const next = clearLocation(new URLSearchParams(query));
                 const text = next.toString();
                 router.replace(text ? `/listings?${text}` : "/listings");
