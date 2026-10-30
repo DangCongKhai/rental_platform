@@ -33,7 +33,9 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
                             Bất động sản
                         </Link>
                         <span aria-hidden="true"> / </span>
-                        <span>{property.name}</span>
+                        <Link href={`/owner/properties/${property.id}`} className="hover:text-brand hover:underline">
+                            {property.name}
+                        </Link>
                     </nav>
                     <h1 className="text-2xl font-bold tracking-tight text-ink">Căn/phòng của bất động sản</h1>
                     <p className="mt-1 text-sm text-subtle">Tạo nhiều căn cùng lúc, sau đó chỉnh sửa từng căn riêng.</p>
@@ -42,8 +44,8 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
                     <Link href={`/owner/properties/${property.id}/media`} className={buttonClass({ variant: "secondary" })}>
                         Hình ảnh
                     </Link>
-                    <Link href={`/owner/properties/${property.id}`} className={buttonClass({ variant: "secondary" })}>
-                        Quay lại bất động sản
+                    <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
+                        Danh sách bất động sản
                     </Link>
                 </div>
             </header>

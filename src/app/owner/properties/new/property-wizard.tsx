@@ -416,11 +416,25 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     return (
         <section className="space-y-5">
             <header className="space-y-3">
-                <p className="text-xs text-subtle">Không gian quản lý / Chủ nhà / Bất động sản / Tạo bất động sản</p>
+                <nav aria-label="Đường dẫn" className="text-xs text-subtle">
+                    <Link href="/owner" className="hover:text-brand hover:underline">Không gian quản lý</Link>
+                    <span aria-hidden="true"> / </span>
+                    <Link href="/owner" className="hover:text-brand hover:underline">Chủ nhà</Link>
+                    <span aria-hidden="true"> / </span>
+                    <Link href="/owner/properties" className="hover:text-brand hover:underline">Bất động sản</Link>
+                    <span aria-hidden="true"> / </span>
+                    <span aria-current="page">{initial ? "Chỉnh sửa bất động sản" : "Tạo bất động sản"}</span>
+                </nav>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand">Tạo bản nháp</p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Thêm bất động sản mới</h1>
-                    <p className="mt-1 text-sm text-muted">Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu tìm người thuê.</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand">{initial ? "Chỉnh sửa bản nháp" : "Tạo bản nháp"}</p>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                        {initial ? "Chỉnh sửa thông tin bất động sản" : "Thêm bất động sản mới"}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted">
+                        {initial
+                            ? "Cập nhật thông tin bất động sản qua các bước bên dưới."
+                            : "Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu tìm người thuê."}
+                    </p>
                 </div>
             </header>
 
@@ -845,20 +859,9 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                     </div>
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-4 sm:px-6">
-                        {step === 0 ? (
-                            <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
-                                Hủy
-                            </Link>
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={pending}
-                                onClick={() => setStep((current) => Math.max(0, current - 1))}
-                                className={buttonClass({ variant: "secondary" })}
-                            >
-                                Quay lại
-                            </button>
-                        )}
+                        <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
+                            Hủy
+                        </Link>
 
                         <div className="flex flex-wrap gap-3">
                             {step < STEPS.length - 1 && (
@@ -866,10 +869,26 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                     {pending ? "Đang lưu…" : "Lưu bản nháp"}
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                aria-label="Quay lại bước trước"
+                                title="Quay lại bước trước"
+                                disabled={pending || step === 0}
+                                onClick={() => setStep((current) => Math.max(0, current - 1))}
+                                className={buttonClass({
+                                    variant: "secondary",
+                                    className: "size-11 px-0 text-xl disabled:opacity-40",
+                                })}
+                            >
+                                <span aria-hidden="true">←</span>
+                            </button>
 
                             {step < STEPS.length - 1 ? (
                                 <button
                                     type="button"
+                                    aria-label="Đến bước tiếp theo"
+                                    title="Đến bước tiếp theo"
+                                    disabled={pending}
                                     onClick={() => {
                                         setError("");
                                         if (step === 0 && (!draft.name.trim() || !draft.propertyType)) {
@@ -882,9 +901,9 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                         }
                                         setStep((current) => Math.min(STEPS.length - 1, current + 1));
                                     }}
-                                    className={buttonClass()}
+                                    className={buttonClass({ className: "size-11 px-0 text-xl" })}
                                 >
-                                    Bước tiếp theo <span aria-hidden="true">→</span>
+                                    <span aria-hidden="true">→</span>
                                 </button>
                             ) : (
                                 <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass()}>
