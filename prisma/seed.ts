@@ -2,7 +2,6 @@ import "dotenv/config";
 import { pathToFileURL } from "node:url";
 import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../src/server/db";
-import { createNotification } from "../src/server/notifications";
 import { listingReportSeedSql } from "./seed-data/listing-reports";
 import { daNangPlaces } from "./seed-data/da-nang-places";
 import { libraryFileMeta, libraryImagesFor } from "./seed-data/image-library";
@@ -166,6 +165,8 @@ async function insertInventory(tx: Tx) {
     type: [],
     arrangement: [],
     address: [],
+    ward: [],
+    city: [],
     latitude: [],
     longitude: [],
     amenities: [],
@@ -234,7 +235,9 @@ async function insertInventory(tx: Tx) {
     properties.arrangement.push(
       index === 0 || index === 5 ? "SEPARATE_UNITS" : "WHOLE_SPACE",
     );
-    properties.address.push(place.addressLine ?? name);
+    properties.address.push(place.addressLine);
+    properties.ward.push(place.ward);
+    properties.city.push(place.city);
     properties.latitude.push(place.latitude);
     properties.longitude.push(place.longitude);
     properties.amenities.push(
@@ -411,15 +414,15 @@ async function insertInventory(tx: Tx) {
     tx,
     `INSERT INTO properties (
        id, owner_id, name, description, property_type, rental_arrangement, address_line,
-       city, latitude, longitude, shared_amenities, policies
+       ward, city, latitude, longitude, shared_amenities, policies
      )
      SELECT id, owner_id, name, description, property_type, rental_arrangement, address_line,
-            'Đà Nẵng', latitude, longitude, shared_amenities::jsonb, policies::jsonb
+            ward, city, latitude, longitude, shared_amenities::jsonb, policies::jsonb
      FROM unnest(
        $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[],
-       $8::numeric[], $9::numeric[], $10::text[], $11::text[]
+       $8::text[], $9::text[], $10::numeric[], $11::numeric[], $12::text[], $13::text[]
      ) AS row(id, owner_id, name, description, property_type, rental_arrangement, address_line,
-              latitude, longitude, shared_amenities, policies)`,
+              ward, city, latitude, longitude, shared_amenities, policies)`,
     properties.id,
     properties.owner,
     properties.name,
@@ -427,6 +430,8 @@ async function insertInventory(tx: Tx) {
     properties.type,
     properties.arrangement,
     properties.address,
+    properties.ward,
+    properties.city,
     properties.latitude,
     properties.longitude,
     properties.amenities,
@@ -1021,23 +1026,6 @@ async function insertStory(tx: Tx) {
     lanId,
     seedId(3, 5),
   );
-
-  await createNotification(tx, {
-    recipientId: linhId,
-    audience: "OWNER",
-    eventKey: `seed:proposal:${seedId(8, 3)}`,
-    title: "A contract is waiting for the tenant",
-    body: "Mai has a studio contract to confirm.",
-    link: { resourceType: "tenancy", resourceId: seedId(8, 3) },
-  });
-  await createNotification(tx, {
-    recipientId: maiId,
-    audience: "TENANT",
-    eventKey: `seed:active:${seedId(8, 1)}`,
-    title: "Your tenancy is active",
-    body: "Studio S201 is active.",
-    link: { resourceType: "tenancy", resourceId: seedId(8, 1) },
-  });
 }
 
 export async function main() {
