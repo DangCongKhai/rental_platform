@@ -53,6 +53,7 @@ export type PublicUnit = {
 
 export type PublicListing = {
   id: string;
+  propertyId: string;
   title: string;
   description: string;
   property: {
@@ -76,21 +77,34 @@ export type PublicListing = {
 function amenityList(value: unknown): PublicAmenity[] {
   const parsed = validateAmenities(value, "PROPERTY");
   const unitParsed = parsed.success ? null : validateAmenities(value, "UNIT");
-  const data = parsed.success ? parsed.data : unitParsed?.success ? unitParsed.data : null;
+  const data = parsed.success
+    ? parsed.data
+    : unitParsed?.success
+      ? unitParsed.data
+      : null;
   if (!data) return [];
   return Object.entries(data.standard)
     .filter(([, entry]) => entry.enabled)
     .flatMap(([key, entry]) => {
       const definition = AMENITY_CATALOG.find((item) => item.key === key);
       if (!definition) return [];
-      return [{ key, label_vi: definition.label, details: entry.details ?? null }];
+      return [
+        { key, label_vi: definition.label, details: entry.details ?? null },
+      ];
     });
 }
 
-function enabledAmenities(value: unknown): { keys: string[]; custom: string[] } {
+function enabledAmenities(value: unknown): {
+  keys: string[];
+  custom: string[];
+} {
   const parsed = validateAmenities(value, "PROPERTY");
   const unitParsed = parsed.success ? null : validateAmenities(value, "UNIT");
-  const data = parsed.success ? parsed.data : unitParsed?.success ? unitParsed.data : null;
+  const data = parsed.success
+    ? parsed.data
+    : unitParsed?.success
+      ? unitParsed.data
+      : null;
   if (!data) return { keys: [], custom: [] };
   return {
     keys: Object.entries(data.standard)
@@ -100,12 +114,19 @@ function enabledAmenities(value: unknown): { keys: string[]; custom: string[] } 
   };
 }
 
-function digit(value: { toFixed: (digits: number) => string } | null): string | null {
+function digit(
+  value: { toFixed: (digits: number) => string } | null,
+): string | null {
   if (!value) return null;
   return value.toFixed(0);
 }
 
-function photoOf(media: { id: string; caption: string | null; sortOrder: number; storagePath: string }): PublicPhoto {
+function photoOf(media: {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  storagePath: string;
+}): PublicPhoto {
   return {
     id: media.id,
     caption: media.caption,
@@ -118,7 +139,9 @@ export async function getPublicListing(
   id: string,
   filters: ListingSearchFilters,
   today: string,
+  options: { includeMedia?: boolean } = {},
 ): Promise<PublicListing | null> {
+  const includeMedia = options.includeMedia !== false;
   const listing = await prisma.listing.findFirst({
     where: {
       id,
@@ -129,13 +152,23 @@ export async function getPublicListing(
       property: { archivedAt: null },
     },
     include: {
-      property: { include: { owner: { select: { fullName: true } }, media: true, units: { include: { media: true } } } },
+      property: {
+        include: {
+          owner: { select: { fullName: true } },
+          units: { include: { media: true } },
+          ...(includeMedia ? { media: true } : {}),
+        },
+      },
     },
   });
 
   if (!listing) return null;
   const property = listing.property;
-  if (!property.addressLine?.trim() || !property.city?.trim() || !property.description?.trim()) {
+  if (
+    !property.addressLine?.trim() ||
+    !property.city?.trim() ||
+    !property.description?.trim()
+  ) {
     return null;
   }
 
@@ -147,7 +180,9 @@ export async function getPublicListing(
   const eligibleIds = new Set(eligible.map((row) => row.unitId));
   const unitIds = [...eligibleIds];
   const blockRows = unitIds.length
-    ? await prisma.$queryRaw<Array<{ unit_id: string; start: string; end: string }>>`
+    ? await prisma.$queryRaw<
+        Array<{ unit_id: string; start: string; end: string }>
+      >`
         SELECT unit_id::text AS unit_id,
                blocked_start_date::text AS start,
                blocked_end_date::text AS end
@@ -167,8 +202,11 @@ export async function getPublicListing(
 
   const propertyPolicies = validatePropertyPolicies(property.policies);
   const shared = enabledAmenities(property.sharedAmenities);
-  const liveMedia = property.media.filter(
-    (item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing,
+  const liveMedia = (includeMedia ? property.media : []).filter(
+    (item) =>
+      item.deletedAt == null &&
+      item.purgedAt == null &&
+      item.isSelectedForListing,
   );
 
   const units = property.units
@@ -177,11 +215,15 @@ export async function getPublicListing(
     .map((unit) => {
       const unitBlocks = blocks.get(unit.id) ?? [];
       const availability = describeUnitAvailability(today, unitBlocks);
-      const covering = unitBlocks.find((block) => block.start <= today && today <= block.end) ?? null;
+      const covering =
+        unitBlocks.find(
+          (block) => block.start <= today && today <= block.end,
+        ) ?? null;
       const overrides = validateUnitPolicyOverrides(unit.policyOverrides);
-      const effective = propertyPolicies.success && overrides.success
-        ? resolveEffectivePolicies(propertyPolicies.data, overrides.data)
-        : null;
+      const effective =
+        propertyPolicies.success && overrides.success
+          ? resolveEffectivePolicies(propertyPolicies.data, overrides.data)
+          : null;
       const ownAmenities = enabledAmenities(unit.amenities);
       const heldLabel = availability.availableNow
         ? availability.label
@@ -209,7 +251,12 @@ export async function getPublicListing(
         customAmenities: ownAmenities.custom,
         additionalRules: effective?.additional_rules ?? [],
         photos: unit.media
-          .filter((item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing)
+          .filter(
+            (item) =>
+              item.deletedAt == null &&
+              item.purgedAt == null &&
+              item.isSelectedForListing,
+          )
           .sort((left, right) => left.sortOrder - right.sortOrder)
           .map(photoOf),
       };
@@ -217,6 +264,7 @@ export async function getPublicListing(
 
   return {
     id: listing.id,
+    propertyId: listing.propertyId,
     title: listing.title,
     description: listing.description,
     property: {
@@ -228,15 +276,74 @@ export async function getPublicListing(
       description: property.description ?? "",
       sharedAmenities: amenityList(property.sharedAmenities),
       customAmenities: shared.custom,
-      sharedRules: propertyPolicies.success ? propertyPolicies.data.shared_rules : [],
-      pets: propertyPolicies.success ? propertyPolicies.data.defaults.pets : "ASK_OWNER",
-    smoking: propertyPolicies.success ? propertyPolicies.data.defaults.smoking : "NOT_ALLOWED",
-  },
-  ownerName: property.owner.fullName,
+      sharedRules: propertyPolicies.success
+        ? propertyPolicies.data.shared_rules
+        : [],
+      pets: propertyPolicies.success
+        ? propertyPolicies.data.defaults.pets
+        : "ASK_OWNER",
+      smoking: propertyPolicies.success
+        ? propertyPolicies.data.defaults.smoking
+        : "NOT_ALLOWED",
+    },
+    ownerName: property.owner.fullName,
     units,
     gallery: liveMedia
       .filter((item) => item.unitId == null)
       .sort((left, right) => left.sortOrder - right.sortOrder)
       .map(photoOf),
   };
+}
+
+export async function getListingPhotoSlides(id: string) {
+  const listing = await prisma.listing.findFirst({
+    where: {
+      id,
+      publicationStatus: "PUBLISHED",
+      moderationStatus: "APPROVED",
+      archivedAt: null,
+      adminSuspendedAt: null,
+      property: { archivedAt: null },
+    },
+    select: {
+      property: {
+        select: {
+          units: { select: { id: true, label: true } },
+          media: {
+            where: {
+              deletedAt: null,
+              purgedAt: null,
+              isSelectedForListing: true,
+            },
+            orderBy: { sortOrder: "asc" },
+            select: {
+              id: true,
+              caption: true,
+              storagePath: true,
+              unitId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!listing) return [];
+  const labels = new Map(
+    listing.property.units.map((unit) => [unit.id, unit.label]),
+  );
+  const shared = listing.property.media.filter((item) => item.unitId == null);
+  const units = listing.property.media.filter((item) => item.unitId != null);
+  return [...shared, ...units].flatMap((item) => {
+    const url = publicMediaUrl(item.storagePath);
+    if (!url) return [];
+    return [
+      {
+        key: item.id,
+        url,
+        label:
+          item.caption ||
+          (item.unitId ? (labels.get(item.unitId) ?? "Ảnh") : "Ảnh chung"),
+      },
+    ];
+  });
 }

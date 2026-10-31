@@ -21,6 +21,7 @@ export class ListingsRequestError extends Error {
 
 export type ListingCard = {
   id: string;
+  property_id: string;
   title: string;
   availability_label: string;
   available_unit_count: number;
@@ -86,6 +87,7 @@ export type PublicUnit = {
 
 export type ListingDetail = {
   id: string;
+  property_id: string;
   title: string;
   description: string;
   availability_label: string;
@@ -136,15 +138,26 @@ async function publicGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-export function fetchListings(params: URLSearchParams, signal?: AbortSignal): Promise<ListingSearchResponse> {
+export function fetchListings(
+  params: URLSearchParams,
+  signal?: AbortSignal,
+): Promise<ListingSearchResponse> {
   const query = params.toString();
-  return publicGet<ListingSearchResponse>(`/api/listings${query ? `?${query}` : ""}`, signal);
+  return publicGet<ListingSearchResponse>(
+    `/api/listings${query ? `?${query}` : ""}`,
+    signal,
+  );
 }
 
-export function fetchListing(id: string, signal?: AbortSignal): Promise<{ data: ListingDetail }> {
+export function fetchListing(
+  id: string,
+  signal?: AbortSignal,
+): Promise<{ data: ListingDetail }> {
   return publicGet<{ data: ListingDetail }>(`/api/listings/${id}`, signal);
 }
 
-export function fetchAmenities(signal?: AbortSignal): Promise<{ data: AmenityCatalogItem[] }> {
+export function fetchAmenities(
+  signal?: AbortSignal,
+): Promise<{ data: AmenityCatalogItem[] }> {
   return publicGet<{ data: AmenityCatalogItem[] }>("/api/amenities", signal);
 }

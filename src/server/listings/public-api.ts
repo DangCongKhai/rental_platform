@@ -4,10 +4,19 @@ import {
   parseListingSearchParams,
 } from "@/domain/discovery/listing-search-params";
 import { todayInVietnam } from "@/domain/discovery/unit-availability";
-import { getPublicListing, type PublicListing } from "./public-listing";
-import { searchListings, type ListingCardData, type ListingSearchPage } from "./search";
+import {
+  getListingPhotoSlides,
+  getPublicListing,
+  type PublicListing,
+} from "./public-listing";
+import {
+  searchListings,
+  type ListingCardData,
+  type ListingSearchPage,
+} from "./search";
 
-const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LISTING_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function amenityCatalogJson() {
   return {
@@ -22,6 +31,7 @@ export function amenityCatalogJson() {
 function cardJson(card: ListingCardData) {
   return {
     id: card.id,
+    property_id: card.propertyId,
     title: card.title,
     availability_label: card.availabilityLabel,
     available_unit_count: card.availableUnitCount,
@@ -58,7 +68,9 @@ function pageMeta(page: ListingSearchPage, moveInDate: string | null) {
 
 export async function listingsIndexJson(params: URLSearchParams) {
   const filters = parseListingSearchParams(params);
-  const page = await searchListings(filters, todayInVietnam());
+  const page = await searchListings(filters, todayInVietnam(), {
+    count: params.get("preview") !== "1",
+  });
   return {
     data: page.items.map(cardJson),
     meta: pageMeta(page, filters.moveInDate),
@@ -68,12 +80,15 @@ export async function listingsIndexJson(params: URLSearchParams) {
 function detailJson(listing: PublicListing) {
   return {
     id: listing.id,
+    property_id: listing.propertyId,
     title: listing.title,
     description: listing.description,
     availability_label: listing.units.some((unit) => unit.availableFrom == null)
       ? "Còn trống"
-      : listing.units[0]?.availabilityLabel ?? "Còn trống",
-    available_unit_count: listing.units.filter((unit) => unit.availableFrom == null).length,
+      : (listing.units[0]?.availabilityLabel ?? "Còn trống"),
+    available_unit_count: listing.units.filter(
+      (unit) => unit.availableFrom == null,
+    ).length,
     gallery: listing.gallery.map((photo) => ({
       id: photo.id,
       caption: photo.caption,
@@ -85,7 +100,7 @@ function detailJson(listing: PublicListing) {
       property_type: listing.property.propertyType,
       address_line: listing.property.addressLine,
       ward: listing.property.ward,
-      city: listing.property.city,
+      city: listing.property.city ?? "",
       description: listing.property.description,
       shared_rules: listing.property.sharedRules,
       shared_amenities: listing.property.sharedAmenities,
@@ -122,14 +137,29 @@ function detailJson(listing: PublicListing) {
   };
 }
 
-export async function listingDetailJson(id: string) {
+export async function listingDetailJson(
+  id: string,
+  options: { includeMedia?: boolean } = {},
+) {
   if (!LISTING_ID.test(id)) return null;
-  const listing = await getPublicListing(id, parseListingSearchParams(new URLSearchParams()), todayInVietnam());
+  const listing = await getPublicListing(
+    id,
+    parseListingSearchParams(new URLSearchParams()),
+    todayInVietnam(),
+    options,
+  );
   if (!listing) return null;
   return { data: detailJson(listing) };
 }
 
-export function validationResponse(error: unknown): { status: 422; body: { message: string } } | null {
+export async function listingPhotoSlides(id: string) {
+  if (!LISTING_ID.test(id)) return [];
+  return getListingPhotoSlides(id);
+}
+
+export function validationResponse(
+  error: unknown,
+): { status: 422; body: { message: string } } | null {
   if (!(error instanceof ListingSearchValidationError)) return null;
   return { status: 422, body: { message: error.message } };
 }

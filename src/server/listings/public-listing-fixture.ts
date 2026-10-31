@@ -41,7 +41,10 @@ export type PublishedListing = {
 const propertyIds: string[] = [];
 const authUserIds: string[] = [];
 
-function amenities(standard: Record<string, boolean> = {}, custom: string[] = []) {
+function amenities(
+  standard: Record<string, boolean> = {},
+  custom: string[] = [],
+) {
   return {
     schema_version: 1,
     standard: Object.fromEntries(
@@ -79,11 +82,15 @@ async function createAuthUser(fullName: string) {
       ${userId + "-c"}, '', ${userId + "-p"}, ${userId + "-a"}, false, false
     )`;
 
-  const profile = await prisma.userProfile.findUniqueOrThrow({ where: { userId } });
+  const profile = await prisma.userProfile.findUniqueOrThrow({
+    where: { userId },
+  });
   return { profileId: profile.id, userId, fullName: profile.fullName };
 }
 
-export async function publishedListing(overrides: PublishedListingInput = {}): Promise<PublishedListing> {
+export async function publishedListing(
+  overrides: PublishedListingInput = {},
+): Promise<PublishedListing> {
   const owner = await createAuthUser("RENT-003 owner");
   const units = overrides.units ?? [{}];
   const property = await prisma.property.create({
@@ -105,19 +112,26 @@ export async function publishedListing(overrides: PublishedListingInput = {}): P
   const createdUnits: { id: string; label: string }[] = [];
   for (const [index, unit] of units.entries()) {
     const label = unit.label ?? `Phòng ${index + 1}`;
-    const description = unit.description === undefined ? "Phòng đầy đủ nội thất." : unit.description;
-    const policyOverrides = unit.pets == null
-      ? {}
-      : { schema_version: 1, overrides: { pets: unit.pets }, additional_rules: [] };
+    const description =
+      unit.description === undefined
+        ? "Phòng đầy đủ nội thất."
+        : unit.description;
+    const policyOverrides =
+      unit.pets == null
+        ? {}
+        : {
+            schema_version: 1,
+            overrides: { pets: unit.pets },
+            additional_rules: [],
+          };
     const rows = await prisma.$queryRaw<Array<{ id: string }>>`
       INSERT INTO units (
-        property_id, label, normalized_label, unit_kind, description, area_m2, bedrooms, bathrooms,
+        property_id, label, unit_kind, description, area_m2, bedrooms, bathrooms,
         bathroom_arrangement, amenities, advertised_monthly_rent, deposit, minimum_rental_months,
         max_occupants, operational_status, is_marketed, policy_overrides, updated_at
       ) VALUES (
         ${property.id}::uuid,
         ${label},
-        ${label.normalize("NFC").trim().toLocaleLowerCase("vi")},
         ${unit.unitKind ?? "STUDIO"},
         ${description},
         28,
@@ -168,8 +182,9 @@ export async function publishedListing(overrides: PublishedListingInput = {}): P
     });
   }
 
-  const published = (overrides.publicationStatus ?? "PUBLISHED") === "PUBLISHED"
-    && (overrides.moderationStatus ?? "APPROVED") === "APPROVED";
+  const published =
+    (overrides.publicationStatus ?? "PUBLISHED") === "PUBLISHED" &&
+    (overrides.moderationStatus ?? "APPROVED") === "APPROVED";
 
   const listing = await prisma.listing.create({
     data: {
@@ -184,7 +199,9 @@ export async function publishedListing(overrides: PublishedListingInput = {}): P
       reviewedById: published ? owner.profileId : null,
       submittedContentRevision: published ? 1 : null,
       approvedContentRevision: published ? 1 : null,
-      adminSuspendedAt: overrides.adminSuspended ? new Date("2026-10-03T00:00:00.000Z") : null,
+      adminSuspendedAt: overrides.adminSuspended
+        ? new Date("2026-10-03T00:00:00.000Z")
+        : null,
       adminSuspendedById: overrides.adminSuspended ? owner.profileId : null,
       suspensionReason: overrides.adminSuspended ? "Vi phạm quy định" : null,
     },
@@ -203,7 +220,8 @@ export async function blockUnit(
   unitId: string,
   start: string,
   end: string,
-  status: "PENDING_CONFIRMATION" | "CONFIRMED" | "ACTIVE" = "PENDING_CONFIRMATION",
+  status:
+    "PENDING_CONFIRMATION" | "CONFIRMED" | "ACTIVE" = "PENDING_CONFIRMATION",
 ) {
   if (status !== "PENDING_CONFIRMATION") {
     throw new Error("The fixture builds a pending confirmation hold.");
@@ -272,19 +290,22 @@ export async function blockUnit(
   });
 }
 
-const testOwnerSql = Prisma.sql`
-  SELECT properties.id FROM properties
-  JOIN user_profiles ON user_profiles.id = properties.owner_id
-  WHERE user_profiles.email LIKE 'rent003-%@rentos.test'
-`;
-
 export async function cleanupPublicListings() {
-  propertyIds.splice(0);
-  authUserIds.splice(0);
+  const ownedPropertyIds = propertyIds.splice(0);
+  const ownedAuthUserIds = authUserIds.splice(0);
+  if (!ownedPropertyIds.length && !ownedAuthUserIds.length) return;
+  // Each test worker imports its own fixture module. Never delete another
+  // worker's inventory merely because its owner has the same email prefix.
+  const testOwnerSql = ownedPropertyIds.length
+    ? Prisma.sql`SELECT id FROM properties WHERE id::text IN (${Prisma.join(ownedPropertyIds)})`
+    : Prisma.sql`SELECT id FROM properties WHERE false`;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.$executeRawUnsafe("SET LOCAL session_replication_role = replica");
-    await tx.$executeRaw`
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRawUnsafe(
+        "SET LOCAL session_replication_role = replica",
+      );
+      await tx.$executeRaw`
       UPDATE tenancies
       SET pending_contract_id = NULL,
           latest_confirmed_contract_id = NULL,
@@ -295,22 +316,28 @@ export async function cleanupPublicListings() {
           actual_ended_at = now(),
           end_reason = 'test cleanup'
       WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))`;
-    await tx.$executeRaw`
+      await tx.$executeRaw`
       DELETE FROM tenancy_contracts
       WHERE tenancy_id IN (
         SELECT id FROM tenancies
         WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))
       )`;
-    await tx.$executeRaw`
+      await tx.$executeRaw`
       DELETE FROM tenancies
       WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))`;
-    await tx.$executeRaw`
+      await tx.$executeRaw`
       DELETE FROM rental_requests
       WHERE listing_id IN (SELECT id FROM listings WHERE property_id IN (${testOwnerSql}))`;
-    await tx.$executeRaw`DELETE FROM listings WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM property_media WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM units WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM properties WHERE id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM auth.users WHERE email LIKE 'rent003-%@rentos.test'`;
-  }, { timeout: 30_000 });
+      await tx.$executeRaw`DELETE FROM listings WHERE property_id IN (${testOwnerSql})`;
+      await tx.$executeRaw`DELETE FROM property_media WHERE property_id IN (${testOwnerSql})`;
+      await tx.$executeRaw`DELETE FROM units WHERE property_id IN (${testOwnerSql})`;
+      await tx.$executeRaw`DELETE FROM properties WHERE id IN (${testOwnerSql})`;
+      if (ownedAuthUserIds.length) {
+        // Replica mode disables the auth.users -> profile cascade as well.
+        await tx.$executeRaw`DELETE FROM user_profiles WHERE user_id::text IN (${Prisma.join(ownedAuthUserIds)})`;
+        await tx.$executeRaw`DELETE FROM auth.users WHERE id::text IN (${Prisma.join(ownedAuthUserIds)})`;
+      }
+    },
+    { timeout: 30_000 },
+  );
 }
