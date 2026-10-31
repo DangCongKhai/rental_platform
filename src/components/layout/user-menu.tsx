@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CurrentUser } from "@/lib/auth/current-user";
@@ -43,7 +45,10 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         aria-label="Menu tài khoản"
         className="inline-flex min-h-12 cursor-pointer items-center gap-2 text-white"
       >
-        <Avatar initials={user.initials} className="size-11.5 border-2 border-white" />
+        <Avatar
+          initials={user.initials}
+          className="size-11.5 border-2 border-white"
+        />
         <ChevronDownIcon className="size-4.5" />
       </button>
 
@@ -57,9 +62,50 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             <Avatar initials={user.initials} className="size-11" />
             <div className="min-w-0">
               <div className="truncate text-[15px] font-bold">{user.name}</div>
-              <div className="truncate text-[13px] text-subtle">{user.email}</div>
+              <div className="truncate text-[13px] text-subtle">
+                {user.email}
+              </div>
             </div>
           </div>
+          <div className="my-1 h-px bg-line-soft" />
+          {[
+            {
+              href: "/account/profile",
+              label: "Hồ sơ cá nhân",
+              icon: "profile",
+            },
+            {
+              href: "/tenant",
+              label: "Trang của bạn (Người thuê)",
+              icon: "tenant",
+            },
+            {
+              href: "/owner",
+              label: "Không gian quản lý (Chủ nhà)",
+              icon: "owner",
+            },
+            {
+              href: "/account/reports",
+              label: "Báo cáo của tôi",
+              icon: "reports",
+            },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium hover:bg-brand-soft"
+            >
+              <Image
+                src={`/images/account/${item.icon}.svg`}
+                alt=""
+                width={18}
+                height={18}
+              />
+              {item.label}
+            </Link>
+          ))}
           <div className="my-1 h-px bg-line-soft" />
           <button
             type="button"
@@ -76,7 +122,13 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   );
 }
 
-function Avatar({ initials, className }: { initials: string; className?: string }) {
+function Avatar({
+  initials,
+  className,
+}: {
+  initials: string;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden="true"

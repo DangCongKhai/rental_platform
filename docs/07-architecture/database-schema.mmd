@@ -189,7 +189,8 @@ erDiagram
         uuid id PK "Report UUID"
         uuid listing_id FK "Reported advertisement"
         uuid reporter_id FK "Authenticated reporter"
-        text reason_code "FRAUD MISLEADING HARMFUL OTHER"
+        text reason_code "First selected code (legacy)"
+        text[] reason_codes "All selected FRAUD MISLEADING HARMFUL OTHER codes"
         text description "Reporter explanation"
         text status "OPEN REVIEWING RESOLVED DISMISSED"
         text resolution_summary "Optional. Sanitized reporter-visible outcome"
@@ -203,6 +204,7 @@ erDiagram
 
 
     notifications {
+        text audience "TENANT / OWNER / ADMIN; required"
         uuid id PK "Inbox UUID"
         uuid recipient_id FK "Only this user can read/mark read"
         text event_key "Unique with recipient_id"

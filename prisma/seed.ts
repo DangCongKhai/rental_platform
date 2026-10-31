@@ -3,9 +3,18 @@ import { pathToFileURL } from "node:url";
 import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../src/server/db";
 import { createNotification } from "../src/server/notifications";
+import { listingReportSeedSql } from "./seed-data/listing-reports";
 import { daNangPlaces } from "./seed-data/da-nang-places";
 import { libraryFileMeta, libraryImagesFor } from "./seed-data/image-library";
-import { adminId, haoId, lanId, linhId, maiId, seedId, seedPeople } from "./seed-data/ids";
+import {
+  adminId,
+  haoId,
+  lanId,
+  linhId,
+  maiId,
+  seedId,
+  seedPeople,
+} from "./seed-data/ids";
 
 if (!process.env.DATABASE_URL && process.env.DIRECT_URL) {
   process.env.DATABASE_URL = process.env.DIRECT_URL;
@@ -53,7 +62,11 @@ async function clear(tx: Tx) {
      WHERE id::text LIKE $1`,
     PREFIX,
   );
-  await exec(tx, `DELETE FROM notifications WHERE event_key LIKE 'seed:%' OR recipient_id::text LIKE $1`, PREFIX);
+  await exec(
+    tx,
+    `DELETE FROM notifications WHERE event_key LIKE 'seed:%' OR recipient_id::text LIKE $1`,
+    PREFIX,
+  );
   for (const table of [
     "favourite_properties",
     "listing_reports",
@@ -69,7 +82,11 @@ async function clear(tx: Tx) {
     await exec(tx, `DELETE FROM ${table} WHERE id::text LIKE $1`, PREFIX);
   }
   await exec(tx, `SET LOCAL session_replication_role = origin`);
-  await exec(tx, `DELETE FROM auth.identities WHERE user_id::text LIKE $1`, PREFIX);
+  await exec(
+    tx,
+    `DELETE FROM auth.identities WHERE user_id::text LIKE $1`,
+    PREFIX,
+  );
   await exec(tx, `DELETE FROM auth.users WHERE id::text LIKE $1`, PREFIX);
 }
 
@@ -124,10 +141,9 @@ async function insertPeople(tx: Tx) {
       person.phone,
       person.admin,
     );
-    const copied = await tx.$queryRawUnsafe<Array<{ avatar_url: string | null }>>(
-      `SELECT avatar_url FROM user_profiles WHERE id = $1::uuid`,
-      profile,
-    );
+    const copied = await tx.$queryRawUnsafe<
+      Array<{ avatar_url: string | null }>
+    >(`SELECT avatar_url FROM user_profiles WHERE id = $1::uuid`, profile);
     if (copied[0]?.avatar_url !== person.avatar) {
       throw new Error(`avatar_url was not copied for ${person.email}`);
     }
@@ -143,19 +159,61 @@ function ownerFor(index: number): string {
 async function insertInventory(tx: Tx) {
   const now = new Date().toISOString();
   const properties: Record<string, unknown[]> = {
-    id: [], owner: [], name: [], description: [], type: [], arrangement: [],
-    address: [], latitude: [], longitude: [], amenities: [], policies: [],
+    id: [],
+    owner: [],
+    name: [],
+    description: [],
+    type: [],
+    arrangement: [],
+    address: [],
+    latitude: [],
+    longitude: [],
+    amenities: [],
+    policies: [],
   };
   const units: Record<string, unknown[]> = {
-    id: [], property: [], label: [], normalized: [], kind: [], area: [], bedrooms: [], description: [], amenities: [], rent: [], overrides: [],
+    id: [],
+    property: [],
+    label: [],
+    normalized: [],
+    kind: [],
+    area: [],
+    bedrooms: [],
+    description: [],
+    amenities: [],
+    rent: [],
+    overrides: [],
   };
   const media: Record<string, unknown[]> = {
-    id: [], property: [], unit: [], owner: [], path: [], caption: [], sort: [], sha: [], mime: [], size: [],
+    id: [],
+    property: [],
+    unit: [],
+    owner: [],
+    path: [],
+    caption: [],
+    sort: [],
+    sha: [],
+    mime: [],
+    size: [],
   };
   const listings: Record<string, unknown[]> = {
-    id: [], property: [], title: [], description: [], cover: [], moderation: [], publication: [],
-    submittedAt: [], reviewedBy: [], reviewedAt: [], reason: [], submittedRevision: [], approvedRevision: [],
-    suspendedAt: [], suspendedBy: [], suspensionReason: [], archivedAt: [],
+    id: [],
+    property: [],
+    title: [],
+    description: [],
+    cover: [],
+    moderation: [],
+    publication: [],
+    submittedAt: [],
+    reviewedBy: [],
+    reviewedAt: [],
+    reason: [],
+    submittedRevision: [],
+    approvedRevision: [],
+    suspendedAt: [],
+    suspendedBy: [],
+    suspensionReason: [],
+    archivedAt: [],
   };
 
   let mediaNumber = 1;
@@ -164,53 +222,116 @@ async function insertInventory(tx: Tx) {
     const propertyId = seedId(3, index + 1);
     const owner = ownerFor(index);
     const generatedName = `Căn hộ Đà Nẵng ${index + 1}`;
-    const name = index === 0 ? (place.name ?? "Nhà Linh") : (place.name ?? generatedName);
+    const name =
+      index === 0 ? (place.name ?? "Nhà Linh") : (place.name ?? generatedName);
     properties.id.push(propertyId);
     properties.owner.push(owner);
     properties.name.push(name);
-    properties.description.push(`${name} is a rentOS seed property in Da Nang.`);
+    properties.description.push(
+      `${name} is a rentOS seed property in Da Nang.`,
+    );
     properties.type.push(index === 0 ? "APARTMENT_BUILDING" : "APARTMENT");
-    properties.arrangement.push(index === 0 || index === 5 ? "SEPARATE_UNITS" : "WHOLE_SPACE");
+    properties.arrangement.push(
+      index === 0 || index === 5 ? "SEPARATE_UNITS" : "WHOLE_SPACE",
+    );
     properties.address.push(place.addressLine ?? name);
     properties.latitude.push(place.latitude);
     properties.longitude.push(place.longitude);
-    properties.amenities.push(JSON.stringify(index === 0 ? SHARED_AMENITIES : { schema_version: 1, standard: {}, custom: [] }));
-    properties.policies.push(JSON.stringify(index === 0 ? QUIET_POLICIES : {
-      schema_version: 1,
-      defaults: { pets: "ASK_OWNER", smoking: "NOT_ALLOWED" },
-      shared_rules: [],
-    }));
+    properties.amenities.push(
+      JSON.stringify(
+        index === 0
+          ? SHARED_AMENITIES
+          : { schema_version: 1, standard: {}, custom: [] },
+      ),
+    );
+    properties.policies.push(
+      JSON.stringify(
+        index === 0
+          ? QUIET_POLICIES
+          : {
+              schema_version: 1,
+              defaults: { pets: "ASK_OWNER", smoking: "NOT_ALLOWED" },
+              shared_rules: [],
+            },
+      ),
+    );
 
     const rows =
       index === 0
         ? ["S201", "S202", "S203", "S204", "S205"].map((label, offset) => ({
-            id: seedId(4, offset + 1), label, kind: "STUDIO", area: "28", bedrooms: 0, rent: 4_500_000,
+            id: seedId(4, offset + 1),
+            label,
+            kind: "STUDIO",
+            area: "28",
+            bedrooms: 0,
+            rent: 4_500_000,
           }))
         : index === 5
           ? [
-              { id: seedId(4, 6), label: "A", kind: "STUDIO", area: "28", bedrooms: 0, rent: 4_500_000 },
-              { id: seedId(4, 7), label: "B", kind: "STUDIO", area: "28", bedrooms: 0, rent: 4_500_000 },
-              { id: seedId(4, 8), label: "C", kind: "STUDIO", area: "28", bedrooms: 0, rent: 4_500_000 },
+              {
+                id: seedId(4, 6),
+                label: "A",
+                kind: "STUDIO",
+                area: "28",
+                bedrooms: 0,
+                rent: 4_500_000,
+              },
+              {
+                id: seedId(4, 7),
+                label: "B",
+                kind: "STUDIO",
+                area: "28",
+                bedrooms: 0,
+                rent: 4_500_000,
+              },
+              {
+                id: seedId(4, 8),
+                label: "C",
+                kind: "STUDIO",
+                area: "28",
+                bedrooms: 0,
+                rent: 4_500_000,
+              },
             ]
-          : [{
-              id: seedId(4, 1000 + index), label: "Entire property", kind: "APARTMENT",
-              area: "45", bedrooms: 1, rent: 5_000_000 + index * 50_000,
-            }];
+          : [
+              {
+                id: seedId(4, 1000 + index),
+                label: "Entire property",
+                kind: "APARTMENT",
+                area: "45",
+                bedrooms: 1,
+                rent: 5_000_000 + index * 50_000,
+              },
+            ];
     for (const unit of rows) {
       units.id.push(unit.id);
       units.property.push(propertyId);
       units.label.push(unit.label);
-      units.normalized.push(unit.label.normalize("NFC").trim().toLocaleLowerCase("vi"));
+      units.normalized.push(
+        unit.label.normalize("NFC").trim().toLocaleLowerCase("vi"),
+      );
       units.description.push(`Phòng ${unit.label} tại ${name}.`);
       units.kind.push(unit.kind);
       units.area.push(unit.area);
       units.bedrooms.push(unit.bedrooms);
-      units.amenities.push(JSON.stringify(index === 0 ? UNIT_AMENITIES : { schema_version: 1, standard: {}, custom: [] }));
+      units.amenities.push(
+        JSON.stringify(
+          index === 0
+            ? UNIT_AMENITIES
+            : { schema_version: 1, standard: {}, custom: [] },
+        ),
+      );
       units.rent.push(unit.rent);
-      units.overrides.push(JSON.stringify(unit.label === "S205" ? S205_OVERRIDES : {}));
+      units.overrides.push(
+        JSON.stringify(unit.label === "S205" ? S205_OVERRIDES : {}),
+      );
     }
 
-    const images = libraryImagesFor(properties.type.at(-1) as string, rows[0].kind, index + 1);
+    const images = libraryImagesFor(
+      properties.type.at(-1) as string,
+      rows[0].kind,
+      index + 1,
+    );
     let coverId: string | null = null;
     for (const [imageIndex, image] of images.entries()) {
       const mediaId = seedId(5, mediaNumber);
@@ -234,23 +355,37 @@ async function insertInventory(tx: Tx) {
     const rejected = index === 3;
     const hidden = index === 4;
     const suspended = index === 5;
-    const moderation = draft ? "DRAFT" : pending ? "PENDING" : rejected ? "REJECTED" : "APPROVED";
+    const moderation = draft
+      ? "DRAFT"
+      : pending
+        ? "PENDING"
+        : rejected
+          ? "REJECTED"
+          : "APPROVED";
     listings.id.push(seedId(6, index + 1));
     listings.property.push(propertyId);
     listings.title.push(name);
     listings.description.push(`${name} is available through rentOS.`);
     listings.cover.push(draft ? null : coverId);
     listings.moderation.push(moderation);
-    listings.publication.push(draft || pending || rejected ? "DRAFT" : hidden ? "HIDDEN" : "PUBLISHED");
+    listings.publication.push(
+      draft || pending || rejected ? "DRAFT" : hidden ? "HIDDEN" : "PUBLISHED",
+    );
     listings.submittedAt.push(draft ? null : now);
-    listings.reviewedBy.push(moderation === "APPROVED" || rejected ? adminId : null);
-    listings.reviewedAt.push(moderation === "APPROVED" || rejected ? now : null);
+    listings.reviewedBy.push(
+      moderation === "APPROVED" || rejected ? adminId : null,
+    );
+    listings.reviewedAt.push(
+      moderation === "APPROVED" || rejected ? now : null,
+    );
     listings.reason.push(rejected ? "Photos do not show the rooms." : null);
     listings.submittedRevision.push(draft ? null : 1);
     listings.approvedRevision.push(moderation === "APPROVED" ? 1 : null);
     listings.suspendedAt.push(suspended ? now : null);
     listings.suspendedBy.push(suspended ? adminId : null);
-    listings.suspensionReason.push(suspended ? "Suspended after a resolved report." : null);
+    listings.suspensionReason.push(
+      suspended ? "Suspended after a resolved report." : null,
+    );
     listings.archivedAt.push(null);
   }
 
@@ -285,9 +420,17 @@ async function insertInventory(tx: Tx) {
        $8::numeric[], $9::numeric[], $10::text[], $11::text[]
      ) AS row(id, owner_id, name, description, property_type, rental_arrangement, address_line,
               latitude, longitude, shared_amenities, policies)`,
-    properties.id, properties.owner, properties.name, properties.description, properties.type,
-    properties.arrangement, properties.address, properties.latitude,
-    properties.longitude, properties.amenities, properties.policies,
+    properties.id,
+    properties.owner,
+    properties.name,
+    properties.description,
+    properties.type,
+    properties.arrangement,
+    properties.address,
+    properties.latitude,
+    properties.longitude,
+    properties.amenities,
+    properties.policies,
   );
   await exec(
     tx,
@@ -302,8 +445,17 @@ async function insertInventory(tx: Tx) {
        $1::uuid[], $2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::numeric[], $8::int[], $9::text[],
        $10::numeric[], $11::text[]
      ) AS row(id, property_id, label, normalized_label, unit_kind, description, area_m2, bedrooms, amenities, rent, overrides)`,
-    units.id, units.property, units.label, units.normalized, units.kind, units.description, units.area, units.bedrooms,
-    units.amenities, units.rent, units.overrides,
+    units.id,
+    units.property,
+    units.label,
+    units.normalized,
+    units.kind,
+    units.description,
+    units.area,
+    units.bedrooms,
+    units.amenities,
+    units.rent,
+    units.overrides,
   );
   await exec(
     tx,
@@ -315,7 +467,16 @@ async function insertInventory(tx: Tx) {
      FROM unnest(
        $1::uuid[], $2::uuid[], $3::text[], $4::uuid[], $5::text[], $6::text[], $7::int[], $8::text[], $9::text[], $10::bigint[]
      ) AS row(id, property_id, unit_id, uploaded_by, storage_path, caption, sort_order, sha256, mime_type, size_bytes)`,
-    media.id, media.property, media.unit, media.owner, media.path, media.caption, media.sort, media.sha, media.mime, media.size,
+    media.id,
+    media.property,
+    media.unit,
+    media.owner,
+    media.path,
+    media.caption,
+    media.sort,
+    media.sha,
+    media.mime,
+    media.size,
   );
   await exec(
     tx,
@@ -337,10 +498,23 @@ async function insertInventory(tx: Tx) {
        submitted_at, reviewed_by, reviewed_at, review_reason, submitted_content_revision,
        approved_content_revision, admin_suspended_at, admin_suspended_by, suspension_reason, archived_at
      )`,
-    listings.id, listings.property, listings.title, listings.description, listings.cover,
-    listings.moderation, listings.publication, listings.submittedAt, listings.reviewedBy,
-    listings.reviewedAt, listings.reason, listings.submittedRevision, listings.approvedRevision,
-    listings.suspendedAt, listings.suspendedBy, listings.suspensionReason, listings.archivedAt,
+    listings.id,
+    listings.property,
+    listings.title,
+    listings.description,
+    listings.cover,
+    listings.moderation,
+    listings.publication,
+    listings.submittedAt,
+    listings.reviewedBy,
+    listings.reviewedAt,
+    listings.reason,
+    listings.submittedRevision,
+    listings.approvedRevision,
+    listings.suspendedAt,
+    listings.suspendedBy,
+    listings.suspensionReason,
+    listings.archivedAt,
   );
 }
 
@@ -475,7 +649,11 @@ async function contract(
     input.renewalN ? seedId(10, input.renewalN) : null,
   );
   if (input.confirmTenant) {
-    await exec(tx, `UPDATE tenancy_contracts SET tenant_confirmed_at = now() WHERE id = $1::uuid`, id);
+    await exec(
+      tx,
+      `UPDATE tenancy_contracts SET tenant_confirmed_at = now() WHERE id = $1::uuid`,
+      id,
+    );
   }
   if (input.rejectReason) {
     await exec(
@@ -521,7 +699,12 @@ async function renewal(
   );
 }
 
-async function pointAt(tx: Tx, tenancyN: number, pendingN: number | null, latestN: number | null) {
+async function pointAt(
+  tx: Tx,
+  tenancyN: number,
+  pendingN: number | null,
+  latestN: number | null,
+) {
   await exec(
     tx,
     `UPDATE tenancies
@@ -535,133 +718,286 @@ async function pointAt(tx: Tx, tenancyN: number, pendingN: number | null, latest
 
 async function insertStory(tx: Tx) {
   await request(tx, 1, {
-    listingN: 1, tenantId: maiId, name: "Mai", phone: "0901000004", status: "ACCEPTED",
-    unitId: seedId(4, 1), start: "2026-01-01", end: "2026-06-30",
+    listingN: 1,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "ACCEPTED",
+    unitId: seedId(4, 1),
+    start: "2026-01-01",
+    end: "2026-06-30",
   });
   await tenancy(tx, 1, {
-    unitId: seedId(4, 1), requestN: 1, tenantId: maiId, ownerId: linhId, status: "ACTIVE",
-    confirmedStart: "2026-01-01", confirmedEnd: "2026-06-30",
-    blockedStart: "2026-01-01", blockedEnd: "2026-12-31", expires: true, movedIn: true,
+    unitId: seedId(4, 1),
+    requestN: 1,
+    tenantId: maiId,
+    ownerId: linhId,
+    status: "ACTIVE",
+    confirmedStart: "2026-01-01",
+    confirmedEnd: "2026-06-30",
+    blockedStart: "2026-01-01",
+    blockedEnd: "2026-12-31",
+    expires: true,
+    movedIn: true,
   });
   await contract(tx, 1, {
-    tenancyN: 1, version: 1, type: "ORIGINAL", start: "2026-01-01", end: "2026-06-30",
-    rent: 4_500_000, ownerId: linhId, confirmTenant: true,
+    tenancyN: 1,
+    version: 1,
+    type: "ORIGINAL",
+    start: "2026-01-01",
+    end: "2026-06-30",
+    rent: 4_500_000,
+    ownerId: linhId,
+    confirmTenant: true,
   });
-  await renewal(tx, 1, { tenancyN: 1, end: "2026-12-31", rent: 5_200_000, status: "PENDING" });
+  await renewal(tx, 1, {
+    tenancyN: 1,
+    end: "2026-12-31",
+    rent: 5_200_000,
+    status: "PENDING",
+  });
   await contract(tx, 2, {
-    tenancyN: 1, version: 2, type: "RENEWAL", start: "2026-07-01", end: "2026-12-31",
-    rent: 5_200_000, ownerId: linhId, basisN: 1, renewalN: 1,
+    tenancyN: 1,
+    version: 2,
+    type: "RENEWAL",
+    start: "2026-07-01",
+    end: "2026-12-31",
+    rent: 5_200_000,
+    ownerId: linhId,
+    basisN: 1,
+    renewalN: 1,
   });
   await pointAt(tx, 1, 2, 1);
 
   await request(tx, 2, {
-    listingN: 1, tenantId: lanId, name: "Lan", phone: "0901000005", status: "ACCEPTED",
-    unitId: seedId(4, 2), start: "2026-08-01", end: "2026-12-31",
+    listingN: 1,
+    tenantId: lanId,
+    name: "Lan",
+    phone: "0901000005",
+    status: "ACCEPTED",
+    unitId: seedId(4, 2),
+    start: "2026-08-01",
+    end: "2026-12-31",
   });
   await tenancy(tx, 2, {
-    unitId: seedId(4, 2), requestN: 2, tenantId: lanId, ownerId: linhId, status: "CONFIRMED",
-    confirmedStart: "2026-08-01", confirmedEnd: "2026-12-31",
-    blockedStart: "2026-08-01", blockedEnd: "2026-12-31",
+    unitId: seedId(4, 2),
+    requestN: 2,
+    tenantId: lanId,
+    ownerId: linhId,
+    status: "CONFIRMED",
+    confirmedStart: "2026-08-01",
+    confirmedEnd: "2026-12-31",
+    blockedStart: "2026-08-01",
+    blockedEnd: "2026-12-31",
   });
   await contract(tx, 3, {
-    tenancyN: 2, version: 1, type: "ORIGINAL", start: "2026-08-01", end: "2026-12-31",
-    rent: 4_500_000, ownerId: linhId, confirmTenant: true,
+    tenancyN: 2,
+    version: 1,
+    type: "ORIGINAL",
+    start: "2026-08-01",
+    end: "2026-12-31",
+    rent: 4_500_000,
+    ownerId: linhId,
+    confirmTenant: true,
   });
   await renewal(tx, 2, {
-    tenancyN: 2, end: "2027-06-30", rent: 5_200_000, status: "REJECTED",
-    reviewer: linhId, reason: "The studio is reserved after December.",
+    tenancyN: 2,
+    end: "2027-06-30",
+    rent: 5_200_000,
+    status: "REJECTED",
+    reviewer: linhId,
+    reason: "The studio is reserved after December.",
   });
   await pointAt(tx, 2, null, 3);
 
   await request(tx, 3, {
-    listingN: 1, tenantId: maiId, name: "Mai", phone: "0901000004", status: "ACCEPTED",
-    unitId: seedId(4, 3), start: "2026-03-01", end: "2026-05-31",
+    listingN: 1,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "ACCEPTED",
+    unitId: seedId(4, 3),
+    start: "2026-03-01",
+    end: "2026-05-31",
   });
   await tenancy(tx, 3, {
-    unitId: seedId(4, 3), requestN: 3, tenantId: maiId, ownerId: linhId, status: "PENDING_CONFIRMATION",
-    blockedStart: "2026-03-01", blockedEnd: "2026-05-31", expires: true,
+    unitId: seedId(4, 3),
+    requestN: 3,
+    tenantId: maiId,
+    ownerId: linhId,
+    status: "PENDING_CONFIRMATION",
+    blockedStart: "2026-03-01",
+    blockedEnd: "2026-05-31",
+    expires: true,
   });
   await contract(tx, 4, {
-    tenancyN: 3, version: 1, type: "ORIGINAL", start: "2026-03-01", end: "2026-05-31",
-    rent: 4_500_000, ownerId: linhId,
+    tenancyN: 3,
+    version: 1,
+    type: "ORIGINAL",
+    start: "2026-03-01",
+    end: "2026-05-31",
+    rent: 4_500_000,
+    ownerId: linhId,
   });
   await pointAt(tx, 3, 4, null);
 
   await request(tx, 4, {
-    listingN: 1, tenantId: lanId, name: "Lan", phone: "0901000005", status: "ACCEPTED",
-    unitId: seedId(4, 4), start: "2026-09-01", end: "2026-11-30",
+    listingN: 1,
+    tenantId: lanId,
+    name: "Lan",
+    phone: "0901000005",
+    status: "ACCEPTED",
+    unitId: seedId(4, 4),
+    start: "2026-09-01",
+    end: "2026-11-30",
   });
   await tenancy(tx, 4, {
-    unitId: seedId(4, 4), requestN: 4, tenantId: lanId, ownerId: linhId, status: "AWAITING_REVISION",
+    unitId: seedId(4, 4),
+    requestN: 4,
+    tenantId: lanId,
+    ownerId: linhId,
+    status: "AWAITING_REVISION",
   });
   await contract(tx, 5, {
-    tenancyN: 4, version: 1, type: "ORIGINAL", start: "2026-09-01", end: "2026-11-30",
-    rent: 4_500_000, ownerId: linhId, rejectReason: "The end date should be 30 November.",
+    tenancyN: 4,
+    version: 1,
+    type: "ORIGINAL",
+    start: "2026-09-01",
+    end: "2026-11-30",
+    rent: 4_500_000,
+    ownerId: linhId,
+    rejectReason: "The end date should be 30 November.",
   });
 
   await request(tx, 5, {
-    listingN: 6, tenantId: maiId, name: "Mai", phone: "0901000004", status: "ACCEPTED",
-    unitId: seedId(4, 6), start: "2026-02-01", end: "2026-04-30",
+    listingN: 6,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "ACCEPTED",
+    unitId: seedId(4, 6),
+    start: "2026-02-01",
+    end: "2026-04-30",
   });
   await tenancy(tx, 5, {
-    unitId: seedId(4, 6), requestN: 5, tenantId: maiId, ownerId: haoId, status: "EXPIRED",
+    unitId: seedId(4, 6),
+    requestN: 5,
+    tenantId: maiId,
+    ownerId: haoId,
+    status: "EXPIRED",
   });
 
   await request(tx, 6, {
-    listingN: 6, tenantId: lanId, name: "Lan", phone: "0901000005", status: "ACCEPTED",
-    unitId: seedId(4, 7), start: "2026-05-01", end: "2026-07-31",
+    listingN: 6,
+    tenantId: lanId,
+    name: "Lan",
+    phone: "0901000005",
+    status: "ACCEPTED",
+    unitId: seedId(4, 7),
+    start: "2026-05-01",
+    end: "2026-07-31",
   });
   await tenancy(tx, 6, {
-    unitId: seedId(4, 7), requestN: 6, tenantId: lanId, ownerId: haoId, status: "CANCELLED",
-    ended: true, endReason: "The tenant cancelled before moving in.",
+    unitId: seedId(4, 7),
+    requestN: 6,
+    tenantId: lanId,
+    ownerId: haoId,
+    status: "CANCELLED",
+    ended: true,
+    endReason: "The tenant cancelled before moving in.",
   });
-  await renewal(tx, 3, { tenancyN: 6, end: "2026-10-31", rent: 4_500_000, status: "CANCELLED" });
+  await renewal(tx, 3, {
+    tenancyN: 6,
+    end: "2026-10-31",
+    rent: 4_500_000,
+    status: "CANCELLED",
+  });
 
   await request(tx, 7, {
-    listingN: 5, tenantId: maiId, name: "Mai", phone: "0901000004", status: "ACCEPTED",
-    unitId: seedId(4, 1004), start: "2025-01-01", end: "2025-12-31",
+    listingN: 5,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "ACCEPTED",
+    unitId: seedId(4, 1004),
+    start: "2025-01-01",
+    end: "2025-12-31",
   });
   await tenancy(tx, 7, {
-    unitId: seedId(4, 1004), requestN: 7, tenantId: maiId, ownerId: linhId, status: "ENDED",
-    confirmedStart: "2025-01-01", confirmedEnd: "2025-12-31",
-    ended: true, endReason: "The agreed term ended.",
+    unitId: seedId(4, 1004),
+    requestN: 7,
+    tenantId: maiId,
+    ownerId: linhId,
+    status: "ENDED",
+    confirmedStart: "2025-01-01",
+    confirmedEnd: "2025-12-31",
+    ended: true,
+    endReason: "The agreed term ended.",
   });
   await contract(tx, 7, {
-    tenancyN: 7, version: 1, type: "ORIGINAL", start: "2025-01-01", end: "2025-06-30",
-    rent: 5_200_000, ownerId: linhId, confirmTenant: true,
+    tenancyN: 7,
+    version: 1,
+    type: "ORIGINAL",
+    start: "2025-01-01",
+    end: "2025-06-30",
+    rent: 5_200_000,
+    ownerId: linhId,
+    confirmTenant: true,
   });
   await renewal(tx, 4, {
-    tenancyN: 7, end: "2025-12-31", rent: 5_200_000, status: "ACCEPTED", reviewer: linhId,
+    tenancyN: 7,
+    end: "2025-12-31",
+    rent: 5_200_000,
+    status: "ACCEPTED",
+    reviewer: linhId,
   });
   await contract(tx, 8, {
-    tenancyN: 7, version: 2, type: "RENEWAL", start: "2025-07-01", end: "2025-12-31",
-    rent: 5_200_000, ownerId: linhId, basisN: 7, renewalN: 4, confirmTenant: true,
+    tenancyN: 7,
+    version: 2,
+    type: "RENEWAL",
+    start: "2025-07-01",
+    end: "2025-12-31",
+    rent: 5_200_000,
+    ownerId: linhId,
+    basisN: 7,
+    renewalN: 4,
+    confirmTenant: true,
   });
   await pointAt(tx, 7, null, 8);
 
   await request(tx, 20, {
-    listingN: 1, tenantId: lanId, name: "Lan", phone: "0901000005", status: "PENDING",
-    start: "2027-03-01", end: "2027-05-31",
+    listingN: 1,
+    tenantId: lanId,
+    name: "Lan",
+    phone: "0901000005",
+    status: "PENDING",
+    start: "2027-03-01",
+    end: "2027-05-31",
   });
   await request(tx, 21, {
-    listingN: 1, tenantId: maiId, name: "Mai", phone: "0901000004", status: "REJECTED",
-    start: "2027-01-01", end: "2027-02-28", reason: "The requested studio is not available.",
+    listingN: 1,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "REJECTED",
+    start: "2027-01-01",
+    end: "2027-02-28",
+    reason: "The requested studio is not available.",
   });
   await request(tx, 22, {
-    listingN: 1, tenantId: maiId, name: "Mai", phone: "0901000004", status: "WITHDRAWN",
-    start: "2027-06-01", end: "2027-08-31", reason: "The tenant withdrew the request.",
+    listingN: 1,
+    tenantId: maiId,
+    name: "Mai",
+    phone: "0901000004",
+    status: "WITHDRAWN",
+    start: "2027-06-01",
+    end: "2027-08-31",
+    reason: "The tenant withdrew the request.",
   });
 
   await exec(
     tx,
-    `INSERT INTO listing_reports (
-       id, listing_id, reporter_id, reason_code, description, status,
-       resolution_summary, reviewed_by, reviewed_at
-     ) VALUES
-       ($1::uuid, $5::uuid, $6::uuid, 'MISLEADING', 'The photos do not match the studio.', 'OPEN', NULL, NULL, NULL),
-       ($2::uuid, $5::uuid, $7::uuid, 'OTHER', 'The rent on the listing looks wrong.', 'REVIEWING', NULL, NULL, NULL),
-       ($3::uuid, $5::uuid, $8::uuid, 'OTHER', 'This listing should no longer be public.', 'RESOLVED', 'The listing was suspended.', $9::uuid, now()),
-       ($4::uuid, $10::uuid, $8::uuid, 'OTHER', 'Hidden listing report.', 'DISMISSED', 'The listing is not public.', $9::uuid, now())`,
+    listingReportSeedSql,
     seedId(11, 1),
     seedId(11, 2),
     seedId(11, 3),
@@ -688,6 +1024,7 @@ async function insertStory(tx: Tx) {
 
   await createNotification(tx, {
     recipientId: linhId,
+    audience: "OWNER",
     eventKey: `seed:proposal:${seedId(8, 3)}`,
     title: "A contract is waiting for the tenant",
     body: "Mai has a studio contract to confirm.",
@@ -695,6 +1032,7 @@ async function insertStory(tx: Tx) {
   });
   await createNotification(tx, {
     recipientId: maiId,
+    audience: "TENANT",
     eventKey: `seed:active:${seedId(8, 1)}`,
     title: "Your tenancy is active",
     body: "Studio S201 is active.",
@@ -703,7 +1041,8 @@ async function insertStory(tx: Tx) {
 }
 
 export async function main() {
-  if (daNangPlaces.length < 200) throw new Error("Da Nang seed data has fewer than 200 places.");
+  if (daNangPlaces.length < 200)
+    throw new Error("Da Nang seed data has fewer than 200 places.");
   await prisma.$transaction(
     async (tx) => {
       await clear(tx);
@@ -716,7 +1055,11 @@ export async function main() {
 }
 
 const entry = process.argv[1] ?? "";
-if (entry.endsWith("seed.ts") || entry.endsWith("seed.js") || import.meta.url === pathToFileURL(entry).href) {
+if (
+  entry.endsWith("seed.ts") ||
+  entry.endsWith("seed.js") ||
+  import.meta.url === pathToFileURL(entry).href
+) {
   main()
     .then(async () => {
       await prisma.$disconnect();

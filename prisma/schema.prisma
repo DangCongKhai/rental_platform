@@ -288,6 +288,7 @@ model ListingReport {
   listingId         String    @map("listing_id") @db.Uuid
   reporterId        String    @map("reporter_id") @db.Uuid
   reasonCode        String    @map("reason_code")
+  reasonCodes       String[]  @map("reason_codes")
   description       String
   status            String    @default("OPEN")
   resolutionSummary String?   @map("resolution_summary")
@@ -323,6 +324,7 @@ model FavouriteProperty {
 model Notification {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   recipientId  String    @map("recipient_id") @db.Uuid
+  audience     String    @map("audience")
   eventKey     String    @map("event_key")
   title        String
   body         String
@@ -335,5 +337,6 @@ model Notification {
 
   @@unique([recipientId, eventKey])
   @@index([recipientId, createdAt(sort: Desc)])
+  @@index([recipientId, audience, createdAt(sort: Desc)])
   @@map("notifications")
 }

@@ -6,7 +6,9 @@ import { withRolledBackTransaction, withTransaction } from "./transaction";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-async function insertProfile(tx: Prisma.TransactionClient): Promise<{ profileId: string; userId: string }> {
+async function insertProfile(
+  tx: Prisma.TransactionClient,
+): Promise<{ profileId: string; userId: string }> {
   const userId = crypto.randomUUID();
   await tx.$executeRawUnsafe(
     `INSERT INTO auth.users (
@@ -39,6 +41,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       const { profileId } = await insertProfile(tx);
       await createNotification(tx, {
         recipientId: profileId,
+        audience: "TENANT" as const,
         eventKey,
         title: "Rolled back",
         body: "This row should not remain.",
@@ -54,6 +57,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       const profile = await insertProfile(tx);
       const notification = await createNotification(tx, {
         recipientId: profile.profileId,
+        audience: "TENANT" as const,
         eventKey,
         title: "Committed",
         body: "This row should be visible.",
@@ -61,27 +65,35 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       });
       return { ...profile, notificationId: notification.id };
     });
-    const row = await prisma.notification.findUnique({ where: { id: created.notificationId } });
+    const row = await prisma.notification.findUnique({
+      where: { id: created.notificationId },
+    });
     expect(row?.eventKey).toBe(eventKey);
     await prisma.notification.delete({ where: { id: created.notificationId } });
-    await prisma.$executeRawUnsafe(`DELETE FROM auth.users WHERE id = $1::uuid`, created.userId);
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM auth.users WHERE id = $1::uuid`,
+      created.userId,
+    );
     expect(await prisma.notification.count({ where: { eventKey } })).toBe(0);
   });
 
   it("rejects a repeated event key in the same transaction", async () => {
     const eventKey = `duplicate:${crypto.randomUUID()}`;
-    await expect(withTransaction(async (tx) => {
-      const { profileId } = await insertProfile(tx);
-      const input = {
-        recipientId: profileId,
-        eventKey,
-        title: "Once",
-        body: "The second insert must fail.",
-        link: { resourceType: "tenancy" as const, resourceId: profileId },
-      };
-      await createNotification(tx, input);
-      await createNotification(tx, input);
-    })).rejects.toMatchObject({ code: "P2002" });
+    await expect(
+      withTransaction(async (tx) => {
+        const { profileId } = await insertProfile(tx);
+        const input = {
+          recipientId: profileId,
+          audience: "TENANT" as const,
+          eventKey,
+          title: "Once",
+          body: "The second insert must fail.",
+          link: { resourceType: "tenancy" as const, resourceId: profileId },
+        };
+        await createNotification(tx, input);
+        await createNotification(tx, input);
+      }),
+    ).rejects.toMatchObject({ code: "P2002" });
     expect(await prisma.notification.count({ where: { eventKey } })).toBe(0);
   });
 });
