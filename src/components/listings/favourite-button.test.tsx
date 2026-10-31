@@ -35,7 +35,8 @@ vi.mock("@/server/favourites", () => ({
 }));
 import type { ActionResult } from "@/server/validation";
 import { saveFavourite, removeFavourite } from "@/server/favourites";
-import { FavouriteButton, FavouritesProvider } from "./favourite-button";
+import { FavouritesProvider } from "@/contexts/favourite-context";
+import { FavouriteButton } from "./favourite-button";
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute("open", "");
@@ -46,12 +47,12 @@ afterEach(() => {
   vi.clearAllMocks();
   listeners.splice(0);
 });
-function view(userId: string | null, ids: string[] = []) {
+function view(userId: string | null, savedPropertyIds: string[] = []) {
   return (
     <FavouritesProvider
       key={userId ?? "guest"}
       userId={userId}
-      initialIds={ids}
+      savedPropertyIds={savedPropertyIds}
     >
       <FavouriteButton propertyId="property" />
     </FavouritesProvider>

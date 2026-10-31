@@ -23,6 +23,7 @@ const tenancySelect = {
     select: {
       id: true,
       versionNumber: true,
+      monthlyRent: true,
       tenantConfirmedAt: true,
       tenantRejectedAt: true,
     },
@@ -42,7 +43,19 @@ const requestSelect = {
   listing: {
     select: {
       title: true,
-      property: { select: { name: true, ward: true, city: true } },
+      property: {
+        select: {
+          name: true,
+          ward: true,
+          city: true,
+          media: {
+            where: { deletedAt: null, purgedAt: null, unitId: null },
+            orderBy: { sortOrder: "asc" },
+            take: 1,
+            select: { storagePath: true },
+          },
+        },
+      },
     },
   },
   tenancy: { select: tenancySelect },
@@ -85,6 +98,35 @@ export async function getMyRentalRequest(id: string) {
   });
 }
 
+const unitCardSelect = {
+  label: true,
+  bedrooms: true,
+  areaM2: true,
+  advertisedMonthlyRent: true,
+  property: {
+    select: {
+      name: true,
+      ward: true,
+      media: {
+        where: { deletedAt: null, purgedAt: null, unitId: null },
+        orderBy: { sortOrder: "asc" as const },
+        take: 1,
+        select: { storagePath: true },
+      },
+    },
+  },
+} satisfies Prisma.UnitSelect;
+
+export async function getMyRecentRequests() {
+  const user = await requireUser();
+  return prisma.rentalRequest.findMany({
+    where: { tenantId: user.profileId },
+    select: requestSelect,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 3,
+  });
+}
+
 export async function getMyTenancies() {
   const user = await requireUser();
   return prisma.tenancy.findMany({
@@ -94,7 +136,10 @@ export async function getMyTenancies() {
       ...tenancySelect,
       confirmedStartDate: true,
       confirmedEndDate: true,
-      unit: { select: { label: true, property: { select: { name: true } } } },
+      latestConfirmedContract: {
+        select: { monthlyRent: true, versionNumber: true },
+      },
+      unit: { select: unitCardSelect },
     },
   });
 }

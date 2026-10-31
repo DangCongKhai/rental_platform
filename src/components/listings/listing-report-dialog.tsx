@@ -203,7 +203,7 @@ export function ListingReportDialog({
             </p>
           ) : null}
           {notice ? (
-            <p role="status" className="text-sm text-[#1f3a5c]">
+            <p role="status" className="text-sm text-green-300">
               {notice}
             </p>
           ) : null}

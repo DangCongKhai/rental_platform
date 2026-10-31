@@ -1,6 +1,11 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
+import {
+  FavouriteBoundary,
+  FavouriteBoundaryFallback,
+} from "@/contexts/favourite-boundary";
 import "./globals.css";
 
 const inter = Inter({
@@ -23,7 +28,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="relative flex min-h-svh flex-col">
         <Navbar />
-        {children}
+        <Suspense
+          fallback={
+            <FavouriteBoundaryFallback>{children}</FavouriteBoundaryFallback>
+          }
+        >
+          <FavouriteBoundary>{children}</FavouriteBoundary>
+        </Suspense>
       </body>
     </html>
   );

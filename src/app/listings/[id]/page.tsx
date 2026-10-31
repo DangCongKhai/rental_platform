@@ -5,8 +5,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { ListingDetailScreen } from "@/features/discovery/listing-detail-screen";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getMyProfile } from "@/server/profile";
-import { getMyFavouriteIds } from "@/server/favourites";
-import { FavouritesProvider } from "@/components/listings/favourite-button";
 
 export const instant = false;
 
@@ -36,18 +34,11 @@ async function ListingDetailContent({
   await connection();
   const user = await getCurrentUser();
   const profile = user ? await getMyProfile() : undefined;
-  const ids = user ? await getMyFavouriteIds() : [];
   return (
-    <FavouritesProvider
-      key={`${user?.id ?? "guest"}:${ids.join(",")}`}
-      userId={user?.id ?? null}
-      initialIds={ids}
-    >
-      <ListingDetailScreen
-        id={id}
-        profile={profile}
-        isSignedIn={user != null}
-      />
-    </FavouritesProvider>
+    <ListingDetailScreen
+      id={id}
+      profile={profile}
+      isSignedIn={user != null}
+    />
   );
 }

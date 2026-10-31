@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { getMyFavourites } from "@/server/favourites";
-import { FavouritesProvider } from "@/components/listings/favourite-button";
 import { SavedListings } from "@/components/listings/saved-listings";
 
 export default function SavedListingsPage() {
@@ -24,13 +23,5 @@ async function SavedListingsContent() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login?next=%2Flistings%2Fsaved");
   const favourites = await getMyFavourites();
-  return (
-    <FavouritesProvider
-      key={`${user.id}:${favourites.map((row) => row.propertyId).join(",")}`}
-      userId={user.id}
-      initialIds={favourites.map((row) => row.propertyId)}
-    >
-      <SavedListings favourites={favourites} />
-    </FavouritesProvider>
-  );
+  return <SavedListings favourites={favourites} />;
 }

@@ -22,7 +22,7 @@ export function AccountSidebarFallback() {
 
 function AccountSidebarNav({ pathname }: { pathname: string }) {
   return (
-    <aside className="shrink-0 bg-[#0e1a20] px-3.5 py-6 text-on-dark-muted lg:flex lg:min-h-[calc(100svh-75px)] lg:w-[260px] lg:flex-col">
+    <aside className="shrink-0 bg-[#0e1a20] px-3.5 py-6 text-on-dark-muted lg:flex lg:min-h-[calc(100svh-75px)] lg:w-[260px] lg:flex-col h-full">
       <p className="mb-3 px-1.5 text-[11px] font-bold tracking-[1.1px] uppercase">
         Trang của bạn
       </p>

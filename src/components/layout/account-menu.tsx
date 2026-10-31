@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import type { CurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +32,6 @@ function fromSession(user: User): CurrentUser | null {
 }
 
 export function AccountMenu() {
-  const pathname = usePathname();
   const [user, setUser] = useState<CurrentUser | null | undefined>(remembered);
   const [notifications, setNotifications] = useState<InboxNotification[]>([]);
   const userId = user?.id;
@@ -93,7 +91,7 @@ export function AccountMenu() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, remember, userId]);
+  }, [remember, userId]);
 
   if (user === undefined) {
     return <span className="inline-block h-11 w-36" aria-hidden="true" />;
