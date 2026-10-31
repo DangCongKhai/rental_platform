@@ -46,7 +46,7 @@ Factors: Validation; private staging; durable file references
 
 Tools: Next.js upload UI + server validation and policies + Supabase Storage
 
-Upload validated images and create one property_media row with optional same-property unit_id. No review_status, approval, replacement chain or admin photo queue. Upload completes before media becomes selectable. Initial listing review sees selected photos; later additions appear directly when selected on an eligible listing.
+Upload validated images and create one property_media row with optional same-property unit_id. Shared property photos remain a single stored object and can be assigned to multiple units through unit_media; unit-only uploads remain directly linked to one unit. No review_status, approval, replacement chain or admin photo queue. Upload completes before media becomes selectable. Initial listing review sees selected photos; later additions appear directly when selected on an eligible listing.
 
 Acceptance criteria:
 

@@ -87,6 +87,14 @@ erDiagram
         bigint size_bytes "Positive completed file byte count"
     }
 
+    unit_media {
+        uuid unit_id PK,FK "Unit receiving a shared property photo"
+        uuid media_id PK,FK "Existing property_media row; reuses its storage object"
+        integer sort_order "Position in this unit's gallery"
+        boolean is_selected_for_listing "Whether this unit includes the shared photo in its public gallery"
+        timestamptz created_at "Assignment creation time in UTC"
+    }
+
     listings {
         uuid id PK "Listing UUID"
         uuid property_id FK "One nonarchived listing per property"
@@ -234,6 +242,8 @@ erDiagram
     properties ||--o{ units : "property_id"
     properties ||--o{ property_media : "property_id"
     units o|--o{ property_media : "unit_id"
+    units ||--o{ unit_media : "unit_id"
+    property_media ||--o{ unit_media : "media_id"
     user_profiles ||--o{ property_media : "uploaded_by"
     properties ||--o{ listings : "property_id"
     property_media o|--o{ listings : "cover_media_id"

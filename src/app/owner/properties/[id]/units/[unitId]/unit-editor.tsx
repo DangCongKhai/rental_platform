@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { getAmenityCatalog, normalizeAmenityText, type AmenityKey, type Amenities } from "@/domain/amenities";
@@ -29,6 +30,13 @@ type UnitEditorData = {
     isMarketed: boolean;
     amenities: Amenities;
     policyOverrides: UnitPolicyOverrides;
+};
+
+type UnitPhoto = {
+    id: string;
+    caption: string | null;
+    signedUrl: string | null;
+    source: string;
 };
 
 const unitKinds = [
@@ -80,11 +88,13 @@ function handleCurrencyInput(
 export function UnitEditor({
     propertyId,
     propertyName,
+    photos,
     sharedRules,
     unit,
 }: {
     propertyId: string;
     propertyName: string;
+    photos: UnitPhoto[];
     sharedRules: string[];
     unit: UnitEditorData;
 }) {
@@ -227,6 +237,33 @@ export function UnitEditor({
                 <h1 className="text-2xl font-bold tracking-tight text-ink">Chỉnh sửa {unit.label}</h1>
                 <p className="text-sm text-subtle">Cập nhật thông tin và điều kiện thuê riêng cho căn/phòng này.</p>
             </header>
+
+            <section className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-semibold text-ink">Ảnh của {unit.label}</h2>
+                        <p className="mt-1 text-sm text-subtle">Ảnh dùng chung đã chọn cho căn/phòng này và ảnh tải riêng lên.</p>
+                    </div>
+                    <Link href={`/owner/properties/${propertyId}/media`} className={buttonClass({ variant: "secondary" })}>Quản lý ảnh</Link>
+                </div>
+                {photos.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-line-strong bg-surface p-5 text-sm text-subtle">Chưa có ảnh cho căn/phòng này. Thêm ảnh dùng chung hoặc tải ảnh riêng trong mục Quản lý ảnh.</p>
+                ) : (
+                    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {photos.map((photo) => (
+                            <li key={photo.id} className="overflow-hidden rounded-xl border border-line bg-white">
+                                <div className="relative aspect-[4/3] bg-surface">
+                                    {photo.signedUrl ? <Image src={photo.signedUrl} alt={photo.caption || `Ảnh ${unit.label}`} fill unoptimized className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-subtle">Không tải được ảnh</div>}
+                                </div>
+                                <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+                                    <span className="min-w-0 truncate text-sm font-medium text-ink-2">{photo.caption || "Chưa có chú thích"}</span>
+                                    <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand-deep">{photo.source}</span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
 
             <div className="space-y-5 rounded-2xl border border-line bg-white p-5 sm:p-7">
                 <section className="grid gap-4 rounded-xl bg-surface p-4 sm:grid-cols-2 sm:p-5">

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getMyProperty } from "@/server/properties";
 import { validateAmenities } from "@/domain/amenities";
 import { validatePropertyPolicies, validateUnitPolicyOverrides } from "@/domain/policies";
+import { getPropertyMedia } from "@/server/property-media";
 import { UnitEditor } from "./unit-editor";
 
 export const instant = false;
@@ -17,6 +18,15 @@ export default async function EditUnitPage({
 
     const unit = property.units.find((item) => item.id === unitId);
     if (!unit) notFound();
+    const propertyMedia = await getPropertyMedia(property.id);
+    const unitPhotos = propertyMedia
+        .filter((item) => item.unitId === unit.id || (item.unitId === null && item.assignedUnitIds.includes(unit.id)))
+        .map((item) => ({
+            id: item.id,
+            caption: item.caption,
+            signedUrl: item.signedUrl,
+            source: item.unitId === null ? "Bất động sản" : "Ảnh riêng",
+        }));
 
     const amenities = validateAmenities(unit.amenities, "UNIT");
     const unitPolicies = validateUnitPolicyOverrides(unit.policyOverrides);
@@ -29,6 +39,7 @@ export default async function EditUnitPage({
         <UnitEditor
             propertyId={property.id}
             propertyName={property.name}
+            photos={unitPhotos}
             sharedRules={propertyPolicies.data.shared_rules}
             unit={{
                 id: unit.id,

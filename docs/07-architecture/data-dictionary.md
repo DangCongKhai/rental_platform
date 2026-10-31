@@ -69,6 +69,11 @@ The table below is the current column list, including the managed auth reference
 | property_media | Core | sha256 | text |  | No |  | Hash of completed image bytes |
 | property_media | Core | mime_type | text |  | No |  | Validated decoded image media type |
 | property_media | Core | size_bytes | bigint |  | No |  | Positive completed file byte count |
+| unit_media | Core | unit_id | uuid | PK, FK | No |  | Unit receiving a shared property photo |
+| unit_media | Core | media_id | uuid | PK, FK | No |  | Existing property_media row; reuses its storage object |
+| unit_media | Core | sort_order | integer |  | No | 0 | Position of the shared photo in this unit's gallery |
+| unit_media | Core | is_selected_for_listing | boolean |  | No | true | Whether this unit includes the shared photo in its public gallery |
+| unit_media | Core | created_at | timestamptz |  | No | now() | Assignment creation time in UTC |
 | listings | Core | id | uuid | PK | No | gen_random_uuid() | Listing UUID |
 | listings | Core | property_id | uuid | FK | No |  | One nonarchived listing per property |
 | listings | Core | title | text |  | No |  | Public title |

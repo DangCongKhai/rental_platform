@@ -20,6 +20,7 @@ export async function getPropertyMedia(propertyId: string) {
       mimeType: true,
       sizeBytes: true,
       storagePath: true,
+      unitAssignments: { select: { unitId: true } },
     },
   });
 
@@ -38,5 +39,6 @@ export async function getPropertyMedia(propertyId: string) {
     mimeType: item.mimeType,
     sizeBytes: Number(item.sizeBytes),
     signedUrl: urls[index],
+    assignedUnitIds: item.unitAssignments.map((assignment) => assignment.unitId),
   }));
 }

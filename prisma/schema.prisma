@@ -94,14 +94,15 @@ model Unit {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  property    Property        @relation(fields: [propertyId], references: [id])
-  media       PropertyMedia[]
-  preferredBy RentalRequest[] @relation("PreferredUnit")
-  tenancies   Tenancy[]
+  property         Property        @relation(fields: [propertyId], references: [id])
+  media            PropertyMedia[]
+  mediaAssignments UnitMedia[]
+  preferredBy      RentalRequest[] @relation("PreferredUnit")
+  tenancies        Tenancy[]
 
+  @@unique([propertyId, normalizedLabel], map: "units_property_normalized_label_key")
   @@index([propertyId])
   @@map("units")
-  @@unique([propertyId, normalizedLabel], map: "units_property_normalized_label_key")
 }
 
 model PropertyMedia {
@@ -121,15 +122,31 @@ model PropertyMedia {
   mimeType             String    @map("mime_type")
   sizeBytes            BigInt    @map("size_bytes")
 
-  property Property    @relation(fields: [propertyId], references: [id])
-  unit     Unit?       @relation(fields: [unitId], references: [id])
-  uploader UserProfile @relation("MediaUploader", fields: [uploadedById], references: [id])
-  covers   Listing[]   @relation("ListingCover")
+  property        Property    @relation(fields: [propertyId], references: [id])
+  unit            Unit?       @relation(fields: [unitId], references: [id])
+  uploader        UserProfile @relation("MediaUploader", fields: [uploadedById], references: [id])
+  covers          Listing[]   @relation("ListingCover")
+  unitAssignments UnitMedia[]
 
   @@index([propertyId])
   @@index([unitId])
   @@index([storagePath])
   @@map("property_media")
+}
+
+model UnitMedia {
+  unitId               String   @map("unit_id") @db.Uuid
+  mediaId              String   @map("media_id") @db.Uuid
+  sortOrder            Int      @default(0) @map("sort_order")
+  isSelectedForListing Boolean  @default(true) @map("is_selected_for_listing")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  unit  Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  media PropertyMedia @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([unitId, mediaId])
+  @@index([mediaId])
+  @@map("unit_media")
 }
 
 model Listing {

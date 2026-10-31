@@ -38,7 +38,7 @@ vi.mock("@/server/media-storage", () => storageFake);
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ unstable_rethrow: vi.fn() }));
 
-import { removePhoto, replacePhoto, updateGallery, uploadPhoto } from "../app/owner/properties/media-actions";
+import { removePhoto, replacePhoto, setSharedPhotoForUnit, updateGallery, uploadPhoto } from "../app/owner/properties/media-actions";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -177,6 +177,52 @@ describe.skipIf(!databaseUrl)("RENT-011 media upload integration", () => {
     expect(result.ok && result.data?.signedUrl).toContain("https://signed.test/");
   });
 
+  it("reuses one shared photo across units and only removes the chosen unit assignment", async () => {
+    const owner = await createTestUser("shared-photo");
+    testAuth.currentUser = owner;
+    const { propertyId, unitId } = await createProperty(owner.profileId, "shared-photo");
+    const secondUnit = await prisma.unit.create({
+      data: {
+        propertyId,
+        label: "S102",
+        normalizedLabel: "s102",
+        unitKind: "STUDIO",
+        bedrooms: 0,
+        bathrooms: 1,
+        bathroomArrangement: "PRIVATE",
+        minimumRentalMonths: 3,
+      },
+    });
+    const photo = await addPhoto(propertyId);
+
+    expect((await setSharedPhotoForUnit(propertyId, unitId, photo.id, true)).ok).toBe(true);
+    expect((await setSharedPhotoForUnit(propertyId, secondUnit.id, photo.id, true)).ok).toBe(true);
+    expect(await prisma.propertyMedia.count({ where: { propertyId, deletedAt: null } })).toBe(1);
+    expect(await prisma.unitMedia.count({ where: { mediaId: photo.id } })).toBe(2);
+    expect(storageFake.uploadMediaObject).toHaveBeenCalledOnce();
+
+    const blockedRemoval = await removePhoto(propertyId, photo.id);
+    expect(blockedRemoval).toMatchObject({ ok: false });
+
+    expect((await setSharedPhotoForUnit(propertyId, unitId, photo.id, false)).ok).toBe(true);
+    expect(await prisma.unitMedia.findUnique({ where: { unitId_mediaId: { unitId, mediaId: photo.id } } })).toBeNull();
+    expect(await prisma.unitMedia.findUnique({ where: { unitId_mediaId: { unitId: secondUnit.id, mediaId: photo.id } } })).not.toBeNull();
+    expect((await prisma.propertyMedia.findUniqueOrThrow({ where: { id: photo.id } })).deletedAt).toBeNull();
+  });
+
+  it("rejects assigning a shared photo to a unit from another property", async () => {
+    const owner = await createTestUser("shared-photo-scope");
+    testAuth.currentUser = owner;
+    const first = await createProperty(owner.profileId, "shared-photo-first");
+    const second = await createProperty(owner.profileId, "shared-photo-second");
+    const photo = await addPhoto(first.propertyId);
+
+    const result = await setSharedPhotoForUnit(first.propertyId, second.unitId, photo.id, true);
+
+    expect(result).toMatchObject({ ok: false, error: "Căn/phòng không thuộc bất động sản này." });
+    expect(await prisma.unitMedia.count({ where: { mediaId: photo.id } })).toBe(0);
+  });
+
   it("rejects text with a .jpg name without uploading or creating a row", async () => {
     const owner = await createTestUser("invalid");
     testAuth.currentUser = owner;
@@ -250,7 +296,6 @@ describe.skipIf(!databaseUrl)("RENT-011 media upload integration", () => {
     const result = await updateGallery(propertyId, {
       items: [
         { id: sharedPhoto.id, caption: "  Mặt tiền  ", sortOrder: 1, isSelectedForListing: true },
-        { id: unitPhoto.id, caption: "Phòng ngủ", sortOrder: 0, isSelectedForListing: false },
       ],
       coverMediaId: sharedPhoto.id,
     });
@@ -261,6 +306,10 @@ describe.skipIf(!databaseUrl)("RENT-011 media upload integration", () => {
       sortOrder: 1,
       isSelectedForListing: true,
     });
+    const unitGalleryResult = await updateGallery(propertyId, {
+      items: [{ id: unitPhoto.id, caption: "Phòng ngủ", sortOrder: 0, isSelectedForListing: false }],
+    }, unitId);
+    expect(unitGalleryResult).toMatchObject({ ok: true, data: { contentRevision: 5 } });
     expect(await prisma.propertyMedia.findUniqueOrThrow({ where: { id: unitPhoto.id } })).toMatchObject({
       caption: "Phòng ngủ",
       sortOrder: 0,
