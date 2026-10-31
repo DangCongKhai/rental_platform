@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { reportListing } from "@/server/reports/report-listing";
 
 const reasons = [
   {
@@ -27,12 +29,17 @@ const reasons = [
 
 export function ListingReportDialog({
   listingTitle,
+  listingId,
+  isSignedIn,
   onClose,
 }: {
   listingTitle: string;
+  listingId: string;
+  isSignedIn: boolean;
   onClose: () => void;
 }) {
-  const [reason, setReason] = useState("");
+  const [reasonCodes, setReasonCodes] = useState<string[]>([]);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -44,10 +51,12 @@ export function ListingReportDialog({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const description = String(new FormData(event.currentTarget).get("description") ?? "").trim();
-    if (!reason) {
+    const description = String(
+      new FormData(event.currentTarget).get("description") ?? "",
+    ).trim();
+    if (!reasonCodes.length) {
       setNotice("");
       setError("Chọn lý do báo cáo.");
       return;
@@ -58,11 +67,27 @@ export function ListingReportDialog({
       return;
     }
     setError("");
-    setNotice("Chưa gửi báo cáo. Việc gửi tới quản trị viên sẽ được nối sau.");
+    setPending(true);
+    try {
+      const result = await reportListing(listingId, {
+        reasonCodes,
+        description,
+      });
+      if (!result.ok)
+        setError(result.error ?? "Không gửi được báo cáo. Thử lại.");
+      else setNotice("Đã gửi báo cáo. Quản trị viên sẽ xem xét tin đăng này.");
+    } catch {
+      setError("Không gửi được báo cáo. Thử lại.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 p-4 sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 p-4 sm:items-center"
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -73,43 +98,76 @@ export function ListingReportDialog({
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 id="report-title" className="text-[22px] font-bold leading-[30px] tracking-[-0.22px] text-[#091216]">
+              <h2
+                id="report-title"
+                className="text-[22px] font-bold leading-[30px] tracking-[-0.22px] text-[#091216]"
+              >
                 Báo cáo tin đăng này
               </h2>
               <p className="text-sm leading-5 text-[#5b6676]">{listingTitle}</p>
             </div>
-            <button type="button" className="flex size-11 items-center justify-center rounded-xl" aria-label="Đóng" onClick={onClose}>
+            <button
+              type="button"
+              className="flex size-11 items-center justify-center rounded-xl"
+              aria-label="Đóng"
+              onClick={onClose}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/listings/report-close.svg" alt="" width={22} height={22} />
+              <img
+                src="/images/listings/report-close.svg"
+                alt=""
+                width={22}
+                height={22}
+              />
             </button>
           </div>
 
-          <fieldset className="grid gap-2">
-            <legend className="pb-2 text-sm font-semibold leading-[21px] text-[#091216]">Lý do</legend>
+          {!isSignedIn ? (
+            <p>
+              Đăng nhập để báo cáo tin đăng.{" "}
+              <Link
+                className="text-[#254e7a] underline"
+                href={`/auth/login?next=${encodeURIComponent(`/listings/${listingId}`)}`}
+              >
+                Đăng nhập
+              </Link>
+            </p>
+          ) : null}
+          <fieldset
+            disabled={pending || !!notice || !isSignedIn}
+            className="grid gap-2"
+          >
+            <legend className="pb-2 text-sm font-semibold leading-[21px] text-[#091216]">
+              Lý do
+            </legend>
             {reasons.map((item) => {
-              const selected = reason === item.value;
+              const selected = reasonCodes.includes(item.value);
               return (
                 <label
                   key={item.value}
                   className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-2.5 ${selected ? "border-[#3368a0] bg-[#f3f8fd]" : "border-[#dde3eb] bg-white"}`}
                 >
                   <input
-                    type="radio"
+                    type="checkbox"
                     name="reason"
                     value={item.value}
                     checked={selected}
-                    onChange={() => setReason(item.value)}
-                    className="sr-only"
+                    onChange={() =>
+                      setReasonCodes((codes) =>
+                        selected
+                          ? codes.filter((code) => code !== item.value)
+                          : [...codes, item.value],
+                      )
+                    }
+                    className="size-5 shrink-0 accent-[#3368a0]"
                   />
-                  <span
-                    className={`flex size-5 shrink-0 items-center justify-center rounded-[10px] border-2 ${selected ? "border-[#3368a0]" : "border-[#7a8799]"}`}
-                    aria-hidden="true"
-                  >
-                    <span className={`size-2.5 rounded-[5px] ${selected ? "bg-[#3368a0]" : ""}`} />
-                  </span>
                   <span>
-                    <span className="block text-[15px] font-bold leading-[22px] text-[#091216]">{item.title}</span>
-                    <span className="block text-[13px] leading-5 text-[#5b6676]">{item.detail}</span>
+                    <span className="block text-[15px] font-bold leading-[22px] text-[#091216]">
+                      {item.title}
+                    </span>
+                    <span className="block text-[13px] leading-5 text-[#5b6676]">
+                      {item.detail}
+                    </span>
                   </span>
                 </label>
               );
@@ -120,18 +178,35 @@ export function ListingReportDialog({
             Mô tả (bắt buộc)
             <textarea
               name="description"
+              disabled={pending || !!notice || !isSignedIn}
+              maxLength={5000}
               className="min-h-24 rounded-xl border border-[#c9d3e0] bg-white px-3.5 py-2.5 text-base font-normal leading-normal text-[#1b2430]"
             />
           </label>
 
           <p className="flex items-start gap-3 rounded-[15px] border border-[#bfd3ea] bg-[#eef3f9] px-[18px] py-3.5 text-sm leading-5 text-[#1f3a5c]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/listings/report-info.svg" alt="" width={18} height={18} className="mt-0.5" />
-            Việc báo cáo không tự động ẩn bài đăng. Quản trị viên sẽ xem xét bài viết này.
+            <img
+              src="/images/listings/report-info.svg"
+              alt=""
+              width={18}
+              height={18}
+              className="mt-0.5"
+            />
+            Việc báo cáo không tự động ẩn bài đăng. Quản trị viên sẽ xem xét bài
+            viết này.
           </p>
 
-          {error ? <p role="alert" className="text-sm text-rose-700">{error}</p> : null}
-          {notice ? <p role="status" className="text-sm text-[#1f3a5c]">{notice}</p> : null}
+          {error ? (
+            <p role="alert" className="text-sm text-rose-700">
+              {error}
+            </p>
+          ) : null}
+          {notice ? (
+            <p role="status" className="text-sm text-[#1f3a5c]">
+              {notice}
+            </p>
+          ) : null}
 
           <div className="flex justify-end gap-3">
             <button
@@ -143,9 +218,10 @@ export function ListingReportDialog({
             </button>
             <button
               type="submit"
+              disabled={pending || !!notice || !isSignedIn}
               className="inline-flex min-h-11 items-center justify-center rounded-[15px] bg-[#3368a0] px-5 text-[15px] font-semibold leading-[21px] text-white"
             >
-              Gửi báo cáo
+              {pending ? "Đang gửi…" : "Gửi báo cáo"}
             </button>
           </div>
         </form>
