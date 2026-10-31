@@ -49,6 +49,8 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isPublicPage =
+    // Exact cron endpoint authenticates with assertCronRequest, not a browser session.
+    pathname === "/api/cron/expire-holds" ||
     pathname === "/" ||
     pathname === "/listings" ||
     pathname.startsWith("/listings/") ||
