@@ -21,8 +21,8 @@ The table below is the current column list, including the managed auth reference
 | properties | Core | property_type | text |  | No |  | HOUSE APARTMENT APARTMENT_BUILDING |
 | properties | Core | rental_arrangement | text |  | No |  | WHOLE_SPACE or SEPARATE_UNITS |
 | properties | Core | address_line | text |  | Yes |  | Street and building address; may be null in incomplete draft, required at listing submission/publication |
-| properties | Core | ward | text |  | Yes |  | Optional local ward |
-| properties | Core | city | text |  | Yes |  | City; may be null in incomplete draft, required at listing submission/publication |
+| properties | Core | ward | text |  | Yes |  | Optional current ward/commune selected from the administrative division list |
+| properties | Core | city | text |  | Yes |  | Optional current province/city selected from the administrative division list |
 | properties | Core | description | text |  | Yes |  | Shared property description; may be null in incomplete draft, required at listing submission/publication |
 | properties | Core | shared_amenities | jsonb |  | No | {"schema_version":1,"standard":{},"custom":[]} | Shared property facilities. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}},custom:[text]}. Standard keys/scopes from the server catalog; canonical labels from catalog, no owner_label. Custom text NFC/trim/whitespace-normalized and deduplicated locally using case folding; never auto-promoted to standard search keys. Absent key means not advertised. |
 | properties | Core | policies | jsonb |  | No |  | schema_version defaults pets/smoking and shared_rules |
@@ -35,6 +35,7 @@ The table below is the current column list, including the managed auth reference
 | units | Core | id | uuid | PK | No | gen_random_uuid() | Stable unit UUID |
 | units | Core | property_id | uuid | FK | No |  | Parent property |
 | units | Core | label | text |  | No |  | Room S201 or Entire property; normalized label unique per property |
+| units | Core | normalized_label | text |  | No |  | NFC-normalized, trimmed, whitespace-collapsed lowercase label; unique with property_id |
 | units | Core | unit_kind | text |  | No |  | ROOM STUDIO APARTMENT HOUSE |
 | units | Core | description | text |  | Yes |  | Unit specific description; may be null in incomplete draft, required at listing submission/publication |
 | units | Core | floor | text |  | Yes |  | Flexible floor label |
@@ -68,6 +69,11 @@ The table below is the current column list, including the managed auth reference
 | property_media | Core | sha256 | text |  | No |  | Hash of completed image bytes |
 | property_media | Core | mime_type | text |  | No |  | Validated decoded image media type |
 | property_media | Core | size_bytes | bigint |  | No |  | Positive completed file byte count |
+| unit_media | Core | unit_id | uuid | PK, FK | No |  | Unit receiving a shared property photo |
+| unit_media | Core | media_id | uuid | PK, FK | No |  | Existing property_media row; reuses its storage object |
+| unit_media | Core | sort_order | integer |  | No | 0 | Position of the shared photo in this unit's gallery |
+| unit_media | Core | is_selected_for_listing | boolean |  | No | true | Whether this unit includes the shared photo in its public gallery |
+| unit_media | Core | created_at | timestamptz |  | No | now() | Assignment creation time in UTC |
 | listings | Core | id | uuid | PK | No | gen_random_uuid() | Listing UUID |
 | listings | Core | property_id | uuid | FK | No |  | One nonarchived listing per property |
 | listings | Core | title | text |  | No |  | Public title |

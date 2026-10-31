@@ -3,6 +3,7 @@ import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getMyProperties } from "@/server/properties";
 import { PropertyActions } from "./property-actions";
+import { PropertySaveNotice } from "./property-save-notice";
 
 export const instant = false;
 
@@ -48,7 +49,7 @@ function locationLine(property: {
   city: string | null;
 }) {
   const place = [property.ward, property.city].filter(Boolean).join(", ");
-  return place || property.addressLine || property.city || "Chưa thêm địa chỉ";
+  return place || property.addressLine || "Chưa thêm địa chỉ";
 }
 
 function StatusBadge({ label, tone }: { label: string; tone: keyof typeof badgeClass }) {
@@ -62,14 +63,15 @@ function StatusBadge({ label, tone }: { label: string; tone: keyof typeof badgeC
 export default async function OwnerPropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>;
+  searchParams: Promise<{ archived?: string; saved?: string }>;
 }) {
-  const { archived } = await searchParams;
+  const { archived, saved } = await searchParams;
   const showArchived = archived === "1";
   const properties = await getMyProperties(showArchived);
 
   return (
     <section className="space-y-5">
+      {saved === "1" && <PropertySaveNotice />}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">Bất động sản</h1>
         <div className="flex flex-wrap items-center gap-4">
@@ -165,6 +167,18 @@ export default async function OwnerPropertiesPage({
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Link
+                          href={`/owner/properties/${property.id}/media`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
+                        >
+                          Hình ảnh
+                        </Link>
+                        <Link
+                          href={`/owner/properties/${property.id}/units`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
+                        >
+                          Căn/phòng
+                        </Link>
                         <Link
                           href={`/owner/properties/${property.id}`}
                           className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-ink px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"

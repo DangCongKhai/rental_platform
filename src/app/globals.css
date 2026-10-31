@@ -49,6 +49,25 @@ body {
   line-height: 1.5;
 }
 
+select {
+  appearance: none;
+  padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m5 7.5 5 5 5-5' stroke='%235b6676' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 0.875rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+}
+
+select option {
+  background: white;
+  color: var(--color-ink-2);
+}
+
+select option:checked {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-deep);
+}
+
 a,
 button,
 input,

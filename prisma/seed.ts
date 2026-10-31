@@ -286,8 +286,8 @@ async function insertInventory(tx: Tx) {
      ) AS row(id, owner_id, name, description, property_type, rental_arrangement, address_line,
               latitude, longitude, shared_amenities, policies)`,
     properties.id, properties.owner, properties.name, properties.description, properties.type,
-    properties.arrangement, properties.address, properties.latitude,
-    properties.longitude, properties.amenities, properties.policies,
+    properties.arrangement, properties.address, properties.latitude, properties.longitude,
+    properties.amenities, properties.policies,
   );
   await exec(
     tx,
@@ -688,6 +688,7 @@ async function insertStory(tx: Tx) {
 
   await createNotification(tx, {
     recipientId: linhId,
+    audience: "USER",
     eventKey: `seed:proposal:${seedId(8, 3)}`,
     title: "A contract is waiting for the tenant",
     body: "Mai has a studio contract to confirm.",
@@ -695,6 +696,7 @@ async function insertStory(tx: Tx) {
   });
   await createNotification(tx, {
     recipientId: maiId,
+    audience: "USER",
     eventKey: `seed:active:${seedId(8, 1)}`,
     title: "Your tenancy is active",
     body: "Studio S201 is active.",

@@ -39,6 +39,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       const { profileId } = await insertProfile(tx);
       await createNotification(tx, {
         recipientId: profileId,
+        audience: "USER",
         eventKey,
         title: "Rolled back",
         body: "This row should not remain.",
@@ -54,6 +55,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       const profile = await insertProfile(tx);
       const notification = await createNotification(tx, {
         recipientId: profile.profileId,
+        audience: "USER",
         eventKey,
         title: "Committed",
         body: "This row should be visible.",
@@ -74,6 +76,7 @@ describe.skipIf(!databaseUrl)("createNotification", () => {
       const { profileId } = await insertProfile(tx);
       const input = {
         recipientId: profileId,
+        audience: "USER" as const,
         eventKey,
         title: "Once",
         body: "The second insert must fail.",

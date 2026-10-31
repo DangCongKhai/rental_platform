@@ -21,8 +21,15 @@ export async function getMyProperties(archived = false) {
                 orderBy: { updatedAt: "desc" },
                 take: 1,
                 select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    coverMediaId: true,
                     moderationStatus: true,
                     publicationStatus: true,
+                    reviewReason: true,
+                    adminSuspendedAt: true,
+                    suspensionReason: true,
                 },
             },
         },
@@ -43,6 +50,12 @@ export async function getMyProperties(archived = false) {
             units: {
                 where: { archivedAt: null },
                 orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            },
+            listings: {
+                where: { archivedAt: null },
+                orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+                take: 1,
+                select: { id: true, moderationStatus: true, publicationStatus: true },
             },
         },
     });
