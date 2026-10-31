@@ -1,0 +1,10 @@
+---
+description: UI follows the rentOS Figma design source
+alwaysApply: true
+---
+
+# Figma design source
+
+Every new or changed screen follows [rentOS Design - MAIN EM4](https://www.figma.com/design/lQSW9bPS82CPlMnf6Py6GG/rentOS-Design---MAIN-EM4-?node-id=470-1451&m=dev).
+
+Before implementing UI, load the Figma design-to-code skill and read the matching frame with `get_design_context`. If the user does not attach a screenshot or a more specific node, open this file, find the screen by name on canvas `470:1451`, and read that frame before implementing UI. Adapt it to the app’s existing components and omit prototype-only controls.

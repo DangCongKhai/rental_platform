@@ -1,7 +1,7 @@
 "use client";
 
+import { safeNext } from "@/lib/auth/safe-next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/ui/alert";
@@ -21,12 +21,12 @@ type LoginError =
   | { kind: "unconfirmed"; resent: boolean }
   | { kind: "other"; message: string };
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string | null }) {
+  const destination = safeNext(next);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<LoginError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,8 +40,10 @@ export function LoginForm() {
     });
 
     if (!error) {
-      router.push("/");
-      router.refresh();
+      // Full navigation leaves /auth/login. router.refresh() re-renders this
+      // route while the session cookie is new, and the signed-in navbar then
+      // aborts the prerender and fetches /auth/login again.
+      window.location.assign(destination ?? "/");
       return;
     }
 
@@ -56,7 +58,9 @@ export function LoginForm() {
     const { error } = await createClient().auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: {
+        emailRedirectTo: `${window.location.origin}${destination ?? "/"}`,
+      },
     });
     setError(
       error
@@ -84,7 +88,9 @@ export function LoginForm() {
           ) : (
             <>
               Chúng tôi đã gửi liên kết tới {email}.{" "}
-              <TextButton onClick={resendConfirmation}>Gửi lại email</TextButton>
+              <TextButton onClick={resendConfirmation}>
+                Gửi lại email
+              </TextButton>
             </>
           )}
         </Alert>
@@ -128,7 +134,11 @@ export function LoginForm() {
         <span
           aria-disabled="true"
           aria-live="polite"
-          className={buttonClass({ variant: "disabled", size: "lg", className: "w-full" })}
+          className={buttonClass({
+            variant: "disabled",
+            size: "lg",
+            className: "w-full",
+          })}
         >
           Đang đăng nhập…
         </span>
@@ -141,7 +151,14 @@ export function LoginForm() {
 
       <AuthSwitch>
         Chưa có tài khoản?
-        <Link href="/auth/sign-up" className="font-semibold text-brand hover:text-brand-deep">
+        <Link
+          href={
+            destination
+              ? `/auth/sign-up?next=${encodeURIComponent(destination)}`
+              : "/auth/sign-up"
+          }
+          className="font-semibold text-brand hover:text-brand-deep"
+        >
           Tạo tài khoản
         </Link>
       </AuthSwitch>
