@@ -272,15 +272,17 @@ export async function blockUnit(
   });
 }
 
-const testOwnerSql = Prisma.sql`
-  SELECT properties.id FROM properties
-  JOIN user_profiles ON user_profiles.id = properties.owner_id
-  WHERE user_profiles.email LIKE 'rent003-%@rentos.test'
-`;
-
 export async function cleanupPublicListings() {
-  propertyIds.splice(0);
-  authUserIds.splice(0);
+  const propertyIdsToClean = propertyIds.splice(0);
+  const authUserIdsToClean = authUserIds.splice(0);
+  if (propertyIdsToClean.length === 0 && authUserIdsToClean.length === 0) return;
+
+  const propertyIdSql = propertyIdsToClean.length
+    ? Prisma.join(propertyIdsToClean.map((id) => Prisma.sql`${id}::uuid`))
+    : Prisma.sql`SELECT NULL::uuid WHERE FALSE`;
+  const authUserIdSql = authUserIdsToClean.length
+    ? Prisma.join(authUserIdsToClean.map((id) => Prisma.sql`${id}::uuid`))
+    : Prisma.sql`SELECT NULL::uuid WHERE FALSE`;
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe("SET LOCAL session_replication_role = replica");
@@ -294,23 +296,23 @@ export async function cleanupPublicListings() {
           confirmation_expires_at = NULL,
           actual_ended_at = now(),
           end_reason = 'test cleanup'
-      WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))`;
+      WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${propertyIdSql}))`;
     await tx.$executeRaw`
       DELETE FROM tenancy_contracts
       WHERE tenancy_id IN (
         SELECT id FROM tenancies
-        WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))
+        WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${propertyIdSql}))
       )`;
     await tx.$executeRaw`
       DELETE FROM tenancies
-      WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))`;
+      WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${propertyIdSql}))`;
     await tx.$executeRaw`
       DELETE FROM rental_requests
-      WHERE listing_id IN (SELECT id FROM listings WHERE property_id IN (${testOwnerSql}))`;
-    await tx.$executeRaw`DELETE FROM listings WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM property_media WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM units WHERE property_id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM properties WHERE id IN (${testOwnerSql})`;
-    await tx.$executeRaw`DELETE FROM auth.users WHERE email LIKE 'rent003-%@rentos.test'`;
+      WHERE listing_id IN (SELECT id FROM listings WHERE property_id IN (${propertyIdSql}))`;
+    await tx.$executeRaw`DELETE FROM listings WHERE property_id IN (${propertyIdSql})`;
+    await tx.$executeRaw`DELETE FROM property_media WHERE property_id IN (${propertyIdSql})`;
+    await tx.$executeRaw`DELETE FROM units WHERE property_id IN (${propertyIdSql})`;
+    await tx.$executeRaw`DELETE FROM properties WHERE id IN (${propertyIdSql})`;
+    await tx.$executeRaw`DELETE FROM auth.users WHERE id IN (${authUserIdSql})`;
   }, { timeout: 30_000 });
 }
