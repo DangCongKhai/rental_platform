@@ -1,14 +1,17 @@
 # M08 Product requirements
 
 ## Purpose
+
 Admin report table/detail, review queues, required-reason forms and reporter outcome. Kien owns the admin flow; Khai reviews access checks and transactions.
 
 ## Actors and permissions
+
 Admin screens and their Server Actions are built together; every action checks `is_admin` on the server.
 
 ## Functional requirements
 
 ### FR36 Submit tenancy based review
+
 Priority: P2 Defer. Actors: Tenant. Dependencies: FR35 FR79.
 
 Factors: Eligibility; abuse; uniqueness
@@ -24,6 +27,7 @@ Acceptance criteria:
 - FR36-AC03 [Race] Two submissions for same tenancy → Unique tenancy_id permits one review.
 
 ### FR37 Display approved property reviews
+
 Priority: P2 Defer. Actors: Guest; User. Dependencies: FR36 FR79.
 
 Factors: Moderated visibility; aggregates
@@ -38,6 +42,7 @@ Acceptance criteria:
 - FR37-AC02 [Race] Review hidden while aggregate cached → Invalidate aggregate and details; no fabricated reviews.
 
 ### FR38 Report public listing
+
 Priority: P0 Must. Actors: Authenticated user. Dependencies: Shared identity/resource foundation.
 
 Factors: Abuse limits; synchronous persistence
@@ -55,6 +60,7 @@ Acceptance criteria:
 - FR38-AC05 [Race] Listing hidden between view and submit → 404/unavailable; existing reports preserved; server rechecks eligibility under property lock.
 
 ### FR39 Investigate reports and suspend listings
+
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Resolution history; fair moderation
@@ -71,6 +77,7 @@ Acceptance criteria:
 - FR39-AC04 [Race] Owner publishes while admin suspends → Shared lock retains suspension; owner cannot clear it.
 
 ### FR72 Reporter outcome and rate limits
+
 Priority: P0 Must. Actors: Authenticated reporter; Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Abuse prevention; confidentiality
@@ -87,6 +94,7 @@ Acceptance criteria:
 - FR72-AC04 [Race] Duplicate report while report is REVIEWING → Return existing live report/conflict; no duplicate.
 
 ### FR79 Moderate optional property reviews
+
 Priority: P2 Defer. Actors: Admin. Dependencies: FR36.
 
 Factors: Public content consistency
@@ -102,13 +110,17 @@ Acceptance criteria:
 - FR79-AC03 [Security] Normal user moderates review → 403.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 Admin UI is not the authorization boundary; protected actions remain reviewed backend work. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 Property reviews deferred. Admin UI is never the authorization boundary.

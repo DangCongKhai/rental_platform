@@ -12,6 +12,7 @@
 The working backlog is in [`planning/`](../../planning/issue-plan.md).
 
 ## Technical reference links
+
 - PostgreSQL ranges/exclusion: https://www.postgresql.org/docs/current/rangetypes.html
 - btree_gist UUID/scalar support: https://www.postgresql.org/docs/15/btree-gist.html
 - Next.js Server Functions: read `node_modules/next/dist/docs/` for the installed version

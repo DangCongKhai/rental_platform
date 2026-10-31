@@ -1,14 +1,17 @@
 # M03 Product requirements
 
 ## Purpose
+
 Property-level draft, first package review, owner publication and independent admin suspension. Admin screens are part of the admin flow.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR10 Create property-level listing draft
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Source data reuse; one current advertisement
@@ -25,6 +28,7 @@ Acceptance criteria:
 - FR10-AC04 [Security] Owner selects another property photo as cover → Reject invalid scope.
 
 ### FR11 Edit listing without reapproval after initial approval
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Stale approvals; public consistency
@@ -41,6 +45,7 @@ Acceptance criteria:
 - FR11-AC04 [Validation] Update removes required cover/last unit data → Reject invalid published update or explicitly hide it; no invalid public listing.
 
 ### FR12 Submit initial listing package
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Completeness; duplicate submission
@@ -57,6 +62,7 @@ Acceptance criteria:
 - FR12-AC04 [Integrity] Already initially approved listing updated → Do not submit to initial moderation again; reporting still applies.
 
 ### FR13 Review initial listing packages
+
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Initial package completeness; current content revision; admin authorization
@@ -72,6 +78,7 @@ Acceptance criteria:
 - FR13-AC03 [Race] Content changes after admin opens screen → Approval compares the captured content_revision with the current property content_revision; a stale decision returns 409.
 
 ### FR14 Approve initial listing package
+
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Exact content approval; separate publication
@@ -88,6 +95,7 @@ Acceptance criteria:
 - FR14-AC04 [Integrity] Approved listing edited later → Approval retained; no perpetual equality requirement with current revision.
 
 ### FR15 Reject initial listing with reason
+
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Explainable decisions; terminal transitions
@@ -103,6 +111,7 @@ Acceptance criteria:
 - FR15-AC03 [Race] Approve and reject compete → One decision commits with its notification.
 
 ### FR16 Dedicated changes requested state
+
 Priority: P2 Defer. Actors: Admin. Dependencies: FR15.
 
 Factors: Scope control
@@ -116,6 +125,7 @@ Acceptance criteria:
 - FR16-AC01 [Scope] Admin requests changes in MVP → Use FR15 and owner resubmission; no unsupported state in API/UI.
 
 ### FR17 Publish initially approved listing
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Inventory eligibility; fresh DB checks
@@ -132,6 +142,7 @@ Acceptance criteria:
 - FR17-AC04 [Boundary] Future tenancy leaves a nonoverlapping earlier period → Unit may qualify only if entire requested interval fits.
 
 ### FR18 Hide or archive listing
+
 Priority: P0 Must. Actors: Owner; Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Visibility
@@ -147,6 +158,7 @@ Acceptance criteria:
 - FR18-AC03 [Race] Publish competes with hide/archive → Revision checks and row locks produce one consistent final state; public pages read current state.
 
 ### FR78 Suspend and restore listings after reports or inspection
+
 Priority: P0 Must. Actors: Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Reports supplement prior review; immediate safety
@@ -164,13 +176,17 @@ Acceptance criteria:
 - FR78-AC05 [Integrity] Previously public photo URL was downloaded → Normal public listing hidden; remove offending object if needed. Do not claim ability to recall downloaded copies.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 Stale initial approval, owner edits versus suspension and shared visibility gate. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 After initial approval edits do not reapprove; owner cannot clear suspension; CHANGES_REQUESTED extension deferred.

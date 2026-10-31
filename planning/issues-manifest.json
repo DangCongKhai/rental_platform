@@ -64,31 +64,15 @@
       "reviewer": "Kien",
       "estimate": "1 day",
       "risk": "medium",
-      "modules": [
-        "M01",
-        "M10"
-      ],
+      "modules": ["M01", "M10"],
       "frs": {
-        "FR05": [
-          "FR05-AC01",
-          "FR05-AC02",
-          "FR05-AC03",
-          "FR05-AC04"
-        ],
-        "FR43": [
-          "FR43-AC01",
-          "FR43-AC02",
-          "FR43-AC03"
-        ],
-        "FR75": [
-          "FR75-AC02"
-        ]
+        "FR05": ["FR05-AC01", "FR05-AC02", "FR05-AC03", "FR05-AC04"],
+        "FR43": ["FR43-AC01", "FR43-AC02", "FR43-AC03"],
+        "FR75": ["FR75-AC02"]
       },
       "prototype_flows": [],
       "screens": [],
-      "workflows": [
-        "WF-28"
-      ],
+      "workflows": ["WF-28"],
       "labels": [
         "flow:foundation",
         "module:M01",
@@ -112,16 +96,7 @@
       "reviewer": "Kien",
       "estimate": "2.5 days",
       "risk": "high",
-      "modules": [
-        "M02",
-        "M03",
-        "M04",
-        "M05",
-        "M06",
-        "M07",
-        "M08",
-        "M09"
-      ],
+      "modules": ["M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09"],
       "frs": {
         "FR86": [
           "FR86-AC01",
@@ -130,20 +105,10 @@
           "FR86-AC04",
           "FR86-AC05"
         ],
-        "FR33": [
-          "FR33-AC02",
-          "FR33-AC03",
-          "FR33-AC05"
-        ],
-        "FR87": [
-          "FR87-AC07"
-        ],
-        "FR88": [
-          "FR88-AC04"
-        ],
-        "FR75": [
-          "FR75-AC03"
-        ]
+        "FR33": ["FR33-AC02", "FR33-AC03", "FR33-AC05"],
+        "FR87": ["FR87-AC07"],
+        "FR88": ["FR88-AC04"],
+        "FR75": ["FR75-AC03"]
       },
       "prototype_flows": [],
       "screens": [],
@@ -162,9 +127,7 @@
         "risk:high",
         "area:database"
       ],
-      "depends_on": [
-        "RENT-001"
-      ],
+      "depends_on": ["RENT-001"],
       "github_issue_number": 4,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/4"
     },
@@ -178,49 +141,17 @@
       "reviewer": "Kien",
       "estimate": "3 days",
       "risk": "high",
-      "modules": [
-        "M04"
-      ],
+      "modules": ["M04"],
       "frs": {
-        "FR19": [
-          "FR19-AC01",
-          "FR19-AC02",
-          "FR19-AC03",
-          "FR19-AC04"
-        ],
-        "FR20": [
-          "FR20-AC01",
-          "FR20-AC02",
-          "FR20-AC03",
-          "FR20-AC04"
-        ],
-        "FR21": [
-          "FR21-AC01",
-          "FR21-AC02",
-          "FR21-AC03",
-          "FR21-AC04"
-        ],
-        "FR40": [
-          "FR40-AC01",
-          "FR40-AC02",
-          "FR40-AC03"
-        ],
-        "FR77": [
-          "FR77-AC01",
-          "FR77-AC02",
-          "FR77-AC03",
-          "FR77-AC04"
-        ],
-        "FR61": [
-          "FR61-AC01"
-        ],
-        "FR87": [
-          "FR87-AC06"
-        ]
+        "FR19": ["FR19-AC01", "FR19-AC02", "FR19-AC03", "FR19-AC04"],
+        "FR20": ["FR20-AC01", "FR20-AC02", "FR20-AC03", "FR20-AC04"],
+        "FR21": ["FR21-AC01", "FR21-AC02", "FR21-AC03", "FR21-AC04"],
+        "FR40": ["FR40-AC01", "FR40-AC02", "FR40-AC03"],
+        "FR77": ["FR77-AC01", "FR77-AC02", "FR77-AC03", "FR77-AC04"],
+        "FR61": ["FR61-AC01"],
+        "FR87": ["FR87-AC06"]
       },
-      "prototype_flows": [
-        "F1"
-      ],
+      "prototype_flows": ["F1"],
       "screens": [
         "S01-Home",
         "S02-Search",
@@ -231,9 +162,7 @@
         "Mob-S02",
         "Mob-S03"
       ],
-      "workflows": [
-        "WF-06"
-      ],
+      "workflows": ["WF-06"],
       "labels": [
         "flow:public",
         "module:M04",
@@ -241,9 +170,7 @@
         "risk:high",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-002"
-      ],
+      "depends_on": ["RENT-002"],
       "github_issue_number": 5,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/5"
     },
@@ -257,9 +184,7 @@
       "reviewer": "Kien",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M04"
-      ],
+      "modules": ["M04"],
       "frs": {
         "FR88": [
           "FR88-AC01",
@@ -273,18 +198,9 @@
           "FR88-AC10"
         ]
       },
-      "prototype_flows": [
-        "F1"
-      ],
-      "screens": [
-        "S01-Home",
-        "S02-Search",
-        "S03-Listing"
-      ],
-      "workflows": [
-        "WF-19",
-        "WF-20"
-      ],
+      "prototype_flows": ["F1"],
+      "screens": ["S01-Home", "S02-Search", "S03-Listing"],
+      "workflows": ["WF-19", "WF-20"],
       "labels": [
         "flow:public",
         "module:M04",
@@ -292,9 +208,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-003"
-      ],
+      "depends_on": ["RENT-003"],
       "github_issue_number": 6,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/6"
     },
@@ -308,9 +222,7 @@
       "reviewer": "Kien",
       "estimate": "1.5 days",
       "risk": "high",
-      "modules": [
-        "M05"
-      ],
+      "modules": ["M05"],
       "frs": {
         "FR25": [
           "FR25-AC01",
@@ -319,24 +231,11 @@
           "FR25-AC04",
           "FR25-AC05"
         ],
-        "FR26": [
-          "FR26-AC01",
-          "FR26-AC02",
-          "FR26-AC03"
-        ]
+        "FR26": ["FR26-AC01", "FR26-AC02", "FR26-AC03"]
       },
-      "prototype_flows": [
-        "F1"
-      ],
-      "screens": [
-        "S03-Listing",
-        "S06-Auth",
-        "S04-Request",
-        "Mob-S04"
-      ],
-      "workflows": [
-        "WF-07"
-      ],
+      "prototype_flows": ["F1"],
+      "screens": ["S03-Listing", "S06-Auth", "S04-Request", "Mob-S04"],
+      "workflows": ["WF-07"],
       "labels": [
         "flow:public",
         "module:M05",
@@ -344,9 +243,7 @@
         "risk:high",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-003"
-      ],
+      "depends_on": ["RENT-003"],
       "github_issue_number": 7,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/7"
     },
@@ -360,9 +257,7 @@
       "reviewer": "Kien",
       "estimate": "1 day",
       "risk": "medium",
-      "modules": [
-        "M08"
-      ],
+      "modules": ["M08"],
       "frs": {
         "FR38": [
           "FR38-AC01",
@@ -371,23 +266,11 @@
           "FR38-AC04",
           "FR38-AC05"
         ],
-        "FR72": [
-          "FR72-AC01",
-          "FR72-AC02",
-          "FR72-AC03",
-          "FR72-AC04"
-        ]
+        "FR72": ["FR72-AC01", "FR72-AC02", "FR72-AC03", "FR72-AC04"]
       },
-      "prototype_flows": [
-        "F7"
-      ],
-      "screens": [
-        "S05-Report",
-        "T09-Reports"
-      ],
-      "workflows": [
-        "WF-16"
-      ],
+      "prototype_flows": ["F7"],
+      "screens": ["S05-Report", "T09-Reports"],
+      "workflows": ["WF-16"],
       "labels": [
         "flow:public",
         "module:M08",
@@ -395,9 +278,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-003"
-      ],
+      "depends_on": ["RENT-003"],
       "github_issue_number": 8,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/8"
     },
@@ -411,42 +292,14 @@
       "reviewer": "Kien",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M01",
-        "M09"
-      ],
+      "modules": ["M01", "M09"],
       "frs": {
-        "FR01": [
-          "FR01-AC01",
-          "FR01-AC02",
-          "FR01-AC03",
-          "FR01-AC04"
-        ],
-        "FR02": [
-          "FR02-AC01",
-          "FR02-AC02",
-          "FR02-AC03",
-          "FR02-AC04"
-        ],
-        "FR04": [
-          "FR04-AC01",
-          "FR04-AC02",
-          "FR04-AC03"
-        ],
-        "FR49": [
-          "FR49-AC01",
-          "FR49-AC02",
-          "FR49-AC03"
-        ],
-        "FR06": [
-          "FR06-AC01",
-          "FR06-AC02",
-          "FR06-AC03"
-        ],
-        "FR73": [
-          "FR73-AC01",
-          "FR73-AC02"
-        ]
+        "FR01": ["FR01-AC01", "FR01-AC02", "FR01-AC03", "FR01-AC04"],
+        "FR02": ["FR02-AC01", "FR02-AC02", "FR02-AC03", "FR02-AC04"],
+        "FR04": ["FR04-AC01", "FR04-AC02", "FR04-AC03"],
+        "FR49": ["FR49-AC01", "FR49-AC02", "FR49-AC03"],
+        "FR06": ["FR06-AC01", "FR06-AC02", "FR06-AC03"],
+        "FR73": ["FR73-AC01", "FR73-AC02"]
       },
       "prototype_flows": [],
       "screens": [
@@ -456,9 +309,7 @@
         "Nav",
         "NavStates"
       ],
-      "workflows": [
-        "WF-28"
-      ],
+      "workflows": ["WF-28"],
       "labels": [
         "flow:tenant",
         "module:M01",
@@ -468,9 +319,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-002"
-      ],
+      "depends_on": ["RENT-002"],
       "github_issue_number": 9,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/9"
     },
@@ -484,21 +333,11 @@
       "reviewer": "Kien",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M05"
-      ],
+      "modules": ["M05"],
       "frs": {
-        "FR27": [
-          "FR27-AC01",
-          "FR27-AC02",
-          "FR27-AC03",
-          "FR27-AC04"
-        ]
+        "FR27": ["FR27-AC01", "FR27-AC02", "FR27-AC03", "FR27-AC04"]
       },
-      "prototype_flows": [
-        "F1",
-        "F8"
-      ],
+      "prototype_flows": ["F1", "F8"],
       "screens": [
         "T01-Dashboard",
         "T02-Requests",
@@ -514,10 +353,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-005",
-        "RENT-007"
-      ],
+      "depends_on": ["RENT-005", "RENT-007"],
       "github_issue_number": 10,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/10"
     },
@@ -531,31 +367,12 @@
       "reviewer": "Khai",
       "estimate": "2 days",
       "risk": "medium",
-      "modules": [
-        "M02"
-      ],
+      "modules": ["M02"],
       "frs": {
-        "FR07": [
-          "FR07-AC01",
-          "FR07-AC02",
-          "FR07-AC03"
-        ],
-        "FR08": [
-          "FR08-AC01",
-          "FR08-AC02",
-          "FR08-AC03",
-          "FR08-AC04"
-        ],
-        "FR41": [
-          "FR41-AC01",
-          "FR41-AC02"
-        ],
-        "FR60": [
-          "FR60-AC01",
-          "FR60-AC02",
-          "FR60-AC03",
-          "FR60-AC04"
-        ],
+        "FR07": ["FR07-AC01", "FR07-AC02", "FR07-AC03"],
+        "FR08": ["FR08-AC01", "FR08-AC02", "FR08-AC03", "FR08-AC04"],
+        "FR41": ["FR41-AC01", "FR41-AC02"],
+        "FR60": ["FR60-AC01", "FR60-AC02", "FR60-AC03", "FR60-AC04"],
         "FR87": [
           "FR87-AC01",
           "FR87-AC02",
@@ -564,24 +381,11 @@
           "FR87-AC05",
           "FR87-AC10"
         ],
-        "FR55": [
-          "FR55-AC01",
-          "FR55-AC02"
-        ]
+        "FR55": ["FR55-AC01", "FR55-AC02"]
       },
-      "prototype_flows": [
-        "F2"
-      ],
-      "screens": [
-        "ManageSidebar",
-        "M02-Properties",
-        "M03-Property"
-      ],
-      "workflows": [
-        "WF-01",
-        "WF-21",
-        "WF-23"
-      ],
+      "prototype_flows": ["F2"],
+      "screens": ["ManageSidebar", "M02-Properties", "M03-Property"],
+      "workflows": ["WF-01", "WF-21", "WF-23"],
       "labels": [
         "flow:manage",
         "module:M02",
@@ -589,9 +393,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-002"
-      ],
+      "depends_on": ["RENT-002"],
       "github_issue_number": 11,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/11"
     },
@@ -605,52 +407,18 @@
       "reviewer": "Khai",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M02"
-      ],
+      "modules": ["M02"],
       "frs": {
-        "FR50": [
-          "FR50-AC01",
-          "FR50-AC02",
-          "FR50-AC03",
-          "FR50-AC04"
-        ],
-        "FR51": [
-          "FR51-AC01",
-          "FR51-AC02",
-          "FR51-AC03",
-          "FR51-AC04"
-        ],
-        "FR52": [
-          "FR52-AC01",
-          "FR52-AC02",
-          "FR52-AC03",
-          "FR52-AC04"
-        ],
-        "FR61": [
-          "FR61-AC02",
-          "FR61-AC03",
-          "FR61-AC04"
-        ],
-        "FR41": [
-          "FR41-AC03"
-        ],
-        "FR87": [
-          "FR87-AC01",
-          "FR87-AC08"
-        ]
+        "FR50": ["FR50-AC01", "FR50-AC02", "FR50-AC03", "FR50-AC04"],
+        "FR51": ["FR51-AC01", "FR51-AC02", "FR51-AC03", "FR51-AC04"],
+        "FR52": ["FR52-AC01", "FR52-AC02", "FR52-AC03", "FR52-AC04"],
+        "FR61": ["FR61-AC02", "FR61-AC03", "FR61-AC04"],
+        "FR41": ["FR41-AC03"],
+        "FR87": ["FR87-AC01", "FR87-AC08"]
       },
-      "prototype_flows": [
-        "F2"
-      ],
-      "screens": [
-        "M04-Units",
-        "M05-Unit"
-      ],
-      "workflows": [
-        "WF-02",
-        "WF-21"
-      ],
+      "prototype_flows": ["F2"],
+      "screens": ["M04-Units", "M05-Unit"],
+      "workflows": ["WF-02", "WF-21"],
       "labels": [
         "flow:manage",
         "module:M02",
@@ -658,9 +426,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-009"
-      ],
+      "depends_on": ["RENT-009"],
       "github_issue_number": 12,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/12"
     },
@@ -674,40 +440,16 @@
       "reviewer": "Khai",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M02"
-      ],
+      "modules": ["M02"],
       "frs": {
-        "FR09": [
-          "FR09-AC01",
-          "FR09-AC02",
-          "FR09-AC03"
-        ],
-        "FR56": [
-          "FR56-AC01",
-          "FR56-AC02",
-          "FR56-AC03",
-          "FR56-AC04"
-        ],
-        "FR57": [
-          "FR57-AC01",
-          "FR57-AC02",
-          "FR57-AC03",
-          "FR57-AC04"
-        ],
-        "FR55": [
-          "FR55-AC04"
-        ]
+        "FR09": ["FR09-AC01", "FR09-AC02", "FR09-AC03"],
+        "FR56": ["FR56-AC01", "FR56-AC02", "FR56-AC03", "FR56-AC04"],
+        "FR57": ["FR57-AC01", "FR57-AC02", "FR57-AC03", "FR57-AC04"],
+        "FR55": ["FR55-AC04"]
       },
-      "prototype_flows": [
-        "F2"
-      ],
-      "screens": [
-        "M06-Media"
-      ],
-      "workflows": [
-        "WF-22"
-      ],
+      "prototype_flows": ["F2"],
+      "screens": ["M06-Media"],
+      "workflows": ["WF-22"],
       "labels": [
         "flow:manage",
         "module:M02",
@@ -715,9 +457,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-009"
-      ],
+      "depends_on": ["RENT-009"],
       "github_issue_number": 13,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/13"
     },
@@ -731,51 +471,17 @@
       "reviewer": "Khai",
       "estimate": "2 days",
       "risk": "high",
-      "modules": [
-        "M03"
-      ],
+      "modules": ["M03"],
       "frs": {
-        "FR10": [
-          "FR10-AC01",
-          "FR10-AC02",
-          "FR10-AC03",
-          "FR10-AC04"
-        ],
-        "FR11": [
-          "FR11-AC01",
-          "FR11-AC04"
-        ],
-        "FR12": [
-          "FR12-AC01",
-          "FR12-AC02",
-          "FR12-AC03",
-          "FR12-AC04"
-        ],
-        "FR17": [
-          "FR17-AC01",
-          "FR17-AC02",
-          "FR17-AC03",
-          "FR17-AC04"
-        ],
-        "FR18": [
-          "FR18-AC01",
-          "FR18-AC02",
-          "FR18-AC03"
-        ]
+        "FR10": ["FR10-AC01", "FR10-AC02", "FR10-AC03", "FR10-AC04"],
+        "FR11": ["FR11-AC01", "FR11-AC04"],
+        "FR12": ["FR12-AC01", "FR12-AC02", "FR12-AC03", "FR12-AC04"],
+        "FR17": ["FR17-AC01", "FR17-AC02", "FR17-AC03", "FR17-AC04"],
+        "FR18": ["FR18-AC01", "FR18-AC02", "FR18-AC03"]
       },
-      "prototype_flows": [
-        "F2"
-      ],
-      "screens": [
-        "M07-Listings",
-        "M08-ListingEditor"
-      ],
-      "workflows": [
-        "WF-03",
-        "WF-04",
-        "WF-05",
-        "WF-27"
-      ],
+      "prototype_flows": ["F2"],
+      "screens": ["M07-Listings", "M08-ListingEditor"],
+      "workflows": ["WF-03", "WF-04", "WF-05", "WF-27"],
       "labels": [
         "flow:manage",
         "module:M03",
@@ -783,11 +489,7 @@
         "risk:high",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-010",
-        "RENT-011",
-        "RENT-003"
-      ],
+      "depends_on": ["RENT-010", "RENT-011", "RENT-003"],
       "github_issue_number": 14,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/14"
     },
@@ -801,29 +503,13 @@
       "reviewer": "Khai",
       "estimate": "1 day",
       "risk": "medium",
-      "modules": [
-        "M05"
-      ],
+      "modules": ["M05"],
       "frs": {
-        "FR29": [
-          "FR29-AC01",
-          "FR29-AC02",
-          "FR29-AC03",
-          "FR29-AC04"
-        ]
+        "FR29": ["FR29-AC01", "FR29-AC02", "FR29-AC03", "FR29-AC04"]
       },
-      "prototype_flows": [
-        "F3",
-        "F8"
-      ],
-      "screens": [
-        "M10-Inbox",
-        "M11-RequestDetail",
-        "Mob-M10"
-      ],
-      "workflows": [
-        "WF-08"
-      ],
+      "prototype_flows": ["F3", "F8"],
+      "screens": ["M10-Inbox", "M11-RequestDetail", "Mob-M10"],
+      "workflows": ["WF-08"],
       "labels": [
         "flow:manage",
         "module:M05",
@@ -831,9 +517,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-005"
-      ],
+      "depends_on": ["RENT-005"],
       "github_issue_number": 15,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/15"
     },
@@ -847,37 +531,15 @@
       "reviewer": "Khai",
       "estimate": "2 days",
       "risk": "high",
-      "modules": [
-        "M03",
-        "M08"
-      ],
+      "modules": ["M03", "M08"],
       "frs": {
-        "FR13": [
-          "FR13-AC01",
-          "FR13-AC02",
-          "FR13-AC03"
-        ],
-        "FR14": [
-          "FR14-AC01",
-          "FR14-AC02",
-          "FR14-AC03",
-          "FR14-AC04"
-        ],
-        "FR15": [
-          "FR15-AC01",
-          "FR15-AC02",
-          "FR15-AC03"
-        ],
-        "FR11": [
-          "FR11-AC02"
-        ],
-        "FR87": [
-          "FR87-AC09"
-        ]
+        "FR13": ["FR13-AC01", "FR13-AC02", "FR13-AC03"],
+        "FR14": ["FR14-AC01", "FR14-AC02", "FR14-AC03", "FR14-AC04"],
+        "FR15": ["FR15-AC01", "FR15-AC02", "FR15-AC03"],
+        "FR11": ["FR11-AC02"],
+        "FR87": ["FR87-AC09"]
       },
-      "prototype_flows": [
-        "F2"
-      ],
+      "prototype_flows": ["F2"],
       "screens": [
         "AdminHeader",
         "AdminSidebar",
@@ -885,9 +547,7 @@
         "A02-Queue",
         "A03-Review"
       ],
-      "workflows": [
-        "WF-04"
-      ],
+      "workflows": ["WF-04"],
       "labels": [
         "flow:admin",
         "module:M03",
@@ -897,9 +557,7 @@
         "area:fullstack",
         "area:admin"
       ],
-      "depends_on": [
-        "RENT-002"
-      ],
+      "depends_on": ["RENT-002"],
       "github_issue_number": 16,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/16"
     },
@@ -913,29 +571,14 @@
       "reviewer": "Khai",
       "estimate": "1 day",
       "risk": "high",
-      "modules": [
-        "M03"
-      ],
+      "modules": ["M03"],
       "frs": {
-        "FR78": [
-          "FR78-AC03",
-          "FR78-AC04",
-          "FR78-AC05"
-        ],
-        "FR11": [
-          "FR11-AC03"
-        ]
+        "FR78": ["FR78-AC03", "FR78-AC04", "FR78-AC05"],
+        "FR11": ["FR11-AC03"]
       },
-      "prototype_flows": [
-        "F7"
-      ],
-      "screens": [
-        "A06-Listings",
-        "S08-Unavailable"
-      ],
-      "workflows": [
-        "WF-17"
-      ],
+      "prototype_flows": ["F7"],
+      "screens": ["A06-Listings", "S08-Unavailable"],
+      "workflows": ["WF-17"],
       "labels": [
         "flow:admin",
         "module:M03",
@@ -944,10 +587,7 @@
         "area:fullstack",
         "area:admin"
       ],
-      "depends_on": [
-        "RENT-014",
-        "RENT-003"
-      ],
+      "depends_on": ["RENT-014", "RENT-003"],
       "github_issue_number": 17,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/17"
     },
@@ -961,31 +601,14 @@
       "reviewer": "Khai",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M08"
-      ],
+      "modules": ["M08"],
       "frs": {
-        "FR39": [
-          "FR39-AC01",
-          "FR39-AC02",
-          "FR39-AC03",
-          "FR39-AC04"
-        ],
-        "FR78": [
-          "FR78-AC01",
-          "FR78-AC02"
-        ]
+        "FR39": ["FR39-AC01", "FR39-AC02", "FR39-AC03", "FR39-AC04"],
+        "FR78": ["FR78-AC01", "FR78-AC02"]
       },
-      "prototype_flows": [
-        "F7"
-      ],
-      "screens": [
-        "A04-Reports",
-        "A05-ReportDetail"
-      ],
-      "workflows": [
-        "WF-17"
-      ],
+      "prototype_flows": ["F7"],
+      "screens": ["A04-Reports", "A05-ReportDetail"],
+      "workflows": ["WF-17"],
       "labels": [
         "flow:admin",
         "module:M08",
@@ -994,10 +617,7 @@
         "area:fullstack",
         "area:admin"
       ],
-      "depends_on": [
-        "RENT-006",
-        "RENT-015"
-      ],
+      "depends_on": ["RENT-006", "RENT-015"],
       "github_issue_number": 18,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/18"
     },
@@ -1011,17 +631,9 @@
       "reviewer": "Kien",
       "estimate": "4.5 days",
       "risk": "critical",
-      "modules": [
-        "M06",
-        "M05"
-      ],
+      "modules": ["M06", "M05"],
       "frs": {
-        "FR30": [
-          "FR30-AC01",
-          "FR30-AC02",
-          "FR30-AC03",
-          "FR30-AC04"
-        ],
+        "FR30": ["FR30-AC01", "FR30-AC02", "FR30-AC03", "FR30-AC04"],
         "FR34": [
           "FR34-AC01",
           "FR34-AC02",
@@ -1029,30 +641,10 @@
           "FR34-AC04",
           "FR34-AC05"
         ],
-        "FR67": [
-          "FR67-AC01",
-          "FR67-AC02",
-          "FR67-AC03",
-          "FR67-AC04"
-        ],
-        "FR35": [
-          "FR35-AC01",
-          "FR35-AC02",
-          "FR35-AC03",
-          "FR35-AC04"
-        ],
-        "FR71": [
-          "FR71-AC01",
-          "FR71-AC02",
-          "FR71-AC03",
-          "FR71-AC04"
-        ],
-        "FR80": [
-          "FR80-AC01",
-          "FR80-AC02",
-          "FR80-AC03",
-          "FR80-AC04"
-        ],
+        "FR67": ["FR67-AC01", "FR67-AC02", "FR67-AC03", "FR67-AC04"],
+        "FR35": ["FR35-AC01", "FR35-AC02", "FR35-AC03", "FR35-AC04"],
+        "FR71": ["FR71-AC01", "FR71-AC02", "FR71-AC03", "FR71-AC04"],
+        "FR80": ["FR80-AC01", "FR80-AC02", "FR80-AC03", "FR80-AC04"],
         "FR81": [
           "FR81-AC01",
           "FR81-AC02",
@@ -1067,26 +659,12 @@
           "FR82-AC04",
           "FR82-AC05"
         ],
-        "FR42": [
-          "FR42-AC01",
-          "FR42-AC02",
-          "FR42-AC03",
-          "FR42-AC04"
-        ],
-        "FR33": [
-          "FR33-AC01"
-        ],
-        "FR61": [
-          "FR61-AC03"
-        ],
-        "FR66": [
-          "FR66-AC01"
-        ]
+        "FR42": ["FR42-AC01", "FR42-AC02", "FR42-AC03", "FR42-AC04"],
+        "FR33": ["FR33-AC01"],
+        "FR61": ["FR61-AC03"],
+        "FR66": ["FR66-AC01"]
       },
-      "prototype_flows": [
-        "F3",
-        "F4"
-      ],
+      "prototype_flows": ["F3", "F4"],
       "screens": [
         "M12-Proposal",
         "Mob-M12",
@@ -1097,13 +675,7 @@
         "T05-Tenancy",
         "States-Conflicts"
       ],
-      "workflows": [
-        "WF-09",
-        "WF-10",
-        "WF-11",
-        "WF-18",
-        "WF-25"
-      ],
+      "workflows": ["WF-09", "WF-10", "WF-11", "WF-18", "WF-25"],
       "labels": [
         "flow:shared",
         "module:M06",
@@ -1112,11 +684,7 @@
         "risk:critical",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-013",
-        "RENT-008",
-        "RENT-011"
-      ],
+      "depends_on": ["RENT-013", "RENT-008", "RENT-011"],
       "github_issue_number": 19,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/19"
     },
@@ -1130,28 +698,13 @@
       "reviewer": "Kien",
       "estimate": "1 day",
       "risk": "high",
-      "modules": [
-        "M06"
-      ],
+      "modules": ["M06"],
       "frs": {
-        "FR83": [
-          "FR83-AC01",
-          "FR83-AC03",
-          "FR83-AC04",
-          "FR83-AC05"
-        ]
+        "FR83": ["FR83-AC01", "FR83-AC03", "FR83-AC04", "FR83-AC05"]
       },
-      "prototype_flows": [
-        "F5"
-      ],
-      "screens": [
-        "T04-Expired",
-        "M13-Tenancy",
-        "States-Conflicts"
-      ],
-      "workflows": [
-        "WF-14"
-      ],
+      "prototype_flows": ["F5"],
+      "screens": ["T04-Expired", "M13-Tenancy", "States-Conflicts"],
+      "workflows": ["WF-14"],
       "labels": [
         "flow:shared",
         "module:M06",
@@ -1159,9 +712,7 @@
         "risk:high",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-017"
-      ],
+      "depends_on": ["RENT-017"],
       "github_issue_number": 20,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/20"
     },
@@ -1175,20 +726,10 @@
       "reviewer": "Khai",
       "estimate": "1.5 days",
       "risk": "medium",
-      "modules": [
-        "M05"
-      ],
+      "modules": ["M05"],
       "frs": {
-        "FR28": [
-          "FR28-AC01",
-          "FR28-AC02",
-          "FR28-AC03"
-        ],
-        "FR31": [
-          "FR31-AC01",
-          "FR31-AC02",
-          "FR31-AC03"
-        ],
+        "FR28": ["FR28-AC01", "FR28-AC02", "FR28-AC03"],
+        "FR31": ["FR31-AC01", "FR31-AC02", "FR31-AC03"],
         "FR85": [
           "FR85-AC01",
           "FR85-AC02",
@@ -1200,19 +741,9 @@
           "FR85-AC08"
         ]
       },
-      "prototype_flows": [
-        "F8"
-      ],
-      "screens": [
-        "T03-Request",
-        "T02-Requests",
-        "M11-RequestDetail"
-      ],
-      "workflows": [
-        "WF-08",
-        "WF-24",
-        "WF-15"
-      ],
+      "prototype_flows": ["F8"],
+      "screens": ["T03-Request", "T02-Requests", "M11-RequestDetail"],
+      "workflows": ["WF-08", "WF-24", "WF-15"],
       "labels": [
         "flow:shared",
         "module:M05",
@@ -1220,10 +751,7 @@
         "risk:medium",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-008",
-        "RENT-013"
-      ],
+      "depends_on": ["RENT-008", "RENT-013"],
       "github_issue_number": 21,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/21"
     },
@@ -1237,23 +765,10 @@
       "reviewer": "Khai",
       "estimate": "2.5 days",
       "risk": "critical",
-      "modules": [
-        "M07",
-        "M06"
-      ],
+      "modules": ["M07", "M06"],
       "frs": {
-        "FR68": [
-          "FR68-AC01",
-          "FR68-AC02",
-          "FR68-AC03",
-          "FR68-AC04"
-        ],
-        "FR69": [
-          "FR69-AC01",
-          "FR69-AC02",
-          "FR69-AC03",
-          "FR69-AC04"
-        ],
+        "FR68": ["FR68-AC01", "FR68-AC02", "FR68-AC03", "FR68-AC04"],
+        "FR69": ["FR69-AC01", "FR69-AC02", "FR69-AC03", "FR69-AC04"],
         "FR70": [
           "FR70-AC01",
           "FR70-AC02",
@@ -1262,31 +777,13 @@
           "FR70-AC05",
           "FR70-AC06"
         ],
-        "FR84": [
-          "FR84-AC01",
-          "FR84-AC02",
-          "FR84-AC03",
-          "FR84-AC04"
-        ],
-        "FR81": [
-          "FR81-AC06"
-        ],
-        "FR33": [
-          "FR33-AC04"
-        ]
+        "FR84": ["FR84-AC01", "FR84-AC02", "FR84-AC03", "FR84-AC04"],
+        "FR81": ["FR81-AC06"],
+        "FR33": ["FR33-AC04"]
       },
-      "prototype_flows": [
-        "F6"
-      ],
-      "screens": [
-        "T05-Tenancy",
-        "M15-Renewal",
-        "T04-Review"
-      ],
-      "workflows": [
-        "WF-12",
-        "WF-13"
-      ],
+      "prototype_flows": ["F6"],
+      "screens": ["T05-Tenancy", "M15-Renewal", "T04-Review"],
+      "workflows": ["WF-12", "WF-13"],
       "labels": [
         "flow:shared",
         "module:M07",
@@ -1295,11 +792,7 @@
         "risk:critical",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-002",
-        "RENT-008",
-        "RENT-013"
-      ],
+      "depends_on": ["RENT-002", "RENT-008", "RENT-013"],
       "github_issue_number": 22,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/22"
     },
@@ -1313,24 +806,13 @@
       "reviewer": "Khai",
       "estimate": "1 day",
       "risk": "high",
-      "modules": [
-        "M06"
-      ],
+      "modules": ["M06"],
       "frs": {
-        "FR66": [
-          "FR66-AC02",
-          "FR66-AC03",
-          "FR66-AC04",
-          "FR66-AC05"
-        ]
+        "FR66": ["FR66-AC02", "FR66-AC03", "FR66-AC04", "FR66-AC05"]
       },
       "prototype_flows": [],
-      "screens": [
-        "M13-Tenancy"
-      ],
-      "workflows": [
-        "WF-26"
-      ],
+      "screens": ["M13-Tenancy"],
+      "workflows": ["WF-26"],
       "labels": [
         "flow:manage",
         "module:M06",
@@ -1338,10 +820,7 @@
         "risk:high",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-017",
-        "RENT-020"
-      ],
+      "depends_on": ["RENT-017", "RENT-020"],
       "github_issue_number": 23,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/23"
     },
@@ -1355,18 +834,10 @@
       "reviewer": "Khai",
       "estimate": "1 day",
       "risk": "low",
-      "modules": [
-        "M02",
-        "M05",
-        "M06"
-      ],
+      "modules": ["M02", "M05", "M06"],
       "frs": {},
-      "prototype_flows": [
-        "F2"
-      ],
-      "screens": [
-        "M01-Overview"
-      ],
+      "prototype_flows": ["F2"],
+      "screens": ["M01-Overview"],
       "workflows": [],
       "labels": [
         "flow:manage",
@@ -1376,10 +847,7 @@
         "risk:low",
         "area:fullstack"
       ],
-      "depends_on": [
-        "RENT-019",
-        "RENT-020"
-      ],
+      "depends_on": ["RENT-019", "RENT-020"],
       "github_issue_number": 24,
       "github_url": "https://github.com/DangCongKhai/rental_platform/issues/24"
     }

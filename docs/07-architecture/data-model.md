@@ -1,7 +1,9 @@
 # Data model and database enforcement
+
 Read [dictionary](data-dictionary.md) and [full Mermaid source](database-schema.mmd). All domain primary/foreign keys are UUIDs. `auth_users` denotes managed auth.users only. `user_profiles.id` is the profile primary key that other tables reference. `user_profiles.user_id` is unique and references `auth.users.id`. The verified session `sub` matches `user_profiles.user_id`. `user_profiles.email` is copied from Auth at signup. property_reviews remains P2 deferred. Do not create contract_versions/contract_confirmations, separate image tables, amenity catalog tables or policy join tables.
 
 ## Required constraints
+
 - Normalized unit label unique per property; one current nonarchived listing per property.
 - One PENDING rental enquiry per tenant/listing; one PENDING renewal request per tenancy; one tenancy per accepted enquiry.
 - GiST EXCLUDE on same unit and intersecting finite blocked dates for PENDING_CONFIRMATION/CONFIRMED/ACTIVE. Convert inclusive end to exclusive end+1day. Do not keep old global UNIQUE(unit_id) allocated rule. No time-dependent index predicate.
@@ -13,6 +15,7 @@ Read [dictionary](data-dictionary.md) and [full Mermaid source](database-schema.
 - No audit log, outbox or idempotency tables: history comes from status fields, timestamps and immutable contract versions; duplicates are stopped by the unique constraints above.
 
 ## Favourite extension
+
 ```sql
 CREATE TABLE favourite_properties (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -24,7 +27,9 @@ CREATE TABLE favourite_properties (
 CREATE INDEX favourite_properties_user_pagination
     ON favourite_properties(user_id, created_at DESC, id DESC);
 ```
+
 Use migrations/namespaces matching real repo schema. Authenticated actor is derived server-side. Save/remove is synchronous and safe to repeat. Account/property deletion policy follows shared privacy/retention policy; normal archival retains bookmarks with unavailable placeholders. Do not introduce soft-deletion complexity to this simple join by default.
 
 ## JSONB defaults
+
 Amenities default to `{"schema_version":1,"standard":{},"custom":[]}`. Validate root schema, catalog scope/enabled/details/custom limits in the Next.js server. Policies retain property defaults/shared_rules and unit overrides/additional_rules. Keep numeric rent/deposit/duration/occupants typed. Canonical stable keys make JSONB bounded descriptive attributes compatible with a relational core; document this deliberate normalization exception rather than claiming JSONB itself is relational normalization.

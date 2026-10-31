@@ -1,4 +1,5 @@
 # Explicit assumptions
+
 - The stack is Next.js (server components + Server Actions) with Supabase PostgreSQL, Auth and Storage.
 - Processing is synchronous. Time-based rules run lazily; Supabase Cron or Database Webhooks calling a protected Route Handler are the fallback, never a separate worker.
 - Favourites are private, signed-in, property-level saves. No guest persistence or automatic save after login. The count includes saved rows shown as unavailable placeholders.

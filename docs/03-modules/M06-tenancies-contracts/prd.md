@@ -1,14 +1,17 @@
 # M06 Product requirements
 
 ## Purpose
+
 Exact unit allocation, immutable tenancy_contracts, embedded confirmations, correction chains, temporary holds and lifecycle actions. Screens for both parties are built in the same flow issue as the actions.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR33 Enforce nonoverlapping unit rental periods
+
 Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
 
 Factors: Concurrent occupancy; allocation granularity
@@ -26,6 +29,7 @@ Acceptance criteria:
 - FR33-AC05 [Integrity] Old unique one-active-tenancy-per-unit index exists → Remove it; date exclusion replaces lifetime allocation restriction.
 
 ### FR34 Create tenancy proposal with temporary reservation
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Agreement recording; exact unit; snapshots
@@ -43,6 +47,7 @@ Acceptance criteria:
 - FR34-AC05 [Integrity] Move-in date arrives before both confirmations → No automatic activation; reservation expiry still applies.
 
 ### FR35 View tenancy timeline and contract versions
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Privacy; effective periods
@@ -59,6 +64,7 @@ Acceptance criteria:
 - FR35-AC04 [Boundary] Date beyond last confirmed term → Show no confirmed term for date; never substitute proposed rent.
 
 ### FR42 Rental request, tenancy and renewal server actions
+
 Priority: P0 Must. Actors: Tenant; Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Explicit transitions
@@ -75,6 +81,7 @@ Acceptance criteria:
 - FR42-AC04 [Integrity] Lazy expiry/auto-rejection and user actions touch the same records → Both use the same server functions and database constraints.
 
 ### FR66 Cancel proposals and end confirmed tenancies
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Actual occupancy; history; reopening
@@ -92,6 +99,7 @@ Acceptance criteria:
 - FR66-AC05 [Boundary] Contract date ends with no physical move-out confirmation → Do not fabricate actual_ended_at; scheduling follows agreed range. Overstay requires an explicit operational block/maintenance action.
 
 ### FR67 Record original immutable agreement version
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Document privacy; dated evidence
@@ -108,6 +116,7 @@ Acceptance criteria:
 - FR67-AC04 [Race] Two inserts choose same tenancy version_number → Unique (tenancy_id,version_number) rejects duplicate; action retries safely.
 
 ### FR71 Keep immutable versions and effective agreement history
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Historical truth; current vs future terms
@@ -124,11 +133,13 @@ Acceptance criteria:
 - FR71-AC04 [Boundary] No confirmed segment covers queried date → Show no confirmed terms for this date; proposed terms separately labeled.
 
 ### FR74 Idempotent writes
+
 Priority: Removed (was Removed (was P0 Must)). Actors: System.
 
 Removed by team decision: No client operation IDs. Duplicate submissions are stopped by database unique constraints and by disabling forms while they submit. The ID is kept and not reused.
 
 ### FR75 Transactional consistency
+
 Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
 
 Factors: Deadlocks; coordinated critical paths
@@ -143,6 +154,7 @@ Acceptance criteria:
 - FR75-AC03 [Integrity] Direct SQL attempts invalid pending pointer or confirmation actor → Composite FK/check/constraint trigger rejects invalid committed state.
 
 ### FR80 Confirm move-in after mutual contract confirmation
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Lifecycle clarity; no duplicate allocation
@@ -159,6 +171,7 @@ Acceptance criteria:
 - FR80-AC04 [Integrity] Date arrives without move-in action → Show awaiting move-in; do not invent actual occupancy.
 
 ### FR81 Confirm the exact contract version mutually
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -177,6 +190,7 @@ Acceptance criteria:
 - FR81-AC06 [Integrity] Renewal final confirmation succeeds → Renewal request ACCEPTED and confirmed end extended in same transaction; old documents remain.
 
 ### FR82 Decline and correct unconfirmed versions
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -194,6 +208,7 @@ Acceptance criteria:
 - FR82-AC05 [Race] Tenant confirms while owner corrects → Same pending pointer lock; no mismatched version or retroactive change.
 
 ### FR83 Expire temporary confirmation reservations
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -210,6 +225,7 @@ Acceptance criteria:
 - FR83-AC05 [Integrity] Renewal expires → Original confirmed range/rent unchanged; release extension only.
 
 ### FR84 Reserve renewal extension without releasing current occupancy
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -226,6 +242,7 @@ Acceptance criteria:
 - FR84-AC04 [Race] Two future adjacent bookings and renewal compete → Database exclusion decides valid committed schedule; no renewal overrides existing booking.
 
 ### FR86 Enforce immutable contract terms and write-once confirmations
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -243,13 +260,17 @@ Acceptance criteria:
 - FR86-AC05 [Race] Two transactions mutate pointers/confirmations → Unique constraints, row locks and commit-time invariant checks preserve one current workflow.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 GiST exclusion, participant/hash/version agreement, deadline races, projections and write-once metadata. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 No contract_versions or contract_confirmations table; no legal signature engine; no confirmed mid-term amendment.

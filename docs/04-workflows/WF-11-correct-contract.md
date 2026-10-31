@@ -5,20 +5,25 @@ Actors: Owner
 Requirements: FR71 FR82
 
 ## Preconditions and trigger
+
 Unconfirmed segment; original awaiting revision or pending renewal. Trigger is the named user action or due system evaluation.
 
 ## Main flow
+
 1. Keep old row/document/decision.
 2. Create new tenancy_contracts row, increment version_number and set predecessor.
 3. Recheck/reacquire dates; owner explicitly acknowledges new row; new deadline/pointer.
 4. Invite tenant to independently acknowledge new version.
 
 ## Alternative and failure flows
+
 - Another booking may take released dates; conflict must not allocate.
 - Already mutually confirmed terms cannot be edited/corrected in-place.
 
 ## Postcondition
+
 New immutable proposal; previous confirmations do not transfer.
 
 ## Consistency boundary
+
 Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

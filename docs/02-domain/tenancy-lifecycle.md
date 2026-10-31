@@ -1,4 +1,5 @@
 # Tenancy lifecycle
+
 1. A new PENDING enquiry commits with one ORIGINAL contract and explicit owner acknowledgement. Request becomes ACCEPTED, tenancy PENDING_CONFIRMATION, blocked dates/deadline set atomically.
 2. Tenant confirms the same contract UUID/document hash before deadline: tenancy CONFIRMED, confirmed projection set, pending pointer/deadline cleared. Calendar arrival alone does not confirm or activate.
 3. Owner records actual move-in on/after agreed start: ACTIVE. Owner records end/cancellation explicitly with reason and actual timestamps; do not fabricate move-out from date expiry.

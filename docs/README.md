@@ -3,6 +3,7 @@
 Implementation specification for the rentOS rental platform, built by Khai and Kien. It is not application code and does not certify that features or tests exist in the repository. The docs were adapted from another course's specification: product rules are kept, while that course's infrastructure requirements (async workers, audit/outbox, OpenAPI, logging, monitoring, caching) are removed. Removed requirements keep their IDs and are marked `Removed`.
 
 ## Read in this order
+
 1. [Constraints](08-project/constraints.md) and [assumptions](08-project/assumptions.md).
 2. [Product scope](01-product/product-scope.md), [business rules](02-domain/business-rules.md), [state transitions](02-domain/state-transition.md).
 3. Your module README and PRD under `03-modules/`, then its workflows under `04-workflows/`.

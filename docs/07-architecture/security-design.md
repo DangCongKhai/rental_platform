@@ -1,4 +1,5 @@
 # Security design
+
 The server identifies the user only through the Supabase session (`supabase.auth.getClaims()` via `@supabase/ssr`), which verifies the token. The verified `sub` maps to `user_profiles.user_id`; disabled accounts are refused. `is_admin` is server data only. Owner and tenant identities on a tenancy decide who may confirm, decline or manage it.
 
 Every write is a Server Action. Next.js Server Actions only accept same-origin requests, which protects these cookie-authenticated writes against CSRF. Any Route Handler (only the optional cron/webhook endpoints) checks a secret header and is never called from the browser.

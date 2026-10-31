@@ -1,14 +1,17 @@
 # M01 Product requirements
 
 ## Purpose
+
 Supabase identity, profile bootstrap, dual tenant/owner navigation and server resource authorization.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR01 Email registration
+
 Priority: P0 Must. Actors: Guest. Dependencies: Shared identity/resource foundation.
 
 Factors: Identity consistency; privilege escalation; privacy
@@ -25,6 +28,7 @@ Acceptance criteria:
 - FR01-AC04 [Race] Two signup/profile callbacks run for the same Auth UUID → Unique profile PK/upsert creates one profile; retries do not reset an existing name or admin flag.
 
 ### FR02 Email login and session refresh
+
 Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundation.
 
 Factors: Authentication; expiration; recovery
@@ -41,6 +45,7 @@ Acceptance criteria:
 - FR02-AC04 [Negative] Refresh fails or session expires → Clear user-specific client state and require sign-in; protected actions are refused.
 
 ### FR03 Google sign in
+
 Priority: P2 Defer. Actors: User. Dependencies: FR01 FR43.
 
 Factors: Identity linking; callback integrity
@@ -56,6 +61,7 @@ Acceptance criteria:
 - FR03-AC03 [Race] Callback is delivered twice → No duplicate profile or duplicated onboarding notification.
 
 ### FR04 Logout
+
 Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundation.
 
 Factors: Session lifecycle; token expiry
@@ -71,6 +77,7 @@ Acceptance criteria:
 - FR04-AC03 [Boundary] Previously copied unexpired access token is replayed → Do not claim instant token revocation; state expiry-bound behavior unless a server-side revocation check is deliberately added.
 
 ### FR05 Resource and admin authorization
+
 Priority: P0 Must. Actors: User; Admin. Dependencies: Shared identity/resource foundation.
 
 Factors: Ownership; least privilege; direct DB exposure
@@ -87,6 +94,7 @@ Acceptance criteria:
 - FR05-AC04 [Security] Browser directly calls Supabase Data API/storage → Business tables are not writable/readable through unintended grants; storage rules restrict private files. Server authorization remains enforced even if DB connection bypasses RLS.
 
 ### FR06 Profile and dual dashboards
+
 Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundation.
 
 Factors: Data minimization; stale edits
@@ -102,6 +110,7 @@ Acceptance criteria:
 - FR06-AC03 [Race] Two tabs edit the same profile version → Expected version rejects stale write with 409 rather than silently overwriting.
 
 ### FR43 Verify the Supabase session on the server
+
 Priority: P0 Must. Actors: API client. Dependencies: Shared identity/resource foundation.
 
 Factors: Signature and claims; single identity authority
@@ -117,6 +126,7 @@ Acceptance criteria:
 - FR43-AC03 [Security] Body contains a different user_id → Never replaces verified sub.
 
 ### FR49 Password reset and email confirmation
+
 Priority: P0 Must. Actors: User. Dependencies: Shared identity/resource foundation.
 
 Factors: Account recovery; provider-managed credentials
@@ -132,13 +142,17 @@ Acceptance criteria:
 - FR49-AC03 [Privacy] Reset requested for an unknown email → Generic response avoids account enumeration.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 JWT verification, account/session isolation and admin privilege boundaries. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 No second password store. Google OAuth is deferred. Auth is Supabase JWT verification in Next.js.
