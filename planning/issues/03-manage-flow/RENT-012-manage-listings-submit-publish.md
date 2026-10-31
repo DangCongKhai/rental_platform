@@ -18,7 +18,8 @@ The owner writes the listing title and description, picks advertised units and t
 - Workflows: [WF-03](../../../docs/04-workflows/WF-03-create-listing.md), [WF-04](../../../docs/04-workflows/WF-04-initial-listing-review.md), [WF-05](../../../docs/04-workflows/WF-05-publish-listing.md), [WF-27](../../../docs/04-workflows/WF-27-hide-archive-listing.md)
 
 ## Current repository evidence
-- Not implemented.
+- The listings table and one-current-listing-per-property partial unique index already exist from the shared schema work.
+- Added owner listing screens/actions and a reusable completeness check; database integration verification still needs a reachable PostgreSQL connection.
 
 ## Scope and non-goals
 **In scope:** Listing actions, listings table with status badges, editor with checklist and status banners.
@@ -26,12 +27,12 @@ The owner writes the listing title and description, picks advertised units and t
 **Not in scope:** Admin decision (RENT-014), suspension (RENT-015).
 
 ## Implementation checklist
-- [ ] One current listing per property; cover must be a selected photo of the same property
-- [ ] Completeness check: address, ≥ 1 shared photo, photo per advertised unit, unit terms, rules
-- [ ] Submit from DRAFT/REJECTED → PENDING and store `submitted_content_revision`; notify admins
-- [ ] Publish only when approved, not suspended, not archived, complete and at least one READY advertised unit is free; reuse `isPubliclyVisible` from RENT-003
-- [ ] Hide/archive keep requests and tenancies; owner cannot change suspension fields
-- [ ] Banners: Đang duyệt, Bị từ chối (reason), Bị đình chỉ bởi admin
+- [x] One current listing per property; cover must be a selected photo of the same property
+- [x] Completeness check: address, ≥ 1 shared photo, photo per advertised unit, unit terms, rules
+- [x] Submit from DRAFT/REJECTED → PENDING and store `submitted_content_revision`; notify active admins
+- [x] Publish only when approved, not suspended, not archived, complete and at least one READY advertised unit is free
+- [x] Hide/archive keep requests and tenancies; owner cannot change suspension fields
+- [x] Banners: Đang duyệt, Bị từ chối (reason), Bị đình chỉ bởi admin
 
 ## API and data contract
 Server Actions `saveListing`, `submitListing`, `publishListing`, `hideListing`, `archiveListing`.

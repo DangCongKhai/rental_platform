@@ -29,7 +29,7 @@ Names below are the planned function names. They are targets, not verified exist
 | `createProperty`, `updateProperty`, `archiveProperty` | Owner | WHOLE_SPACE creates its single unit; edits bump `content_revision`; archive keeps history |
 | `createUnits(propertyId, rows[])`, `updateUnit` | Owner | All-or-nothing batch; whole-space guard; normalized labels unique per property |
 | `uploadPhoto(propertyId, formData)`, `updateGallery(propertyId, changes)`, `removePhoto(propertyId, mediaId, replacementCoverId?)`, `replacePhoto(propertyId, mediaId, formData)` | Owner | Decode and validate image bytes; unique private object path; row created after upload; property/unit ownership; gallery changes bump `content_revision`; cover rules; replacement is a new upload; removal is soft delete |
-| `saveListing`, `submitListing`, `publishListing`, `hideListing`, `archiveListing` | Owner | One current listing per property; first-review submission captures the content revision |
+| `saveListing`, `submitListing`, `publishListing`, `hideListing`, `archiveListing` | Owner | One current listing per property; draft reuses property/unit/media records; first-review submission validates and captures `content_revision`, then notifies active admins; publish rechecks approval, suspension, completeness and minimum-term availability |
 | `saveFavourite(propertyId)`, `removeFavourite(propertyId)` | Signed in | Desired state, safe to repeat; no toggle |
 | `createRentalRequest(listingId, input)` | Tenant | Contact snapshots; PENDING; no hold; owner notified |
 | `withdrawRequest(id, reason?)` | Tenant | PENDING → WITHDRAWN only |
