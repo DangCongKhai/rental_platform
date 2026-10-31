@@ -9,7 +9,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !serviceKey) {
-  console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before uploading seed media.");
+  console.error(
+    "Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before uploading seed media.",
+  );
   process.exit(1);
 }
 
@@ -22,10 +24,12 @@ async function main() {
 
   for (const image of libraryFiles()) {
     const bytes = readFileSync(path.join(root, image.file));
-    const { error } = await supabase.storage.from(bucket).upload(image.storage_path, bytes, {
-      contentType: "image/webp",
-      upsert: false,
-    });
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(image.storage_path, bytes, {
+        contentType: "image/webp",
+        upsert: false,
+      });
     if (!error) {
       uploaded += 1;
       continue;

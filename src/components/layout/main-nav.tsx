@@ -8,7 +8,8 @@ const NAV_LINKS = [
   {
     label: "Tìm nhà cho bạn",
     href: "/listings",
-    isActive: (pathname: string) => pathname === "/listings" || pathname.startsWith("/listings/"),
+    isActive: (pathname: string) =>
+      pathname === "/listings" || pathname.startsWith("/listings/"),
   },
   {
     label: "Hướng dẫn",
@@ -22,7 +23,7 @@ const NAV_LINKS = [
   },
   {
     label: "Cổng cư dân",
-    href: "/",
+    href: "/tenant",
     isActive: () => false,
   },
   {
@@ -32,13 +33,12 @@ const NAV_LINKS = [
   },
 ] as const;
 
-export function MainNav() {
-  return <MainNavLinks pathname={usePathname()} />;
-}
-
-/** Static links for the Suspense fallback while the current path streams in. */
 export function MainNavFallback() {
   return <MainNavLinks pathname="" />;
+}
+
+export function MainNav() {
+  return <MainNavLinks pathname={usePathname()} />;
 }
 
 function MainNavLinks({ pathname }: { pathname: string }) {
@@ -48,7 +48,7 @@ function MainNavLinks({ pathname }: { pathname: string }) {
       className="order-last flex w-full flex-wrap justify-center gap-x-8 gap-y-1 md:order-none md:w-auto md:flex-1"
     >
       {NAV_LINKS.map((link) => {
-        const active = link.isActive(pathname);
+        const active = pathname !== "" && link.isActive(pathname);
         return (
           <Link
             key={link.label}

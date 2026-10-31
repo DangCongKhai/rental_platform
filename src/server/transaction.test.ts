@@ -13,8 +13,8 @@ vi.mock("@/server/db", () => ({
 
 beforeEach(() => {
   transaction.mockReset();
-  transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
-    fn({ tag: "tx" }),
+  transaction.mockImplementation(
+    async (fn: (tx: unknown) => Promise<unknown>) => fn({ tag: "tx" }),
   );
 });
 
@@ -30,13 +30,15 @@ describe("withTransaction", () => {
   });
 
   it("does not commit when the callback throws", async () => {
-    transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-      try {
-        return await fn({ tag: "tx" });
-      } catch (error) {
-        throw error;
-      }
-    });
+    transaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        try {
+          return await fn({ tag: "tx" });
+        } catch (error) {
+          throw error;
+        }
+      },
+    );
 
     await expect(
       withTransaction(async () => {
@@ -49,18 +51,20 @@ describe("withTransaction", () => {
 describe("withRolledBackTransaction", () => {
   it("returns the callback result and still aborts the transaction", async () => {
     let aborted = false;
-    transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-      try {
-        return await fn({ tag: "tx" });
-      } catch (error) {
-        aborted = true;
-        throw error;
-      }
-    });
+    transaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        try {
+          return await fn({ tag: "tx" });
+        } catch (error) {
+          aborted = true;
+          throw error;
+        }
+      },
+    );
 
-    await expect(
-      withRolledBackTransaction(async () => "done"),
-    ).resolves.toBe("done");
+    await expect(withRolledBackTransaction(async () => "done")).resolves.toBe(
+      "done",
+    );
     expect(aborted).toBe(true);
   });
 });

@@ -21,5 +21,7 @@ export function safeNext(value: string | null | undefined): string | null {
     return null;
   }
   if (url.origin !== "https://local.invalid") return null;
-  return `${url.pathname}${url.search}${url.hash}`;
+  const destination = `${url.pathname}${url.search}${url.hash}`;
+  // Home is the default after login. A `?next=/` link is the same destination.
+  return destination === "/" ? null : destination;
 }

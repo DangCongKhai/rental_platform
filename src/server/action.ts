@@ -11,7 +11,9 @@ export class ActionError extends Error {
   }
 }
 
-export async function runAction<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
+export async function runAction<T>(
+  fn: () => Promise<T>,
+): Promise<ActionResult<T>> {
   try {
     const data = await fn();
     return { ok: true, data };

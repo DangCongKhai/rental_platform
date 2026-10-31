@@ -18,7 +18,10 @@ export function ResendButton({ onResend }: { onResend: () => Promise<void> }) {
   if (secondsLeft > 0) {
     const ss = String(secondsLeft).padStart(2, "0");
     return (
-      <span aria-disabled="true" className={buttonClass({ variant: "disabled" })}>
+      <span
+        aria-disabled="true"
+        className={buttonClass({ variant: "disabled" })}
+      >
         Gửi lại email sau 00:{ss}
       </span>
     );

@@ -14,6 +14,7 @@ describe("safeNext", () => {
     "",
     "https://evil.test",
     "//evil.test",
+    "/",
     "/auth/login",
     "/auth/sign-up?next=/",
     "/a/../auth/login",

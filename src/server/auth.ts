@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ActionError } from "./action";
 import { prisma } from "./db";
@@ -34,6 +35,7 @@ function toSessionUser(profile: {
 }
 
 export async function requireUser(): Promise<SessionUser> {
+  await connection();
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const sub = data?.claims?.sub;

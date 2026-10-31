@@ -2,7 +2,8 @@
 
 /* rentOS tokens, matched to the prototype's rentos.css and design/tokens/rentos-tokens.css */
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans:
+    var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-brand: #3368a0;
   --color-brand-hover: #2b5a8c;
@@ -57,4 +58,18 @@ summary {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
   }
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Homepage hero sits under the bar. The bar stays in normal flow on every other page.
+   Leaving home keeps that page mounted with display:none, so ignore the hidden copy. */
+body:has([data-home]:not([hidden]):not([style*="display: none"]):not([style*="display:none"])) > header {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+  background-color: transparent;
 }

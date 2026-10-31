@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Navbar } from "@/components/layout/navbar";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       // Browser extensions (e.g. one sec) add attributes to <html> before hydration.
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="relative flex min-h-svh flex-col">
+        <Navbar />
+        {children}
+      </body>
     </html>
   );
 }

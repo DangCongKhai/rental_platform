@@ -68,7 +68,9 @@ export function AuthHeading({
 }) {
   return (
     <div>
-      <h1 className="text-[28px] font-bold leading-9 tracking-[-.02em]">{title}</h1>
+      <h1 className="text-[28px] font-bold leading-9 tracking-[-.02em]">
+        {title}
+      </h1>
       {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
     </div>
   );
@@ -98,7 +100,9 @@ export function AuthStatus({
       >
         {icon}
       </span>
-      <h1 className="text-[28px] font-bold leading-9 tracking-[-.02em]">{title}</h1>
+      <h1 className="text-[28px] font-bold leading-9 tracking-[-.02em]">
+        {title}
+      </h1>
       <div className="text-sm text-muted">{children}</div>
     </>
   );

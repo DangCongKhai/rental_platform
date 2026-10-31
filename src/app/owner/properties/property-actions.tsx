@@ -10,7 +10,9 @@ export function PropertyActions({ propertyId }: { propertyId: string }) {
   const [error, setError] = useState("");
 
   function archive() {
-    const confirmed = window.confirm("Lưu trữ bất động sản này? Lịch sử thuê và yêu cầu liên quan vẫn được giữ.");
+    const confirmed = window.confirm(
+      "Lưu trữ bất động sản này? Lịch sử thuê và yêu cầu liên quan vẫn được giữ.",
+    );
     if (!confirmed) return;
 
     setError("");

@@ -70,7 +70,10 @@ export function UpdatePasswordForm() {
       {error && (
         <Alert tone="neutral">
           {error}{" "}
-          <Link href="/auth/forgot-password" className="font-semibold text-brand">
+          <Link
+            href="/auth/forgot-password"
+            className="font-semibold text-brand"
+          >
             Gửi lại liên kết
           </Link>
         </Alert>
