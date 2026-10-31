@@ -51,6 +51,12 @@ export async function getMyProperties(archived = false) {
                 where: { archivedAt: null },
                 orderBy: [{ createdAt: "asc" }, { id: "asc" }],
             },
+            listings: {
+                where: { archivedAt: null },
+                orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+                take: 1,
+                select: { id: true, moderationStatus: true, publicationStatus: true },
+            },
         },
     });
 }

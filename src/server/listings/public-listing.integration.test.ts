@@ -53,4 +53,15 @@ describe.skipIf(!databaseUrl)("public listing fixture", { timeout: 30_000 }, () 
     expect(publicListing?.gallery.map((photo) => photo.id)).toContain(listing.coverMediaId);
     expect(publicListing?.units[0]?.photos.map((photo) => photo.id)).toContain(listing.coverMediaId);
   });
+
+  it("uses the property gallery for a whole-space listing without a separate unit photo assignment", async () => {
+    const listing = await publishedListing({ rentalArrangement: "WHOLE_SPACE" });
+    const publicListing = await getPublicListing(
+      listing.listingId,
+      parseListingSearchParams(new URLSearchParams()),
+      "2026-10-31",
+    );
+
+    expect(publicListing?.units[0]?.photos.map((photo) => photo.id)).toContain(listing.coverMediaId);
+  });
 });

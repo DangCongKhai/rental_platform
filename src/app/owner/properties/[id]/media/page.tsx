@@ -34,7 +34,9 @@ export default async function PropertyMediaPage({ params }: { params: Promise<{ 
             <span>Hình ảnh</span>
           </nav>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Hình ảnh bất động sản</h1>
-          <p className="mt-1 text-sm text-subtle">Tải ảnh cho bất động sản hoặc từng căn/phòng, sắp xếp và chọn ảnh bìa.</p>
+          <p className="mt-1 text-sm text-subtle">{property.rentalArrangement === "WHOLE_SPACE"
+            ? "Tải ảnh cho toàn bộ bất động sản. Ảnh đã chọn sẽ dùng cho tin đăng."
+            : "Tải ảnh cho bất động sản hoặc từng căn/phòng, sắp xếp và chọn ảnh bìa."}</p>
         </div>
         <Link href={`/owner/properties/${property.id}/units`} className={buttonClass({ variant: "secondary" })}>
           Quản lý căn/phòng
@@ -43,6 +45,7 @@ export default async function PropertyMediaPage({ params }: { params: Promise<{ 
 
       <PropertyMediaManager
         propertyId={property.id}
+        isWholeSpace={property.rentalArrangement === "WHOLE_SPACE"}
         units={property.units.map((unit) => ({ id: unit.id, label: unit.label }))}
         initialMedia={media}
         initialCoverMediaId={latestListing?.coverMediaId ?? null}

@@ -23,6 +23,13 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
         operationalStatus: unit.operationalStatus,
         isMarketed: unit.isMarketed,
     }));
+    const listing = property.listings[0] ?? null;
+    const returnTo = `/owner/properties/${property.id}/units`;
+    const statusLabels: Record<string, string> = {
+        READY: "Sẵn sàng",
+        MAINTENANCE: "Đang bảo trì",
+        RETIRED: "Ngừng khai thác",
+    };
 
     return (
         <section className="mx-auto w-full max-w-6xl space-y-6">
@@ -44,6 +51,14 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
                     <Link href={`/owner/properties/${property.id}/media`} className={buttonClass({ variant: "secondary" })}>
                         Hình ảnh
                     </Link>
+                    <Link
+                        href={listing
+                            ? `/owner/listings/${listing.id}?returnTo=${encodeURIComponent(returnTo)}`
+                            : `/owner/listings/new?propertyId=${property.id}&returnTo=${encodeURIComponent(returnTo)}`}
+                        className={buttonClass()}
+                    >
+                        {listing ? "Quản lý tin đăng" : "Tạo tin đăng"}
+                    </Link>
                     <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
                         Danh sách bất động sản
                     </Link>
@@ -59,7 +74,7 @@ export default async function PropertyUnitsPage({ params }: { params: Promise<{ 
                     {units.map((unit) => (
                         <div key={unit.id} className="mt-4 rounded-xl bg-surface p-4">
                             <p className="font-semibold text-ink">{unit.label}</p>
-                            <p className="mt-1 text-sm text-subtle">Trạng thái: {unit.operationalStatus}</p>
+                            <p className="mt-1 text-sm text-subtle">Trạng thái: {statusLabels[unit.operationalStatus] ?? unit.operationalStatus}</p>
                         </div>
                     ))}
                 </section>

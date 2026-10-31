@@ -20,11 +20,13 @@ type UnitOption = { id: string; label: string };
 
 export function PropertyMediaManager({
   propertyId,
+  isWholeSpace,
   units,
   initialMedia,
   initialCoverMediaId,
 }: {
   propertyId: string;
+  isWholeSpace: boolean;
   units: UnitOption[];
   initialMedia: MediaItem[];
   initialCoverMediaId: string | null;
@@ -211,13 +213,15 @@ export function PropertyMediaManager({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-ink">Quản lý ảnh</h2>
-            <p className="mt-1 text-sm text-subtle">Ảnh dùng chung chỉ lưu một bản. Bạn có thể thêm ảnh đó vào nhiều căn/phòng.</p>
+            <p className="mt-1 text-sm text-subtle">{isWholeSpace
+              ? "Ảnh bất động sản được dùng trực tiếp cho tin đăng cho thuê toàn bộ."
+              : "Ảnh dùng chung chỉ lưu một bản. Bạn có thể thêm ảnh đó vào nhiều căn/phòng."}</p>
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Thư viện ảnh">
             <button type="button" aria-pressed={galleryScope === "property"} onClick={() => setGalleryScope("property")} className={`min-h-10 rounded-lg border px-4 text-sm font-semibold ${galleryScope === "property" ? "border-brand bg-brand-soft text-brand-deep" : "border-line text-ink-2 hover:bg-canvas"}`}>
               Ảnh bất động sản
             </button>
-            {units.length > 0 && (
+            {!isWholeSpace && units.length > 0 && (
               <button type="button" aria-pressed={galleryScope === "unit"} onClick={() => setGalleryScope("unit")} className={`min-h-10 rounded-lg border px-4 text-sm font-semibold ${galleryScope === "unit" ? "border-brand bg-brand-soft text-brand-deep" : "border-line text-ink-2 hover:bg-canvas"}`}>
                 Ảnh căn/phòng
               </button>

@@ -19,6 +19,7 @@ export type FixtureUnit = {
 };
 
 export type PublishedListingInput = {
+  rentalArrangement?: "WHOLE_SPACE" | "SEPARATE_UNITS";
   ward?: string;
   city?: string;
   addressLine?: string;
@@ -91,7 +92,7 @@ export async function publishedListing(overrides: PublishedListingInput = {}): P
       ownerId: owner.profileId,
       name: "Nhà Hải Châu",
       propertyType: "APARTMENT_BUILDING",
-      rentalArrangement: "SEPARATE_UNITS",
+      rentalArrangement: overrides.rentalArrangement ?? "SEPARATE_UNITS",
       addressLine: overrides.addressLine ?? "12 Trần Phú",
       ward: overrides.ward ?? "Hải Châu",
       city: overrides.city ?? "Đà Nẵng",

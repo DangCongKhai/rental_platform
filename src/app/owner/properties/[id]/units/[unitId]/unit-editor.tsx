@@ -88,12 +88,14 @@ function handleCurrencyInput(
 export function UnitEditor({
     propertyId,
     propertyName,
+    isWholeSpace,
     photos,
     sharedRules,
     unit,
 }: {
     propertyId: string;
     propertyName: string;
+    isWholeSpace: boolean;
     photos: UnitPhoto[];
     sharedRules: string[];
     unit: UnitEditorData;
@@ -241,13 +243,17 @@ export function UnitEditor({
             <section className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-7">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 className="text-lg font-semibold text-ink">Ảnh của {unit.label}</h2>
-                        <p className="mt-1 text-sm text-subtle">Ảnh dùng chung đã chọn cho căn/phòng này và ảnh tải riêng lên.</p>
+                        <h2 className="text-lg font-semibold text-ink">{isWholeSpace ? "Ảnh toàn bộ bất động sản" : `Ảnh của ${unit.label}`}</h2>
+                        <p className="mt-1 text-sm text-subtle">{isWholeSpace
+                            ? "Thư viện ảnh bất động sản được dùng cho tin đăng cho thuê toàn bộ."
+                            : "Ảnh dùng chung đã chọn cho căn/phòng này và ảnh tải riêng lên."}</p>
                     </div>
                     <Link href={`/owner/properties/${propertyId}/media`} className={buttonClass({ variant: "secondary" })}>Quản lý ảnh</Link>
                 </div>
                 {photos.length === 0 ? (
-                    <p className="rounded-xl border border-dashed border-line-strong bg-surface p-5 text-sm text-subtle">Chưa có ảnh cho căn/phòng này. Thêm ảnh dùng chung hoặc tải ảnh riêng trong mục Quản lý ảnh.</p>
+                    <p className="rounded-xl border border-dashed border-line-strong bg-surface p-5 text-sm text-subtle">{isWholeSpace
+                        ? "Chưa có ảnh bất động sản. Tải ảnh trong mục Quản lý ảnh để sử dụng cho tin đăng."
+                        : "Chưa có ảnh cho căn/phòng này. Thêm ảnh dùng chung hoặc tải ảnh riêng trong mục Quản lý ảnh."}</p>
                 ) : (
                     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {photos.map((photo) => (

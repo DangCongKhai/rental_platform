@@ -35,7 +35,7 @@ export async function getOwnerListingEditor(propertyId: string) {
   const unitData = property.units.map((unit) => ({
     id: unit.id,
     label: unit.label,
-    isMarketed: unit.isMarketed,
+    isMarketed: property.rentalArrangement === "WHOLE_SPACE" || unit.isMarketed,
     description: unit.description,
     areaM2: unit.areaM2 === null ? null : Number(unit.areaM2),
     advertisedMonthlyRent: unit.advertisedMonthlyRent === null ? null : Number(unit.advertisedMonthlyRent),
@@ -49,6 +49,7 @@ export async function getOwnerListingEditor(propertyId: string) {
   const photos = media.filter((item) => item.unitId === null && item.isSelectedForListing && item.signedUrl);
   const listingValues = listing ?? { title: "", description: "", coverMediaId: null };
   const issues = checkListingCompleteness({
+    rentalArrangement: property.rentalArrangement as "WHOLE_SPACE" | "SEPARATE_UNITS",
     title: listingValues.title,
     description: listingValues.description,
     addressLine: property.addressLine,
@@ -63,6 +64,7 @@ export async function getOwnerListingEditor(propertyId: string) {
   return {
     property: {
       id: property.id,
+      rentalArrangement: property.rentalArrangement as "WHOLE_SPACE" | "SEPARATE_UNITS",
       name: property.name,
       addressLine: property.addressLine,
       ward: property.ward,

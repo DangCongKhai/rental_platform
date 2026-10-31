@@ -192,7 +192,7 @@ export async function getPublicListing(
       const heldLabel = availability.availableNow
         ? availability.label
         : `${availability.label}`;
-      const unitPhotos = [
+      const unitSpecificPhotos = [
         ...unit.mediaAssignments
           .filter((assignment) =>
             assignment.isSelectedForListing &&
@@ -205,6 +205,12 @@ export async function getPublicListing(
           .filter((item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing)
           .sort((left, right) => left.sortOrder - right.sortOrder),
       ];
+      const unitPhotos = property.rentalArrangement === "WHOLE_SPACE"
+        ? [...new Map([
+            ...liveMedia.filter((item) => item.unitId === null),
+            ...unitSpecificPhotos,
+          ].map((photo) => [photo.id, photo])).values()]
+        : unitSpecificPhotos;
 
       return {
         id: unit.id,

@@ -12,6 +12,7 @@ export type ListingCompletenessUnit = {
 };
 
 export type ListingCompletenessInput = {
+  rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
   title: string;
   description: string;
   addressLine: string | null;
@@ -74,7 +75,7 @@ export function checkListingCompleteness(input: ListingCompletenessInput): Listi
     if (unit.maxOccupants === null || unit.maxOccupants < 1) {
       issues.push({ field: "unit.maxOccupants", message: `${unit.label}: bổ sung số người ở tối đa.`, unitLabel: unit.label });
     }
-    if (!unit.hasSelectedPhoto) {
+    if (input.rentalArrangement === "SEPARATE_UNITS" && !unit.hasSelectedPhoto) {
       issues.push({ field: "unit.photos", message: `${unit.label}: chọn ít nhất một ảnh cho căn/phòng này.`, unitLabel: unit.label });
     }
   }

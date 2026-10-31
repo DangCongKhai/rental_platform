@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkListingCompleteness, type ListingCompletenessInput } from "./completeness";
 
 const completePackage: ListingCompletenessInput = {
+  rentalArrangement: "SEPARATE_UNITS",
   title: "Studio gần biển Mỹ Khê",
   description: "Căn hộ đầy đủ tiện nghi, gần biển.",
   addressLine: "29 Hải Phòng",
@@ -51,6 +52,16 @@ describe("checkListingCompleteness", () => {
       unitLabel: "S201",
       message: expect.stringContaining("S201"),
     }));
+  });
+
+  it("uses the property gallery for a whole-space listing without requiring unit photo assignment", () => {
+    const issues = checkListingCompleteness({
+      ...completePackage,
+      rentalArrangement: "WHOLE_SPACE",
+      units: completePackage.units.map((unit) => ({ ...unit, hasSelectedPhoto: false })),
+    });
+
+    expect(issues).toEqual([]);
   });
 
   it("requires at least one marketed unit and validates marketed terms", () => {

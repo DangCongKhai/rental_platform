@@ -20,7 +20,9 @@ export default async function EditUnitPage({
     if (!unit) notFound();
     const propertyMedia = await getPropertyMedia(property.id);
     const unitPhotos = propertyMedia
-        .filter((item) => item.unitId === unit.id || (item.unitId === null && item.assignedUnitIds.includes(unit.id)))
+        .filter((item) => item.unitId === unit.id || (item.unitId === null && (
+            property.rentalArrangement === "WHOLE_SPACE" || item.assignedUnitIds.includes(unit.id)
+        )))
         .map((item) => ({
             id: item.id,
             caption: item.caption,
@@ -39,6 +41,7 @@ export default async function EditUnitPage({
         <UnitEditor
             propertyId={property.id}
             propertyName={property.name}
+            isWholeSpace={property.rentalArrangement === "WHOLE_SPACE"}
             photos={unitPhotos}
             sharedRules={propertyPolicies.data.shared_rules}
             unit={{

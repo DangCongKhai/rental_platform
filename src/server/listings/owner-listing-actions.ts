@@ -22,6 +22,11 @@ const saveSchema = z.object({
   coverMediaId: uuid.nullable(),
   marketedUnitIds: z.array(uuid).max(100),
 }).strict();
+const coverSchema = z.object({
+  listingId: uuid.nullable(),
+  expectedRevision: z.number().int().positive(),
+  coverMediaId: uuid,
+}).strict();
 
 const listingCompletenessInclude = {
   units: {
@@ -66,7 +71,7 @@ async function getCompleteness(
     return {
       id: unit.id,
       label: unit.label,
-      isMarketed: unit.isMarketed,
+      isMarketed: property.rentalArrangement === "WHOLE_SPACE" || unit.isMarketed,
       description: unit.description,
       areaM2: unit.areaM2 === null ? null : Number(unit.areaM2),
       advertisedMonthlyRent: unit.advertisedMonthlyRent === null ? null : Number(unit.advertisedMonthlyRent),
@@ -80,6 +85,7 @@ async function getCompleteness(
   const policiesValid = propertyPolicies.success && units.every((unit) => unit.policiesValid);
 
   return checkListingCompleteness({
+    rentalArrangement: property.rentalArrangement as "WHOLE_SPACE" | "SEPARATE_UNITS",
     title: listing.title,
     description: listing.description,
     addressLine: property.addressLine,
@@ -116,8 +122,10 @@ export async function saveListing(propertyId: string, input: unknown) {
   const user = auth.data;
   const data = parsed.data;
   const result = await runAction(async () => prisma.$transaction(async (tx) => {
-    const locked = await tx.$queryRaw<Array<{ contentRevision: number }>>`
-      SELECT content_revision AS "contentRevision" FROM properties
+    const locked = await tx.$queryRaw<Array<{ contentRevision: number; rentalArrangement: string }>>`
+      SELECT content_revision AS "contentRevision",
+             rental_arrangement AS "rentalArrangement"
+      FROM properties
       WHERE id = ${propertyId}::uuid AND owner_id = ${user.profileId}::uuid AND archived_at IS NULL
       FOR UPDATE`;
     if (!locked[0]) throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
@@ -133,11 +141,15 @@ export async function saveListing(propertyId: string, input: unknown) {
       throw new ActionError("CONFLICT", "Bất động sản này đã có tin đăng. Hãy mở tin hiện tại để chỉnh sửa.");
     }
 
-    const unitIds = [...new Set(data.marketedUnitIds)];
-    if (unitIds.length !== data.marketedUnitIds.length) {
-      throw new ActionError("CONFLICT", "Danh sách căn/phòng bị lặp.");
-    }
     const propertyUnits = await tx.unit.findMany({ where: { propertyId, archivedAt: null }, select: { id: true, isMarketed: true } });
+    const unitIds = locked[0].rentalArrangement === "WHOLE_SPACE"
+      ? propertyUnits.map((unit) => unit.id)
+      : [...new Set(data.marketedUnitIds)];
+    if (unitIds.length !== data.marketedUnitIds.length) {
+      if (locked[0].rentalArrangement !== "WHOLE_SPACE") {
+        throw new ActionError("CONFLICT", "Danh sách căn/phòng bị lặp.");
+      }
+    }
     if (unitIds.some((id) => !propertyUnits.some((unit) => unit.id === id))) {
       throw new ActionError("NOT_FOUND", "Có căn/phòng không thuộc bất động sản này.");
     }
@@ -171,12 +183,90 @@ export async function saveListing(propertyId: string, input: unknown) {
     if (contentChanged) {
       await tx.property.update({ where: { id: propertyId }, data: { contentRevision: { increment: 1 } } });
     }
+    if (current?.moderationStatus === "PENDING" && contentChanged) {
+      const admins = await tx.userProfile.findMany({
+        where: { isAdmin: true, accountStatus: "ACTIVE" },
+        select: { id: true },
+      });
+      const eventKey = `listing-updated-during-review:${current.id}:${randomUUID()}`;
+      for (const admin of admins) {
+        await createNotification(tx, {
+          recipientId: admin.id,
+          audience: "ADMIN",
+          eventKey,
+          title: "Tin đăng đang duyệt đã thay đổi",
+          body: `Tin “${listing.title || "Chưa đặt tiêu đề"}” đã được chủ nhà cập nhật. Vui lòng xem lại nội dung mới nhất.`,
+          link: { resourceType: "listing", resourceId: listing.id },
+        });
+      }
+    }
     const issues = await getCompleteness(tx, propertyId, listing);
     if (current?.publicationStatus === "PUBLISHED" && issues.length > 0) {
       throw new ActionError("CONFLICT", `Không thể lưu vì tin đang công khai sẽ thiếu nội dung bắt buộc. ${issuesAsMessage(issues)}`);
     }
     return { id: listing.id, contentRevision: locked[0].contentRevision + (contentChanged ? 1 : 0), issues };
   }));
+  if (result.ok && result.data) revalidateListingPaths(propertyId, result.data.id);
+  return result;
+}
+
+export async function saveListingCover(propertyId: string, input: unknown) {
+  if (!uuid.safeParse(propertyId).success) return { ok: false as const, error: "Không tìm thấy dữ liệu." };
+  const auth = await runAction(() => requireUser());
+  if (!auth.ok) return auth;
+  if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
+  const user = auth.data;
+  const parsed = coverSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: "Ảnh bìa không hợp lệ." };
+
+  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<Array<{ contentRevision: number }>>`
+      SELECT content_revision AS "contentRevision"
+      FROM properties
+      WHERE id = ${propertyId}::uuid AND owner_id = ${user.profileId}::uuid AND archived_at IS NULL
+      FOR UPDATE`;
+    if (!locked[0]) throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
+    if (locked[0].contentRevision !== parsed.data.expectedRevision) {
+      throw new ActionError("CONFLICT", "Thông tin bất động sản đã thay đổi. Tải lại trang trước khi chọn ảnh bìa.");
+    }
+
+    const current = await tx.listing.findFirst({ where: { propertyId, archivedAt: null } });
+    if (parsed.data.listingId ? current?.id !== parsed.data.listingId : Boolean(current)) {
+      throw new ActionError("CONFLICT", "Tin đăng đã thay đổi. Tải lại trang trước khi chọn ảnh bìa.");
+    }
+    const cover = await tx.propertyMedia.findFirst({
+      where: { id: parsed.data.coverMediaId, propertyId, unitId: null, deletedAt: null, purgedAt: null, isSelectedForListing: true },
+      select: { id: true },
+    });
+    if (!cover) throw new ActionError("CONFLICT", "Ảnh bìa phải là ảnh dùng chung đã chọn của bất động sản.");
+
+    if (current?.coverMediaId === cover.id) {
+      return { id: current.id, contentRevision: locked[0].contentRevision };
+    }
+    const listing = current
+      ? await tx.listing.update({ where: { id: current.id }, data: { coverMediaId: cover.id } })
+      : await tx.listing.create({ data: { propertyId, title: "", description: "", coverMediaId: cover.id } });
+    await tx.property.update({ where: { id: propertyId }, data: { contentRevision: { increment: 1 } } });
+    if (current?.moderationStatus === "PENDING") {
+      const admins = await tx.userProfile.findMany({
+        where: { isAdmin: true, accountStatus: "ACTIVE" },
+        select: { id: true },
+      });
+      const eventKey = `listing-updated-during-review:${current.id}:${randomUUID()}`;
+      for (const admin of admins) {
+        await createNotification(tx, {
+          recipientId: admin.id,
+          audience: "ADMIN",
+          eventKey,
+          title: "Tin đăng đang duyệt đã thay đổi",
+          body: `Tin “${listing.title || "Chưa đặt tiêu đề"}” đã được chủ nhà cập nhật. Vui lòng xem lại nội dung mới nhất.`,
+          link: { resourceType: "listing", resourceId: listing.id },
+        });
+      }
+    }
+    return { id: listing.id, contentRevision: locked[0].contentRevision + 1 };
+  }));
+
   if (result.ok && result.data) revalidateListingPaths(propertyId, result.data.id);
   return result;
 }
@@ -230,6 +320,43 @@ export async function submitListing(listingId: string) {
       });
     }
     return { propertyId: listing.propertyId };
+  }));
+  if (result.ok && result.data) revalidateListingPaths(result.data.propertyId, listingId);
+  return result;
+}
+
+export async function withdrawListing(listingId: string) {
+  if (!uuid.safeParse(listingId).success) return { ok: false as const, error: "Không tìm thấy tin đăng." };
+  const auth = await runAction(() => requireUser());
+  if (!auth.ok) return auth;
+  if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
+  const user = auth.data;
+
+  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<Array<{ propertyId: string }>>`
+      SELECT p.id AS "propertyId"
+      FROM properties p JOIN listings l ON l.property_id = p.id
+      WHERE l.id = ${listingId}::uuid AND p.owner_id = ${user.profileId}::uuid
+        AND p.archived_at IS NULL AND l.archived_at IS NULL
+      FOR UPDATE OF p`;
+    if (!rows[0]) throw new ActionError("NOT_FOUND", "Không tìm thấy tin đăng.");
+
+    const listing = await tx.listing.findUniqueOrThrow({ where: { id: listingId } });
+    if (listing.moderationStatus !== "PENDING") {
+      throw new ActionError("CONFLICT", "Chỉ có thể rút tin đăng đang chờ xét duyệt.");
+    }
+    await tx.listing.update({
+      where: { id: listingId },
+      data: {
+        moderationStatus: "DRAFT",
+        submittedAt: null,
+        submittedContentRevision: null,
+        reviewedById: null,
+        reviewedAt: null,
+        reviewReason: null,
+      },
+    });
+    return { propertyId: rows[0].propertyId };
   }));
   if (result.ok && result.data) revalidateListingPaths(result.data.propertyId, listingId);
   return result;
