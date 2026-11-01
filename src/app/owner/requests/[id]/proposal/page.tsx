@@ -34,6 +34,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         preferredUnitId={r.preferredUnitId}
         startDate={r.desiredMoveInDate.toISOString().slice(0, 10)}
         endDate={r.desiredEndDate.toISOString().slice(0, 10)}
+        rulesByUnitId={r.rulesByUnitId}
       />
     </section>
   );

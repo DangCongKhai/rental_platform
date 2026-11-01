@@ -1,4 +1,5 @@
 import { Prisma } from "../../../generated/prisma/client";
+import { normalizeUnitLabel } from "@/domain/units";
 import { prisma } from "../db";
 
 type PetValue = "ALLOWED" | "ASK_OWNER" | "NOT_ALLOWED";
@@ -127,12 +128,13 @@ export async function publishedListing(
           };
     const rows = await prisma.$queryRaw<Array<{ id: string }>>`
       INSERT INTO units (
-        property_id, label, unit_kind, description, area_m2, bedrooms, bathrooms,
+        property_id, label, normalized_label, unit_kind, description, area_m2, bedrooms, bathrooms,
         bathroom_arrangement, amenities, advertised_monthly_rent, deposit, minimum_rental_months,
         max_occupants, operational_status, is_marketed, policy_overrides, updated_at
       ) VALUES (
         ${property.id}::uuid,
         ${label},
+        ${normalizeUnitLabel(label)},
         ${unit.unitKind ?? "STUDIO"},
         ${description},
         28,

@@ -5,6 +5,7 @@ import { prisma } from "../db";
 import { withTransaction } from "../transaction";
 import { releaseExpiredHolds } from "./expiry";
 import { currentTerms } from "@/domain/tenancies/current-terms";
+import { agreedRulesView } from "@/components/tenancies/agreed-rules";
 import { signContractDownload } from "../contracts/storage";
 import { ActionError, runAction } from "../action";
 
@@ -122,6 +123,12 @@ export async function getOwnerRentalRequest(id: string) {
       monthlyRent: u.advertisedMonthlyRent?.toString() ?? "",
       depositAmount: u.deposit?.toString() ?? "0",
     })),
+    rulesByUnitId: Object.fromEntries(
+      r.listing.property.units.map((u) => [
+        u.id,
+        agreedRulesView(r.listing.property.policies, u.policyOverrides),
+      ]),
+    ),
   };
 }
 export async function getContractDownloadUrl(contractId: string) {

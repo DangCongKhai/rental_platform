@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getTenancy } from "@/server/tenancies/read";
 import { ContractForm } from "@/components/tenancies/contract-form";
+import { agreedRulesFromSnapshot } from "@/components/tenancies/agreed-rules";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense
@@ -57,6 +58,9 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         endDate={c.endDate.toISOString().slice(0, 10)}
         monthlyRent={c.monthlyRent}
         depositAmount={c.depositAmount}
+        rulesByUnitId={{
+          [t.unitId]: agreedRulesFromSnapshot(c.policiesSnapshot),
+        }}
       />
     </section>
   );

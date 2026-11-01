@@ -29,7 +29,7 @@ From a pending request the owner fills the 4-step proposal (unit, dates and mone
 
 ## Current repository evidence
 
-- Not implemented.
+- Proposal, confirm, decline, revise, and move-in actions are in `src/server/tenancies/actions.ts`. The proposal form shows the agreed rules before submit. See `RENT-017-018-verification.md`.
 
 ## Scope and non-goals
 
@@ -39,14 +39,14 @@ From a pending request the owner fills the 4-step proposal (unit, dates and mone
 
 ## Implementation checklist
 
-- [ ] Upload the contract PDF first; store its sha256 and private path
-- [ ] Proposal (one transaction): request still PENDING, unit READY, ≥ 3 calendar months, rent > 0, deposit ≥ 0; release expired holds on the unit (RENT-018 helper); insert tenancy with blocked dates and `confirmation_expires_at` (default 48h, configurable), version 1 with agreed rules and `owner_confirmed_at`; request → ACCEPTED; notify tenant
-- [ ] Overlap rejected by the database → “Căn đã được giữ cho khoảng thời gian này”
-- [ ] Confirm: only the current pending version, matching hash, before the deadline → `tenant_confirmed_at`, confirmed dates set, deadline cleared; notify owner
-- [ ] Decline: reason required → `tenant_rejected_at`, hold released, AWAITING_REVISION; notify owner
-- [ ] Revise: only before both confirmed; new version number linked to the old one; owner confirms; dates re-held if still free
-- [ ] Tenancy detail: all versions with each side's decision; current terms only from confirmed versions; proposed terms labelled
-- [ ] Move-in: CONFIRMED and start date reached → ACTIVE; never automatic
+- [x] Upload the contract PDF first; store its sha256 and private path
+- [x] Proposal (one transaction): request still PENDING, unit READY, ≥ 3 calendar months, rent > 0, deposit ≥ 0; release expired holds on the unit (RENT-018 helper); insert tenancy with blocked dates and `confirmation_expires_at` (default 48h, configurable), version 1 with agreed rules and `owner_confirmed_at`; request → ACCEPTED; notify tenant
+- [x] Overlap rejected by the database → “Căn đã được giữ cho khoảng thời gian này”
+- [x] Confirm: only the current pending version, matching hash, before the deadline → `tenant_confirmed_at`, confirmed dates set, deadline cleared; notify owner
+- [x] Decline: reason required → `tenant_rejected_at`, hold released, AWAITING_REVISION; notify owner
+- [x] Revise: only before both confirmed; new version number linked to the old one; owner confirms; dates re-held if still free
+- [x] Tenancy detail: all versions with each side's decision; current terms only from confirmed versions; proposed terms labelled
+- [x] Move-in: CONFIRMED and start date reached → ACTIVE; never automatic
 
 ## API and data contract
 

@@ -18,7 +18,7 @@ When the 48-hour countdown on T04 reaches zero, the confirm button is disabled a
 
 ## Current repository evidence
 
-- Not implemented.
+- `releaseExpiredHolds` and `isHoldExpired` run from proposal, confirm, revise, and tenancy page loads. The cron route is only a fallback. Renewal actions remain RENT-020; the helper's renewal fallback is covered by the expiry integration test. See `RENT-017-018-verification.md`.
 
 ## Scope and non-goals
 
@@ -28,11 +28,11 @@ When the 48-hour countdown on T04 reaches zero, the confirm button is disabled a
 
 ## Implementation checklist
 
-- [ ] Confirm refuses at or after `confirmation_expires_at` (server time)
-- [ ] `releaseExpiredHolds`: inside the caller's transaction, lock the tenancy, recheck it is still the same pending version and past deadline, then original → EXPIRED with blocked dates cleared, renewal → blocked dates back to confirmed dates
-- [ ] Run it before inserting any new hold on a unit, and when a tenancy page loads
-- [ ] Search already treats expired holds as free (RENT-003)
-- [ ] Countdown component switches to the expired state at the deadline
+- [x] Confirm refuses at or after `confirmation_expires_at` (server time)
+- [x] `releaseExpiredHolds`: inside the caller's transaction, lock the tenancy, recheck it is still the same pending version and past deadline, then original → EXPIRED with blocked dates cleared, renewal → blocked dates back to confirmed dates
+- [x] Run it before inserting any new hold on a unit, and when a tenancy page loads
+- [x] Search already treats expired holds as free (RENT-003)
+- [x] Countdown component switches to the expired state at the deadline
 
 ## API and data contract
 

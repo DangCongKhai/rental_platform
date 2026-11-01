@@ -33,10 +33,21 @@ function missing(): never {
 }
 function parseTerms(input: unknown) {
   const result = termsSchema.safeParse(input);
-  if (!result.success)
+  if (!result.success) {
+    const shortTerm = result.error.issues.some((issue) =>
+      issue.message.includes("3 tháng"),
+    );
+    if (shortTerm) {
+      throw new ActionError(
+        "CONFLICT",
+        "Thời hạn thuê tối thiểu 3 tháng.",
+        { endDate: "Thời hạn thuê tối thiểu 3 tháng." },
+      );
+    }
     conflict(
       "Kiểm tra ngày thuê, giá thuê và tiền cọc. Thời hạn tối thiểu 3 tháng.",
     );
+  }
   return result.data;
 }
 function deadline(now: Date) {

@@ -133,6 +133,26 @@ async function proposal() {
 describe.skipIf(!process.env.DATABASE_URL)(
   "contract flow commits and constraints",
   () => {
+    it("rejects a term under three calendar months without writing a tenancy", async () => {
+      const { r, input } = await setup();
+      const result = await proposeTenancy(
+        r.id,
+        { ...input, startDate: "2090-11-01", endDate: "2090-12-01" },
+        pdf(),
+      );
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.fieldErrors?.endDate).toBe(
+        "Thời hạn thuê tối thiểu 3 tháng.",
+      );
+      expect(await prisma.tenancy.count({ where: { rentalRequestId: r.id } })).toBe(
+        0,
+      );
+      expect(
+        (await prisma.rentalRequest.findUniqueOrThrow({ where: { id: r.id } }))
+          .status,
+      ).toBe("PENDING");
+    });
     it("atomically proposes, stores a private version, accepts request and notifies", async () => {
       const { t, c, r, a } = await proposal();
       expect(t.status).toBe("PENDING_CONFIRMATION");
