@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { requireUser } from "./auth";
 import { prisma } from "./db";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export async function getMyProperties(archived = false, page = 1) {
   await connection();

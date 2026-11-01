@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLinks } from "@/components/page-links";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getMyProperties } from "@/server/properties";
@@ -266,27 +267,21 @@ export default async function OwnerPropertiesPage({
           </table>
         </div>
       )}
-      {result.total > result.pageSize && (
-        <nav aria-label="Phân trang" className="flex items-center gap-5 text-sm">
-          {page > 1 && (
-            <Link
-              href={`?${showArchived ? "archived=1&" : ""}${saved === "1" ? "saved=1&" : ""}page=${page - 1}`}
-            >
-              Trang trước
-            </Link>
-          )}
-          <span>
-            Trang {page} · {result.total} bất động sản
-          </span>
-          {page * result.pageSize < result.total && (
-            <Link
-              href={`?${showArchived ? "archived=1&" : ""}${saved === "1" ? "saved=1&" : ""}page=${page + 1}`}
-            >
-              Trang sau
-            </Link>
-          )}
-        </nav>
-      )}
+      <div className="flex justify-end">
+        <PageLinks
+          page={page}
+          total={result.total}
+          pageSize={result.pageSize}
+          href={(nextPage) => {
+            const params = new URLSearchParams();
+            if (showArchived) params.set("archived", "1");
+            if (saved === "1") params.set("saved", "1");
+            if (nextPage > 1) params.set("page", String(nextPage));
+            const query = params.toString();
+            return query ? `/owner/properties?${query}` : "/owner/properties";
+          }}
+        />
+      </div>
     </section>
   );
 }
