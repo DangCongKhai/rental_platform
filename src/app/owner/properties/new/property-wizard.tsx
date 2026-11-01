@@ -1,9 +1,11 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AMENITY_CATALOG, getAmenityCatalog, type AmenityKey, type Amenities } from "@/domain/amenities";
 import { createProperty, updateProperty } from "../actions";
+import { uploadPhoto } from "../media-actions";
 import { buttonClass } from "@/components/ui/button";
 
 export type PropertyType = "HOUSE" | "APARTMENT" | "APARTMENT_BUILDING";
@@ -99,6 +101,12 @@ const ARRANGEMENT_DESCRIPTIONS: Record<RentalArrangement, string> = {
     SEPARATE_UNITS: "Cho thuê từng phòng hoặc căn độc lập trong cùng bất động sản.",
 };
 
+type AdministrativeDivisionOption = {
+    code: string;
+    name: string;
+    type: string;
+};
+
 type PropertyWizardProps = {
     initial?: {
         propertyId: string;
@@ -108,6 +116,7 @@ type PropertyWizardProps = {
 };
 
 export function PropertyWizard({ initial }: PropertyWizardProps) {
+    const router = useRouter();
     const rentalArrangementGroupName = useId();
     const [draft, setDraft] = useState<Draft>(initial?.draft ?? INITIAL_DRAFT);
     const [step, setStep] = useState(0);
@@ -117,8 +126,90 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     const [newRule, setNewRule] = useState("");
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
+    const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
     const [pending, startTransition] = useTransition();
+    const [provinces, setProvinces] = useState<AdministrativeDivisionOption[]>([]);
+    const [provinceCode, setProvinceCode] = useState("");
+    const [wards, setWards] = useState<AdministrativeDivisionOption[]>([]);
+    const [provinceLoading, setProvinceLoading] = useState(true);
+    const [wardLoading, setWardLoading] = useState(false);
+    const [locationError, setLocationError] = useState("");
+    const [locationLoadKey, setLocationLoadKey] = useState(0);
+    const initialLocation = useRef({ city: draft.city, ward: draft.ward });
+    const initialWardReconciled = useRef(false);
     const resetNewDraftOnHide = useRef(false);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        fetch("/api/locations/provinces", { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Không tải được danh sách tỉnh/thành.");
+                return (await response.json()) as AdministrativeDivisionOption[];
+            })
+            .then((items) => {
+                setProvinces(items);
+                const savedCity = initialLocation.current.city;
+                if (!savedCity) return;
+
+                const matchingProvince = items.find(
+                    (item) => item.name.toLocaleLowerCase("vi") === savedCity.toLocaleLowerCase("vi"),
+                );
+                if (matchingProvince) {
+                    setWardLoading(true);
+                    setProvinceCode(matchingProvince.code);
+                    return;
+                }
+
+                initialWardReconciled.current = true;
+                setDraft((current) => ({ ...current, city: "", ward: "" }));
+                setSaved(false);
+                setLocationError("Địa chỉ đã lưu dùng địa giới cũ. Hãy chọn lại tỉnh/thành và phường/xã theo danh sách mới.");
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setLocationError("Không tải được danh sách tỉnh/thành. Hãy thử tải lại danh sách.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setProvinceLoading(false);
+            });
+
+        return () => controller.abort();
+    }, [locationLoadKey]);
+
+    useEffect(() => {
+        if (!provinceCode) return;
+
+        const controller = new AbortController();
+        fetch(`/api/locations/provinces/${encodeURIComponent(provinceCode)}/wards`, { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Không tải được danh sách phường/xã.");
+                return (await response.json()) as AdministrativeDivisionOption[];
+            })
+            .then((items) => {
+                setWards(items);
+                if (initialWardReconciled.current) return;
+
+                initialWardReconciled.current = true;
+                const savedWard = initialLocation.current.ward;
+                if (savedWard && !items.some((item) => item.name.toLocaleLowerCase("vi") === savedWard.toLocaleLowerCase("vi"))) {
+                    setDraft((current) => ({ ...current, ward: "" }));
+                    setSaved(false);
+                    setLocationError("Phường/xã đã lưu không còn trong danh sách mới. Hãy chọn lại phường/xã.");
+                }
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setLocationError("Không tải được danh sách phường/xã. Hãy thử chọn lại tỉnh/thành.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setWardLoading(false);
+            });
+
+        return () => controller.abort();
+    }, [provinceCode, locationLoadKey]);
 
     useLayoutEffect(() => {
         return () => {
@@ -132,6 +223,7 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                 setNewRule("");
                 setError("");
                 setSaved(false);
+                setPendingPhotos([]);
             }
         };
     }, [initial]);
@@ -144,6 +236,22 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     function updateDraft<K extends keyof Draft>(key: K, value: Draft[K]) {
         setDraft((current) => ({ ...current, [key]: value }));
         setSaved(false);
+    }
+
+    function selectProvince(code: string) {
+        const selected = provinces.find((province) => province.code === code);
+        setProvinceCode(code);
+        setWards([]);
+        setWardLoading(Boolean(code));
+        initialWardReconciled.current = true;
+        setDraft((current) => ({ ...current, city: selected?.name ?? "", ward: "" }));
+        setLocationError("");
+        setSaved(false);
+    }
+
+    function selectWard(name: string) {
+        updateDraft("ward", name);
+        setLocationError("");
     }
 
     function toggleAmenity(key: AmenityKey) {
@@ -218,6 +326,21 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
             setStep(1);
             return;
         }
+        if (initialLocation.current.city && (provinceLoading || wardLoading)) {
+            setError("Đang tải địa chỉ theo danh sách mới. Hãy đợi hoàn tất rồi lưu lại.");
+            setStep(0);
+            return;
+        }
+        if (locationError) {
+            setError("Không thể xác nhận địa chỉ theo danh sách mới. Hãy tải lại danh sách hoặc chọn lại địa chỉ.");
+            setStep(0);
+            return;
+        }
+        if ((draft.city && !draft.ward) || (!draft.city && draft.ward)) {
+            setError("Hãy chọn cả tỉnh/thành và phường/xã, hoặc để trống cả hai.");
+            setStep(0);
+            return;
+        }
 
         startTransition(async () => {
             try {
@@ -249,6 +372,40 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                 }
 
                 setRevision(result.data.contentRevision);
+                if (step === STEPS.length - 1) {
+                    const savedPropertyId = "id" in result.data && typeof result.data.id === "string"
+                        ? result.data.id
+                        : propertyId;
+                    if (typeof savedPropertyId !== "string" || !savedPropertyId) {
+                        setError("Đã lưu bản nháp nhưng không nhận được mã bất động sản để tải ảnh.");
+                        return;
+                    }
+
+                    const failedPhotos: File[] = [];
+                    let uploadedCount = 0;
+                    for (const photo of pendingPhotos) {
+                        try {
+                            const formData = new FormData();
+                            formData.set("file", photo);
+                            const uploadResult = await uploadPhoto(savedPropertyId, formData);
+                            if (!uploadResult.ok) {
+                                failedPhotos.push(photo);
+                                continue;
+                            }
+                            uploadedCount += 1;
+                        } catch {
+                            failedPhotos.push(photo);
+                        }
+                    }
+                    setRevision(result.data.contentRevision + uploadedCount);
+                    setPendingPhotos(failedPhotos);
+                    if (failedPhotos.length > 0) {
+                        setError(`Đã lưu bản nháp${uploadedCount ? ` và tải lên ${uploadedCount} ảnh` : ""}, nhưng ${failedPhotos.length} ảnh chưa tải được. Hãy thử lưu lại để tải tiếp.`);
+                        return;
+                    }
+                    router.replace("/owner/properties?saved=1");
+                    return;
+                }
                 setSaved(true);
             } catch {
                 setError("Không thể lưu bản nháp. Vui lòng thử lại.");
@@ -259,11 +416,25 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
     return (
         <section className="space-y-5">
             <header className="space-y-3">
-                <p className="text-xs text-subtle">Không gian quản lý / Chủ nhà / Bất động sản / Tạo bất động sản</p>
+                <nav aria-label="Đường dẫn" className="text-xs text-subtle">
+                    <Link href="/owner" className="hover:text-brand hover:underline">Không gian quản lý</Link>
+                    <span aria-hidden="true"> / </span>
+                    <Link href="/owner" className="hover:text-brand hover:underline">Chủ nhà</Link>
+                    <span aria-hidden="true"> / </span>
+                    <Link href="/owner/properties" className="hover:text-brand hover:underline">Bất động sản</Link>
+                    <span aria-hidden="true"> / </span>
+                    <span aria-current="page">{initial ? "Chỉnh sửa bất động sản" : "Tạo bất động sản"}</span>
+                </nav>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand">Tạo bản nháp</p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Thêm bất động sản mới</h1>
-                    <p className="mt-1 text-sm text-muted">Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu tìm người thuê.</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand">{initial ? "Chỉnh sửa bản nháp" : "Tạo bản nháp"}</p>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                        {initial ? "Chỉnh sửa thông tin bất động sản" : "Thêm bất động sản mới"}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted">
+                        {initial
+                            ? "Cập nhật thông tin bất động sản qua các bước bên dưới."
+                            : "Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu tìm người thuê."}
+                    </p>
                 </div>
             </header>
 
@@ -352,24 +523,76 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                         </label>
 
                         <div className="grid gap-3 sm:grid-cols-2">
-                            {(
-                                [
-                                    ["city", "Thành phố"],
-                                    ["ward", "Phường / xã"],
-                                    ["addressLine", "Địa chỉ cụ thể"],
-                                ] as const
-                            ).map(([field, label]) => (
-                                <label key={field} className="block space-y-2 text-sm font-medium">
-                                    {label}
-                                    <input
-                                        value={draft[field]}
-                                        onChange={(event) => updateDraft(field, event.target.value)}
-                                        maxLength={240}
-                                        className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
-                                    />
-                                </label>
-                            ))}
+                            <label className="block space-y-2 text-sm font-medium">
+                                Tỉnh / thành phố
+                                <select
+                                    value={provinceCode}
+                                    onChange={(event) => selectProvince(event.target.value)}
+                                    disabled={provinceLoading || provinces.length === 0}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm disabled:bg-surface disabled:text-subtle"
+                                >
+                                    <option value="">
+                                        {provinceLoading ? "Đang tải tỉnh/thành…" : "Chọn tỉnh/thành phố"}
+                                    </option>
+                                    {provinces.map((province) => (
+                                        <option key={province.code} value={province.code}>
+                                            {province.type} {province.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="block space-y-2 text-sm font-medium">
+                                Phường / xã / đặc khu
+                                <select
+                                    value={wards.some((ward) => ward.name === draft.ward) ? draft.ward : ""}
+                                    onChange={(event) => selectWard(event.target.value)}
+                                    disabled={!provinceCode || wardLoading || wards.length === 0}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm disabled:bg-surface disabled:text-subtle"
+                                >
+                                    <option value="">
+                                        {!provinceCode
+                                            ? "Chọn tỉnh/thành trước"
+                                            : wardLoading
+                                              ? "Đang tải phường/xã…"
+                                              : "Chọn phường/xã"}
+                                    </option>
+                                    {wards.map((ward) => (
+                                        <option key={ward.code} value={ward.name}>
+                                            {ward.type} {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="block space-y-2 text-sm font-medium sm:col-span-2">
+                                Địa chỉ cụ thể
+                                <input
+                                    value={draft.addressLine}
+                                    onChange={(event) => updateDraft("addressLine", event.target.value)}
+                                    maxLength={240}
+                                    className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3 text-sm"
+                                    placeholder="Số nhà, tên đường, tòa nhà"
+                                />
+                            </label>
                         </div>
+                        {locationError && (
+                            <div role="alert" className="rounded-lg border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">
+                                <p>{locationError}</p>
+                                {locationError.includes("tải") && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProvinceLoading(true);
+                                            setWardLoading(Boolean(provinceCode));
+                                            setLocationError("");
+                                            setLocationLoadKey((current) => current + 1);
+                                        }}
+                                        className="mt-2 font-semibold underline"
+                                    >
+                                        Tải lại danh sách
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -558,6 +781,44 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
 
                 {step === 4 && (
                     <div className="space-y-4">
+                        <section className="space-y-3 rounded-xl border border-line bg-white p-4" aria-labelledby="creation-photos-title">
+                            <div>
+                                <h3 id="creation-photos-title" className="font-semibold text-ink">Ảnh bất động sản</h3>
+                                <p className="mt-1 text-sm text-muted">Chọn ảnh ngay trong quá trình tạo. Ảnh sẽ được tải lên khi bạn lưu bản nháp.</p>
+                            </div>
+                            <label className="inline-flex min-h-10 cursor-pointer items-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-brand-deep hover:bg-brand-soft">
+                                Chọn ảnh
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    multiple
+                                    disabled={pending}
+                                    className="sr-only"
+                                    onChange={(event) => {
+                                        const chosen = Array.from(event.currentTarget.files ?? []);
+                                        setPendingPhotos((current) => [...current, ...chosen].slice(0, 40));
+                                        setError(chosen.length > 0 && pendingPhotos.length + chosen.length > 40 ? "Mỗi bất động sản được chọn tối đa 40 ảnh." : "");
+                                        setSaved(false);
+                                        event.currentTarget.value = "";
+                                    }}
+                                />
+                            </label>
+                            {pendingPhotos.length > 0 ? (
+                                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    {pendingPhotos.map((photo, index) => (
+                                        <li key={`${photo.name}-${photo.lastModified}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas p-3 text-sm">
+                                            <span className="min-w-0 truncate text-ink" title={photo.name}>{photo.name}</span>
+                                            <button type="button" disabled={pending} onClick={() => setPendingPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index))} className="shrink-0 font-semibold text-danger-ink hover:underline">
+                                                Xóa
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm text-subtle">Chưa chọn ảnh. Bạn cũng có thể thêm ảnh sau trong trang quản lý ảnh.</p>
+                            )}
+                            <p className="text-xs text-subtle">JPEG, PNG hoặc WebP · tối đa 10 MB mỗi ảnh · tối đa 40 ảnh.</p>
+                        </section>
                         <dl className="grid gap-3 sm:grid-cols-2">
                             <ReviewItem label="Tên" value={draft.name || "Chưa nhập"} />
                             <ReviewItem label="Loại" value={draft.propertyType ? PROPERTY_TYPE_LABELS[draft.propertyType] : "Chưa chọn"} />
@@ -598,20 +859,9 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                     </div>
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-4 sm:px-6">
-                        {step === 0 ? (
-                            <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
-                                Hủy
-                            </Link>
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={pending}
-                                onClick={() => setStep((current) => Math.max(0, current - 1))}
-                                className={buttonClass({ variant: "secondary" })}
-                            >
-                                Quay lại
-                            </button>
-                        )}
+                        <Link href="/owner/properties" className={buttonClass({ variant: "secondary" })}>
+                            Hủy
+                        </Link>
 
                         <div className="flex flex-wrap gap-3">
                             {step < STEPS.length - 1 && (
@@ -619,10 +869,26 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                     {pending ? "Đang lưu…" : "Lưu bản nháp"}
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                aria-label="Quay lại bước trước"
+                                title="Quay lại bước trước"
+                                disabled={pending || step === 0}
+                                onClick={() => setStep((current) => Math.max(0, current - 1))}
+                                className={buttonClass({
+                                    variant: "secondary",
+                                    className: "size-11 px-0 text-xl disabled:opacity-40",
+                                })}
+                            >
+                                <span aria-hidden="true">←</span>
+                            </button>
 
                             {step < STEPS.length - 1 ? (
                                 <button
                                     type="button"
+                                    aria-label="Đến bước tiếp theo"
+                                    title="Đến bước tiếp theo"
+                                    disabled={pending}
                                     onClick={() => {
                                         setError("");
                                         if (step === 0 && (!draft.name.trim() || !draft.propertyType)) {
@@ -635,13 +901,13 @@ export function PropertyWizard({ initial }: PropertyWizardProps) {
                                         }
                                         setStep((current) => Math.min(STEPS.length - 1, current + 1));
                                     }}
-                                    className={buttonClass()}
+                                    className={buttonClass({ className: "size-11 px-0 text-xl" })}
                                 >
-                                    Bước tiếp theo <span aria-hidden="true">→</span>
+                                    <span aria-hidden="true">→</span>
                                 </button>
                             ) : (
                                 <button type="button" disabled={pending} onClick={saveDraft} className={buttonClass()}>
-                                    {pending ? "Đang lưu…" : "Lưu bản nháp"}
+                                    {pending ? "Đang lưu…" : "Lưu"}
                                 </button>
                             )}
                         </div>

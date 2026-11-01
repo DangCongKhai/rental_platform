@@ -129,7 +129,13 @@ export async function getPublicListing(
       property: { archivedAt: null },
     },
     include: {
-      property: { include: { owner: { select: { fullName: true } }, media: true, units: { include: { media: true } } } },
+      property: {
+        include: {
+          owner: { select: { fullName: true } },
+          media: true,
+          units: { include: { media: true, mediaAssignments: { include: { media: true } } } },
+        },
+      },
     },
   });
 
@@ -186,6 +192,25 @@ export async function getPublicListing(
       const heldLabel = availability.availableNow
         ? availability.label
         : `${availability.label}`;
+      const unitSpecificPhotos = [
+        ...unit.mediaAssignments
+          .filter((assignment) =>
+            assignment.isSelectedForListing &&
+            assignment.media.deletedAt == null &&
+            assignment.media.purgedAt == null,
+          )
+          .sort((left, right) => left.sortOrder - right.sortOrder)
+          .map((assignment) => ({ ...assignment.media, sortOrder: assignment.sortOrder })),
+        ...unit.media
+          .filter((item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing)
+          .sort((left, right) => left.sortOrder - right.sortOrder),
+      ];
+      const unitPhotos = property.rentalArrangement === "WHOLE_SPACE"
+        ? [...new Map([
+            ...liveMedia.filter((item) => item.unitId === null),
+            ...unitSpecificPhotos,
+          ].map((photo) => [photo.id, photo])).values()]
+        : unitSpecificPhotos;
 
       return {
         id: unit.id,
@@ -208,10 +233,7 @@ export async function getPublicListing(
         amenities: amenityList(unit.amenities),
         customAmenities: ownAmenities.custom,
         additionalRules: effective?.additional_rules ?? [],
-        photos: unit.media
-          .filter((item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing)
-          .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map(photoOf),
+        photos: unitPhotos.map(photoOf),
       };
     });
 

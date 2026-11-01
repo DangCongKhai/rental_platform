@@ -6,7 +6,13 @@ export function publiclyVisibleSql(): Prisma.Sql {
     AND l.moderation_status = 'APPROVED'
     AND l.archived_at IS NULL
     AND l.admin_suspended_at IS NULL
-    AND p.archived_at IS NULL
+    AND ${publicPropertyContentSql()}
+  `;
+}
+
+export function publicPropertyContentSql(): Prisma.Sql {
+  return Prisma.sql`
+    p.archived_at IS NULL
     AND p.address_line IS NOT NULL
     AND btrim(p.address_line) <> ''
     AND p.city IS NOT NULL
