@@ -59,7 +59,7 @@ export function LoginForm({ next }: { next?: string | null }) {
       type: "signup",
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}${destination ?? "/"}`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
       },
     });
     setError(

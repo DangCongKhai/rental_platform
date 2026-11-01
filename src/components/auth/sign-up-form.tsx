@@ -43,7 +43,7 @@ export function SignUpForm({ next }: { next?: string | null }) {
         password,
         options: {
           data: { full_name: fullName.trim() },
-          emailRedirectTo: `${window.location.origin}${destination ?? "/"}`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
         },
       });
       if (error) throw error;
@@ -68,7 +68,7 @@ export function SignUpForm({ next }: { next?: string | null }) {
       type: "signup",
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}${destination ?? "/"}`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
       },
     });
   };

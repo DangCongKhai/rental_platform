@@ -63,7 +63,7 @@ describe("neutral account existence responses", () => {
       expect(signUp).toHaveBeenLastCalledWith(
         expect.objectContaining({
           options: expect.objectContaining({
-            emailRedirectTo: `${window.location.origin}${destination}`,
+            emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination)}`,
           }),
         }),
       );
