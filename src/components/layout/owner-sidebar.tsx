@@ -40,7 +40,7 @@ const ITEMS = [
     exact: false,
   },
   {
-    href: "/account/notifications",
+    href: "/owner/notifications",
     label: "Thông báo",
     icon: BellIcon,
     exact: false,
