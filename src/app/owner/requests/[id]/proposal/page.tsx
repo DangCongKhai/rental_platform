@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getOwnerRentalRequest } from "@/server/tenancies/read";
@@ -22,8 +23,19 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   if (!r || r.status !== "PENDING") notFound();
   return (
     <section className="max-w-[1100px] space-y-6">
-      <p className="text-sm text-brand">
-        Yêu cầu thuê / {r.contactName} / Tạo đề xuất
+      <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-brand">
+        <Link href="/owner/requests" className="inline-flex items-center gap-1.5">
+          <span aria-hidden="true">←</span>
+          Yêu cầu thuê
+        </Link>
+        <span aria-hidden="true" className="text-muted">
+          /
+        </span>
+        <Link href={`/owner/requests/${r.id}`}>{r.contactName}</Link>
+        <span aria-hidden="true" className="text-muted">
+          /
+        </span>
+        <span className="font-normal text-muted">Tạo đề xuất</span>
       </p>
       <h1 className="text-[28px] font-bold">
         Tạo đề xuất thuê cho {r.contactName}

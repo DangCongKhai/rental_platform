@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getTenancy } from "@/server/tenancies/read";
@@ -30,8 +31,18 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   const c = t.contracts[0];
   return (
     <section className="max-w-[1100px] space-y-6">
-      <p className="text-sm text-brand">
-        Kỳ thuê / {t.unitLabel} / Phiên bản sửa đổi
+      <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-brand">
+        <Link
+          href={`/owner/tenancies/${t.id}`}
+          className="inline-flex items-center gap-1.5"
+        >
+          <span aria-hidden="true">←</span>
+          {t.unitLabel}
+        </Link>
+        <span aria-hidden="true" className="text-muted">
+          /
+        </span>
+        <span className="font-normal text-muted">Phiên bản sửa đổi</span>
       </p>
       <h1 className="text-[28px] font-bold">
         Tạo phiên bản {c.versionNumber + 1}
