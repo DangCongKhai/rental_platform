@@ -12,8 +12,16 @@ const moderationLabels: Record<string, string> = {
 };
 const publicationLabels: Record<string, string> = { DRAFT: "Chưa đăng", PUBLISHED: "Đang công khai", HIDDEN: "Đã ẩn" };
 
-export default async function OwnerListingsPage() {
-  const properties = await getMyProperties();
+export default async function OwnerListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const parsed = Number((await searchParams).page);
+  const page =
+    Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
+  const result = await getMyProperties(false, page);
+  const properties = result.properties;
   return (
     <section className="space-y-5">
       <header>
@@ -56,6 +64,17 @@ export default async function OwnerListingsPage() {
             );
           })}
         </ul>
+      )}
+      {result.total > result.pageSize && (
+        <nav aria-label="Phân trang" className="flex items-center gap-5 text-sm">
+          {page > 1 && <Link href={`?page=${page - 1}`}>Trang trước</Link>}
+          <span>
+            Trang {page} · {result.total} bất động sản
+          </span>
+          {page * result.pageSize < result.total && (
+            <Link href={`?page=${page + 1}`}>Trang sau</Link>
+          )}
+        </nav>
       )}
     </section>
   );

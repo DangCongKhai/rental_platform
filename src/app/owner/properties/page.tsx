@@ -80,11 +80,15 @@ function StatusBadge({
 export default async function OwnerPropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string; saved?: string }>;
+  searchParams: Promise<{ archived?: string; saved?: string; page?: string }>;
 }) {
-  const { archived, saved } = await searchParams;
+  const { archived, saved, page: pageValue } = await searchParams;
   const showArchived = archived === "1";
-  const properties = await getMyProperties(showArchived);
+  const parsed = Number(pageValue);
+  const page =
+    Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
+  const result = await getMyProperties(showArchived, page);
+  const properties = result.properties;
 
   return (
     <section className="space-y-5">
@@ -261,6 +265,27 @@ export default async function OwnerPropertiesPage({
             </tbody>
           </table>
         </div>
+      )}
+      {result.total > result.pageSize && (
+        <nav aria-label="Phân trang" className="flex items-center gap-5 text-sm">
+          {page > 1 && (
+            <Link
+              href={`?${showArchived ? "archived=1&" : ""}${saved === "1" ? "saved=1&" : ""}page=${page - 1}`}
+            >
+              Trang trước
+            </Link>
+          )}
+          <span>
+            Trang {page} · {result.total} bất động sản
+          </span>
+          {page * result.pageSize < result.total && (
+            <Link
+              href={`?${showArchived ? "archived=1&" : ""}${saved === "1" ? "saved=1&" : ""}page=${page + 1}`}
+            >
+              Trang sau
+            </Link>
+          )}
+        </nav>
       )}
     </section>
   );
