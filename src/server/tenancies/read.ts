@@ -131,6 +131,29 @@ export async function getOwnerRentalRequest(id: string) {
     ),
   };
 }
+const PAGE_SIZE = 20;
+
+export async function getOwnerTenancies(page = 1) {
+  const user = await requireUser();
+  const safePage =
+    Number.isInteger(page) && page > 0 && page <= 100000 ? page : 1;
+  const where = { ownerId: user.profileId };
+  const [tenancies, total] = await Promise.all([
+    prisma.tenancy.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      skip: (safePage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        unit: { select: { label: true, property: { select: { name: true } } } },
+        rentalRequest: { select: { contactName: true } },
+      },
+    }),
+    prisma.tenancy.count({ where }),
+  ]);
+  return { tenancies, total, page: safePage, pageSize: PAGE_SIZE };
+}
+
 export async function getContractDownloadUrl(contractId: string) {
   return runAction(async () => {
     if (!z.guid().safeParse(contractId).success)
