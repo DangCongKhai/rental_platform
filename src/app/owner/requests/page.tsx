@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { requestDate } from "@/components/tenant/request-status";
+import { RequestActions } from "./request-actions";
 import {
   getOwnerRequests,
   type OwnerRequestTab,
@@ -97,8 +98,8 @@ async function Content({
       <header>
         <h1 className="text-[28px] font-bold">Yêu cầu thuê</h1>
         <p className="mt-1 text-sm text-muted">
-          Chỉ các yêu cầu cho bất động sản của bạn. Mở một hàng không đổi trạng
-          thái.
+          Chỉ các yêu cầu cho bất động sản của bạn. Xem không đổi trạng thái.
+          Huỷ chỉ áp dụng cho yêu cầu đang chờ.
         </p>
       </header>
       <nav aria-label="Trạng thái yêu cầu" className="flex flex-wrap gap-1">
@@ -158,6 +159,7 @@ async function Content({
                   "Ngày mong muốn",
                   "Đã chờ",
                   "Trạng thái",
+                  "Thao tác",
                 ].map((label) => (
                   <th key={label} className="px-4 py-3 font-semibold">
                     {label}
@@ -173,10 +175,7 @@ async function Content({
                 return (
                   <tr key={request.id} className="border-t border-line">
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/owner/requests/${request.id}`}
-                        className="font-semibold text-ink"
-                      >
+                      <p className="font-semibold text-ink">
                         {request.status === "PENDING" && (
                           <span
                             aria-label="Cần xử lý"
@@ -184,7 +183,7 @@ async function Content({
                           />
                         )}
                         {request.contactName}
-                      </Link>
+                      </p>
                       <p className="mt-1 text-muted">{request.contactPhone}</p>
                     </td>
                     <td className="px-4 py-4">{request.listing.title}</td>
@@ -206,6 +205,12 @@ async function Content({
                         </p>
                       )}
                     </td>
+                    <td className="px-4 py-4">
+                      <RequestActions
+                        id={request.id}
+                        pending={request.status === "PENDING"}
+                      />
+                    </td>
                   </tr>
                 );
               })}
@@ -214,7 +219,7 @@ async function Content({
         </div>
       )}
       <p className="text-sm text-muted">
-        Sắp xếp mục cũ nhất lên trước. Nhấn vào tên người thuê để xem chi tiết.
+        Sắp xếp mục cũ nhất lên trước. Dùng Xem để mở chi tiết.
       </p>
       {result.total > result.pageSize && (
         <nav aria-label="Phân trang" className="flex items-center gap-5 text-sm">
