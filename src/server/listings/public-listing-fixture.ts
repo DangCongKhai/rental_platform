@@ -19,6 +19,7 @@ export type FixtureUnit = {
 };
 
 export type PublishedListingInput = {
+  rentalArrangement?: "WHOLE_SPACE" | "SEPARATE_UNITS";
   ward?: string;
   city?: string;
   addressLine?: string;
@@ -98,7 +99,7 @@ export async function publishedListing(
       ownerId: owner.profileId,
       name: "Nhà Hải Châu",
       propertyType: "APARTMENT_BUILDING",
-      rentalArrangement: "SEPARATE_UNITS",
+      rentalArrangement: overrides.rentalArrangement ?? "SEPARATE_UNITS",
       addressLine: overrides.addressLine ?? "12 Trần Phú",
       ward: overrides.ward ?? "Hải Châu",
       city: overrides.city ?? "Đà Nẵng",
@@ -329,6 +330,9 @@ export async function cleanupPublicListings() {
       DELETE FROM rental_requests
       WHERE listing_id IN (SELECT id FROM listings WHERE property_id IN (${testOwnerSql}))`;
       await tx.$executeRaw`DELETE FROM listings WHERE property_id IN (${testOwnerSql})`;
+      await tx.$executeRaw`
+      DELETE FROM unit_media
+      WHERE unit_id IN (SELECT id FROM units WHERE property_id IN (${testOwnerSql}))`;
       await tx.$executeRaw`DELETE FROM property_media WHERE property_id IN (${testOwnerSql})`;
       await tx.$executeRaw`DELETE FROM units WHERE property_id IN (${testOwnerSql})`;
       await tx.$executeRaw`DELETE FROM properties WHERE id IN (${testOwnerSql})`;

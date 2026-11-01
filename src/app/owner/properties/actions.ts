@@ -9,6 +9,7 @@ import { ActionError, runAction } from "@/server/action";
 import { requireUser } from "@/server/auth";
 import { prisma } from "@/server/db";
 import type { ActionResult } from "@/server/validation";
+import { normalizeUnitLabel } from "@/domain/units";
 
 const propertyTypeSchema = z.enum(["HOUSE", "APARTMENT", "APARTMENT_BUILDING"]);
 
@@ -149,6 +150,7 @@ export async function createProperty(
             bathrooms: 0,
             bathroomArrangement: "PRIVATE",
             minimumRentalMonths: 3,
+            normalizedLabel: normalizeUnitLabel(unitLabel),
           },
         });
       }

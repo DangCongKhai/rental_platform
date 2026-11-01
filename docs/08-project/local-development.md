@@ -73,6 +73,8 @@ Open http://localhost:3000. Server Actions run in the same process.
 
 Business tables live in `prisma/migrations`. You write `prisma/schema.prisma`, then `npx prisma migrate dev --name <change>` writes and applies the next migration. Triggers, functions, and the `user_profiles.user_id` foreign key to `auth.users` are SQL in that new migration file. One person coordinates those files. `npx prisma generate` refreshes the client. `DIRECT_URL` is the migration connection.
 
+Property photos use the private Supabase Storage bucket `property-media`. The Prisma migration creates or updates the bucket when Supabase Storage is available; apply it with `npx prisma migrate deploy`. The server uses `SUPABASE_SECRET_KEY` only after owner authorization. Images must decode as JPEG, PNG, or WebP and are limited to 10 MB each and 40 active photos per property. Never expose the secret key through a `NEXT_PUBLIC_` variable.
+
 Notifications are inserted by each action in its own transaction, and time-based rules run lazily, so there is no worker or scheduler to start. If a Supabase Cron job or Database Webhook is added later, it calls a Route Handler in this same app (see `docs/07-architecture/api-design.md`).
 
 ## Daily flow

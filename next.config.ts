@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "11mb" },
   },
   partialPrefetching: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "11mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {

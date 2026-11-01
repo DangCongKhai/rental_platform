@@ -2,6 +2,7 @@ import "dotenv/config";
 import { pathToFileURL } from "node:url";
 import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../src/server/db";
+import { createNotification } from "../src/server/notifications";
 import { listingReportSeedSql } from "./seed-data/listing-reports";
 import { daNangPlaces } from "./seed-data/da-nang-places";
 import { libraryFileMeta, libraryImagesFor } from "./seed-data/image-library";
@@ -1026,6 +1027,23 @@ async function insertStory(tx: Tx) {
     lanId,
     seedId(3, 5),
   );
+
+  await createNotification(tx, {
+    recipientId: linhId,
+    audience: "OWNER",
+    eventKey: `seed:proposal:${seedId(8, 3)}`,
+    title: "A contract is waiting for the tenant",
+    body: "Mai has a studio contract to confirm.",
+    link: { resourceType: "tenancy", resourceId: seedId(8, 3) },
+  });
+  await createNotification(tx, {
+    recipientId: maiId,
+    audience: "TENANT",
+    eventKey: `seed:active:${seedId(8, 1)}`,
+    title: "Your tenancy is active",
+    body: "Studio S201 is active.",
+    link: { resourceType: "tenancy", resourceId: seedId(8, 1) },
+  });
 }
 
 export async function main() {
