@@ -184,6 +184,82 @@ export async function setAllSharedPhotosForUnit(
   });
 }
 
+export async function saveSharedPhotoSelection(
+  propertyId: string,
+  unitId: string,
+  selectedMediaIds: string[],
+): Promise<ActionResult<{ selectedMediaIds: string[] }>> {
+  if (
+    !propertyIdSchema.safeParse(propertyId).success ||
+    !unitIdSchema.safeParse(unitId).success ||
+    !Array.isArray(selectedMediaIds) ||
+    selectedMediaIds.length > MAX_PHOTOS_PER_PROPERTY ||
+    selectedMediaIds.some((id) => !mediaIdSchema.safeParse(id).success) ||
+    new Set(selectedMediaIds).size !== selectedMediaIds.length
+  ) return failed("Danh sách ảnh được chọn không hợp lệ.");
+
+  const auth = await runAction(() => requireOwner(propertyId));
+  if (!auth.ok) return auth;
+  const user = auth.data;
+  if (!user) return failed("Vui lòng đăng nhập lại.");
+
+  return runAction(async () => {
+    const result = await prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM properties
+        WHERE id = ${propertyId}::uuid AND owner_id = ${user.profileId}::uuid AND archived_at IS NULL
+        FOR UPDATE`;
+      if (!locked[0]) throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
+
+      const unit = await tx.unit.findFirst({ where: { id: unitId, propertyId, archivedAt: null }, select: { id: true } });
+      if (!unit) throw new ActionError("NOT_FOUND", "Căn/phòng không thuộc bất động sản này.");
+
+      const [sharedPhotos, existingAssignments, directPhotoCount] = await Promise.all([
+        tx.propertyMedia.findMany({
+          where: { id: { in: selectedMediaIds }, propertyId, unitId: null, deletedAt: null, purgedAt: null },
+          select: { id: true },
+        }),
+        tx.unitMedia.findMany({ where: { unitId }, select: { mediaId: true, sortOrder: true } }),
+        tx.propertyMedia.count({ where: { propertyId, unitId, deletedAt: null, purgedAt: null } }),
+      ]);
+      if (sharedPhotos.length !== selectedMediaIds.length) {
+        throw new ActionError("NOT_FOUND", "Một số ảnh không còn thuộc thư viện dùng chung của bất động sản.");
+      }
+      if (selectedMediaIds.length + directPhotoCount > MAX_PHOTOS_PER_PROPERTY) {
+        throw new ActionError("CONFLICT", `Mỗi căn/phòng được hiển thị tối đa ${MAX_PHOTOS_PER_PROPERTY} ảnh.`);
+      }
+
+      const selectedIds = new Set(selectedMediaIds);
+      const existingIds = new Set(existingAssignments.map((assignment) => assignment.mediaId));
+      const removeIds = existingAssignments.filter((assignment) => !selectedIds.has(assignment.mediaId)).map((assignment) => assignment.mediaId);
+      const addIds = selectedMediaIds.filter((id) => !existingIds.has(id));
+      const changed = removeIds.length > 0 || addIds.length > 0;
+
+      if (removeIds.length > 0) {
+        await tx.unitMedia.deleteMany({ where: { unitId, mediaId: { in: removeIds } } });
+      }
+      if (addIds.length > 0) {
+        const lastSortOrder = existingAssignments.reduce((highest, assignment) => Math.max(highest, assignment.sortOrder), -1);
+        await tx.unitMedia.createMany({
+          data: addIds.map((mediaId, index) => ({
+            unitId,
+            mediaId,
+            sortOrder: directPhotoCount + lastSortOrder + index + 1,
+            isSelectedForListing: true,
+          })),
+        });
+      }
+      if (changed) await tx.property.update({ where: { id: propertyId }, data: { contentRevision: { increment: 1 } } });
+      return { selectedMediaIds };
+    });
+
+    revalidatePath(`/owner/properties/${propertyId}/media`);
+    revalidatePath(`/owner/properties/${propertyId}/units`);
+    revalidatePath("/owner/properties");
+    return result;
+  });
+}
+
 export async function replacePhoto(
   propertyId: string,
   mediaId: string,

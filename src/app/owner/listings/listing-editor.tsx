@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { checkListingCompleteness, type ListingCompletenessIssue } from "@/domain/listings/completeness";
 import { archiveListing, hideListing, publishListing, saveListing, saveListingCover, submitListing, withdrawListing } from "@/server/listings/owner-listing-actions";
@@ -30,6 +30,7 @@ const moderationLabels: Record<string, string> = {
   REJECTED: "Bị từ chối",
 };
 const publicationLabels: Record<string, string> = { DRAFT: "Chưa đăng", PUBLISHED: "Đang công khai", HIDDEN: "Đã ẩn" };
+type PendingAction = "cover" | "submit" | "publish" | "save" | "hide" | "withdraw" | "archive";
 
 export function ListingEditor({ initialData, returnTo }: { initialData: EditorData; returnTo?: string }) {
   const router = useRouter();
@@ -43,7 +44,8 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
     : initialData.units.filter((unit) => unit.isMarketed).map((unit) => unit.id));
   const [serverIssues, setServerIssues] = useState(initialData.issues);
   const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const isBusy = pendingAction !== null;
   const listing = initialData.listing;
   const suspended = Boolean(listing?.adminSuspendedAt);
   const issues = useMemo(() => checkListingCompleteness({
@@ -85,8 +87,11 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
   }
 
   function persist(then?: "submit" | "publish") {
+    if (isBusy) return;
+    const action: PendingAction = then ?? "save";
     setMessage(null);
-    startTransition(async () => {
+    setPendingAction(action);
+    void (async () => {
       try {
         const saved = await saveListing(initialData.property.id, {
           listingId,
@@ -134,15 +139,19 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
         if (returnTo) router.push(returnTo);
       } catch {
         setMessage("Không thể lưu tin đăng. Hãy thử lại.");
+      } finally {
+        setPendingAction(null);
       }
-    });
+    })();
   }
 
   function chooseCover(nextCoverMediaId: string) {
+    if (isBusy) return;
     const previousCoverMediaId = coverMediaId;
     setCoverMediaId(nextCoverMediaId);
     setMessage(null);
-    startTransition(async () => {
+    setPendingAction("cover");
+    void (async () => {
       try {
         const result = await saveListingCover(initialData.property.id, {
           listingId,
@@ -164,15 +173,18 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
       } catch {
         setCoverMediaId(previousCoverMediaId);
         setMessage("Không thể lưu ảnh bìa. Hãy thử lại.");
+      } finally {
+        setPendingAction(null);
       }
-    });
+    })();
   }
 
   function runStateChange(action: (id: string) => Promise<{ ok: boolean; error?: string }>, successMessage: string, archive = false) {
-    if (!listingId) return;
+    if (!listingId || isBusy) return;
     if (archive && !window.confirm("Lưu trữ tin đăng này? Yêu cầu thuê và lịch sử kỳ thuê vẫn được giữ lại.")) return;
     setMessage(null);
-    startTransition(async () => {
+    setPendingAction(archive ? "archive" : "hide");
+    void (async () => {
       try {
         const result = await action(listingId);
         if (!result.ok) {
@@ -186,14 +198,17 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
         }
       } catch {
         setMessage("Không thể cập nhật trạng thái tin đăng. Hãy thử lại.");
+      } finally {
+        setPendingAction(null);
       }
-    });
+    })();
   }
 
   function withdrawReviewRequest() {
-    if (!listingId || !window.confirm("Rút tin đăng khỏi hàng chờ xét duyệt? Tin sẽ trở về bản nháp và có thể gửi lại.")) return;
+    if (!listingId || isBusy || !window.confirm("Rút tin đăng khỏi hàng chờ xét duyệt? Tin sẽ trở về bản nháp và có thể gửi lại.")) return;
     setMessage(null);
-    startTransition(async () => {
+    setPendingAction("withdraw");
+    void (async () => {
       try {
         const result = await withdrawListing(listingId);
         if (!result.ok) {
@@ -204,8 +219,10 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
         router.refresh();
       } catch {
         setMessage("Không thể rút yêu cầu xét duyệt. Hãy thử lại.");
+      } finally {
+        setPendingAction(null);
       }
-    });
+    })();
   }
 
   return (
@@ -280,7 +297,7 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {initialData.photos.map((photo) => (
               <li key={photo.id}>
-                <button type="button" disabled={isPending} aria-pressed={coverMediaId === photo.id} onClick={() => chooseCover(photo.id)} className={`w-full overflow-hidden rounded-xl border text-left disabled:cursor-wait disabled:opacity-70 ${coverMediaId === photo.id ? "border-brand ring-2 ring-brand/30" : "border-line"}`}>
+                <button type="button" disabled={isBusy} aria-pressed={coverMediaId === photo.id} onClick={() => chooseCover(photo.id)} className={`w-full overflow-hidden rounded-xl border text-left disabled:cursor-wait disabled:opacity-70 ${coverMediaId === photo.id ? "border-brand ring-2 ring-brand/30" : "border-line"}`}>
                   <div className="relative aspect-[4/3] bg-surface">{photo.signedUrl ? <Image src={photo.signedUrl} alt={photo.caption || "Ảnh bất động sản"} fill unoptimized className="object-cover" /> : <span className="flex h-full items-center justify-center text-sm text-subtle">Không tải được ảnh</span>}</div>
                   <span className="flex min-h-10 items-center justify-between gap-2 px-3 text-sm"><span className="truncate">{photo.caption || "Ảnh bất động sản"}</span><span className="font-semibold text-brand-deep">{coverMediaId === photo.id ? "Ảnh bìa ✓" : "Chọn làm bìa"}</span></span>
                 </button>
@@ -315,22 +332,22 @@ export function ListingEditor({ initialData, returnTo }: { initialData: EditorDa
       <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white p-4">
         <Link href="/owner/listings" className={buttonClass({ variant: "secondary" })}>Quay lại danh sách</Link>
         <div className="flex flex-wrap gap-2">
-          {listingId && listing?.publicationStatus === "PUBLISHED" && <button type="button" disabled={isPending} onClick={() => runStateChange(hideListing, "Tin đăng đã được ẩn.")} className={buttonClass({ variant: "secondary" })}>Ẩn tin</button>}
-          {listingId && listing?.moderationStatus === "APPROVED" && listing?.publicationStatus !== "PUBLISHED" && !suspended && <button type="button" disabled={isPending || issues.length > 0} onClick={() => persist("publish")} className={buttonClass()}>Đăng tin</button>}
-          {listingId && listing?.moderationStatus === "PENDING" && <button type="button" disabled={isPending} onClick={withdrawReviewRequest} className={buttonClass({ variant: "secondary" })}>{isPending ? "Đang xử lý…" : "Rút yêu cầu duyệt"}</button>}
+          {listingId && listing?.publicationStatus === "PUBLISHED" && <button type="button" disabled={isBusy} onClick={() => runStateChange(hideListing, "Tin đăng đã được ẩn.")} className={buttonClass({ variant: "secondary" })}>{pendingAction === "hide" ? "Đang ẩn…" : "Ẩn tin"}</button>}
+          {listingId && listing?.moderationStatus === "APPROVED" && listing?.publicationStatus !== "PUBLISHED" && !suspended && <button type="button" disabled={isBusy || issues.length > 0} onClick={() => persist("publish")} className={buttonClass()}>{pendingAction === "publish" ? "Đang đăng…" : "Đăng tin"}</button>}
+          {listingId && listing?.moderationStatus === "PENDING" && <button type="button" disabled={isBusy} onClick={withdrawReviewRequest} className={buttonClass({ variant: "secondary" })}>{pendingAction === "withdraw" ? "Đang xử lý…" : "Rút yêu cầu duyệt"}</button>}
           {listingId && (listing?.moderationStatus === "DRAFT" || listing?.moderationStatus === "REJECTED") && (
             <button
               type="button"
-              disabled={isPending || issues.length > 0}
+              disabled={isBusy || issues.length > 0}
               title={issues.length > 0 ? "Hoàn tất kiểm tra trước khi gửi duyệt." : undefined}
               onClick={() => persist("submit")}
-              className={buttonClass({ variant: issues.length > 0 || isPending ? "disabled" : "primary" })}
+              className={buttonClass({ variant: issues.length > 0 || isBusy ? "disabled" : "primary" })}
             >
-              {isPending ? "Đang gửi…" : "Gửi duyệt"}
+              {pendingAction === "submit" ? "Đang gửi…" : "Gửi duyệt"}
             </button>
           )}
-          <button type="button" disabled={isPending} onClick={() => persist()} className={buttonClass({ variant: "secondary" })}>{isPending ? "Đang lưu…" : listing ? "Lưu thay đổi" : "Lưu bản nháp"}</button>
-          {listingId && <button type="button" disabled={isPending} onClick={() => runStateChange(archiveListing, "", true)} className="min-h-11 rounded-xl px-4 text-sm font-semibold text-danger-ink hover:bg-[#fff8f7]">Lưu trữ</button>}
+          <button type="button" disabled={isBusy} onClick={() => persist()} className={buttonClass({ variant: "secondary" })}>{pendingAction === "save" ? "Đang lưu…" : listing ? "Lưu thay đổi" : "Lưu bản nháp"}</button>
+          {listingId && <button type="button" disabled={isBusy} onClick={() => runStateChange(archiveListing, "", true)} className="min-h-11 rounded-xl px-4 text-sm font-semibold text-danger-ink hover:bg-[#fff8f7] disabled:cursor-not-allowed disabled:opacity-60">{pendingAction === "archive" ? "Đang lưu trữ…" : "Lưu trữ"}</button>}
         </div>
       </footer>
     </section>

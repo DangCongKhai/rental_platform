@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { removePhoto, replacePhoto, setAllSharedPhotosForUnit, setSharedPhotoForUnit, updateGallery, uploadPhoto } from "../../media-actions";
+import { removePhoto, replacePhoto, saveSharedPhotoSelection, updateGallery, uploadPhoto } from "../../media-actions";
 
 type MediaItem = {
   id: string;
@@ -35,6 +35,14 @@ export function PropertyMediaManager({
   const [galleryScope, setGalleryScope] = useState<"property" | "unit">("property");
   const [activeUnitId, setActiveUnitId] = useState(units[0]?.id ?? "");
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSavingSharedSelection, setIsSavingSharedSelection] = useState(false);
+  const [selectedSharedIdsByUnit, setSelectedSharedIdsByUnit] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(units.map((unit) => [
+      unit.id,
+      initialMedia.filter((item) => item.unitId === null && item.assignedUnitIds.includes(unit.id)).map((item) => item.id),
+    ])),
+  );
   const [message, setMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   const dragId = useRef<string | null>(null);
@@ -43,7 +51,11 @@ export function PropertyMediaManager({
     galleryScope === "property" ? item.unitId === null : item.unitId === activeUnitId,
   );
   const sharedMedia = media.filter((item) => item.unitId === null);
-  const allSharedPhotosIncluded = sharedMedia.length > 0 && sharedMedia.every((item) => item.assignedUnitIds.includes(activeUnitId));
+  const selectedSharedIds = selectedSharedIdsByUnit[activeUnitId] ?? [];
+  const selectedSharedIdSet = new Set(selectedSharedIds);
+  const allSharedPhotosIncluded = sharedMedia.length > 0 && sharedMedia.every((item) => selectedSharedIdSet.has(item.id));
+  const savedSharedIds = sharedMedia.filter((item) => item.assignedUnitIds.includes(activeUnitId)).map((item) => item.id);
+  const sharedSelectionChanged = selectedSharedIds.length !== savedSharedIds.length || selectedSharedIds.some((id) => !savedSharedIds.includes(id));
 
   function moveMedia(sourceId: string, targetId: string) {
     setMedia((current) => {
@@ -64,6 +76,7 @@ export function PropertyMediaManager({
   function uploadFiles(files: File[]) {
     if (files.length === 0) return;
     setMessage(null);
+    setIsUploading(true);
     startTransition(async () => {
       const uploaded: MediaItem[] = [];
       let failure: string | null = null;
@@ -91,6 +104,7 @@ export function PropertyMediaManager({
       } else if (failure) {
         setMessage({ kind: "error", text: failure });
       }
+      setIsUploading(false);
     });
   }
 
@@ -118,50 +132,42 @@ export function PropertyMediaManager({
 
   function toggleSharedPhoto(item: MediaItem) {
     if (!activeUnitId || isPending) return;
-    const included = item.assignedUnitIds.includes(activeUnitId);
-    setMessage(null);
-    startTransition(async () => {
-      try {
-        const result = await setSharedPhotoForUnit(propertyId, activeUnitId, item.id, !included);
-        if (!result.ok) {
-          setMessage({ kind: "error", text: result.error });
-          return;
-        }
-        setMedia((current) => current.map((entry) => entry.id === item.id
-          ? {
-              ...entry,
-              assignedUnitIds: result.data?.included
-                ? [...new Set([...entry.assignedUnitIds, activeUnitId])]
-                : entry.assignedUnitIds.filter((id) => id !== activeUnitId),
-            }
-          : entry));
-        setMessage({ kind: "success", text: result.data?.included ? "Đã thêm ảnh dùng chung vào căn/phòng." : "Đã gỡ ảnh khỏi căn/phòng này." });
-      } catch {
-        setMessage({ kind: "error", text: "Không thể cập nhật ảnh dùng chung. Hãy thử lại." });
-      }
+    setSelectedSharedIdsByUnit((current) => {
+      const selected = new Set(current[activeUnitId] ?? []);
+      if (selected.has(item.id)) selected.delete(item.id);
+      else selected.add(item.id);
+      return { ...current, [activeUnitId]: [...selected] };
     });
   }
 
   function toggleAllSharedPhotos() {
     if (!activeUnitId || isPending || sharedMedia.length === 0) return;
-    const included = !allSharedPhotosIncluded;
+    const nextIds = allSharedPhotosIncluded ? [] : sharedMedia.map((item) => item.id);
+    setSelectedSharedIdsByUnit((current) => ({ ...current, [activeUnitId]: nextIds }));
+  }
+
+  function saveSharedSelection() {
+    if (!activeUnitId || isPending || !sharedSelectionChanged) return;
     setMessage(null);
+    setIsSavingSharedSelection(true);
     startTransition(async () => {
       try {
-        const result = await setAllSharedPhotosForUnit(propertyId, activeUnitId, included);
+        const result = await saveSharedPhotoSelection(propertyId, activeUnitId, selectedSharedIds);
         if (!result.ok || !result.data) {
-          setMessage({ kind: "error", text: result.ok ? "Không thể cập nhật ảnh dùng chung." : result.error });
+          setMessage({ kind: "error", text: result.ok ? "Không thể lưu lựa chọn ảnh dùng chung." : result.error });
           return;
         }
-        const mediaIds = new Set(result.data.mediaIds);
+        const mediaIds = new Set(result.data.selectedMediaIds);
         setMedia((current) => current.map((item) => {
-          if (!mediaIds.has(item.id)) return item;
+          if (item.unitId !== null) return item;
           const assignedUnitIds = item.assignedUnitIds.filter((id) => id !== activeUnitId);
-          return { ...item, assignedUnitIds: included ? [...assignedUnitIds, activeUnitId] : assignedUnitIds };
+          return { ...item, assignedUnitIds: mediaIds.has(item.id) ? [...assignedUnitIds, activeUnitId] : assignedUnitIds };
         }));
-        setMessage({ kind: "success", text: included ? "Đã chọn tất cả ảnh dùng chung cho căn/phòng." : "Đã bỏ chọn tất cả ảnh dùng chung của căn/phòng." });
+        setMessage({ kind: "success", text: "Đã lưu lựa chọn ảnh dùng chung cho căn/phòng." });
       } catch {
-        setMessage({ kind: "error", text: "Không thể cập nhật ảnh dùng chung. Hãy thử lại." });
+        setMessage({ kind: "error", text: "Không thể lưu lựa chọn ảnh dùng chung. Hãy thử lại." });
+      } finally {
+        setIsSavingSharedSelection(false);
       }
     });
   }
@@ -241,12 +247,12 @@ export function PropertyMediaManager({
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-canvas p-4">
           <p className="text-sm text-subtle">JPEG, PNG hoặc WebP · tối đa 10 MB mỗi ảnh · tối đa 40 ảnh mỗi bất động sản.</p>
           <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-brand px-5 font-semibold text-white hover:bg-brand-hover has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
-            {isPending ? "Đang xử lý…" : galleryScope === "unit" ? "Tải ảnh riêng lên căn này" : "Tải ảnh dùng chung lên"}
+            {galleryScope === "unit" ? "Tải ảnh riêng lên căn này" : "Tải ảnh dùng chung lên"}
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
-              disabled={isPending || (galleryScope === "unit" && !activeUnitId)}
+              disabled={isUploading || (galleryScope === "unit" && !activeUnitId)}
               className="sr-only"
               onChange={(event) => {
                 uploadFiles(Array.from(event.currentTarget.files ?? []));
@@ -265,31 +271,36 @@ export function PropertyMediaManager({
               <p className="mt-1 text-sm text-subtle">Chọn ảnh sẽ xuất hiện trong thư viện của {units.find((unit) => unit.id === activeUnitId)?.label}. Ảnh được dùng lại trực tiếp, không tải lên bản sao.</p>
             </div>
             {sharedMedia.length > 0 && (
-              <button type="button" disabled={isPending} onClick={toggleAllSharedPhotos} className="min-h-10 shrink-0 rounded-lg border border-line-strong px-4 text-sm font-semibold text-brand-deep hover:bg-brand-soft disabled:opacity-60">
-                {allSharedPhotosIncluded ? "Bỏ chọn tất cả" : "Chọn tất cả"}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" disabled={isPending} onClick={toggleAllSharedPhotos} className="min-h-10 shrink-0 rounded-lg border border-line-strong px-4 text-sm font-semibold text-brand-deep hover:bg-brand-soft disabled:opacity-60">
+                  {allSharedPhotosIncluded ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                </button>
+                <button type="button" disabled={isPending || !sharedSelectionChanged} onClick={saveSharedSelection} className="min-h-10 shrink-0 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60">
+                  {isSavingSharedSelection ? "Đang lưu…" : "Lưu lựa chọn"}
+                </button>
+              </div>
             )}
           </div>
           {sharedMedia.length === 0 ? (
             <p className="mt-5 rounded-xl border border-dashed border-line-strong bg-surface p-6 text-sm text-subtle">Chưa có ảnh dùng chung. Hãy thêm ảnh trong mục “Ảnh bất động sản”.</p>
           ) : (
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {sharedMedia.map((item) => {
-                const included = item.assignedUnitIds.includes(activeUnitId);
-                return (
-                  <li key={item.id} className="overflow-hidden rounded-xl border border-line bg-white">
-                    <div className="relative aspect-[4/3] bg-surface">
-                      {item.signedUrl ? <Image src={item.signedUrl} alt={item.caption || "Ảnh dùng chung"} fill unoptimized className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-subtle">Không tải được ảnh</div>}
-                    </div>
-                    <div className="flex items-center justify-between gap-3 p-3">
-                      <span className="min-w-0 truncate text-sm text-ink-2">{item.caption || "Ảnh dùng chung"}</span>
-                      <button type="button" aria-pressed={included} disabled={isPending} onClick={() => toggleSharedPhoto(item)} className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-60 ${included ? "border-brand bg-brand-soft text-brand-deep" : "border-line-strong text-ink-2 hover:bg-canvas"}`}>
-                        {included ? "Đã thêm ✓" : "Thêm vào căn"}
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
+              {sharedMedia.map((item) => (
+                <li key={item.id} className="overflow-hidden rounded-xl border border-line bg-white">
+                  <div className="relative aspect-[4/3] bg-surface">
+                    {item.signedUrl ? <Image src={item.signedUrl} alt={item.caption || "Ảnh dùng chung"} fill unoptimized className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-subtle">Không tải được ảnh</div>}
+                    <label className="absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-md bg-white/95 shadow-sm" aria-label={`Chọn ảnh ${item.caption || "dùng chung"}`}>
+                      <input type="checkbox" checked={selectedSharedIdSet.has(item.id)} disabled={isPending} onChange={() => toggleSharedPhoto(item)} className="size-4 accent-brand" />
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 p-3">
+                    <span className="min-w-0 truncate text-sm text-ink-2">{item.caption || "Ảnh dùng chung"}</span>
+                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${selectedSharedIdSet.has(item.id) ? "bg-brand-soft text-brand-deep" : "bg-surface text-subtle"}`}>
+                      {selectedSharedIdSet.has(item.id) ? "Đã chọn" : "Chưa chọn"}
+                    </span>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </section>
