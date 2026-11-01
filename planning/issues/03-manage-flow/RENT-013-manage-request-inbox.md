@@ -18,7 +18,7 @@ The owner sees requests for their properties with the tenant's contact snapshot,
 
 ## Current repository evidence
 
-- Not implemented.
+- The owner inbox is `/owner/requests`, with the listing title and preferred unit in separate columns. Detail remains `/owner/requests/[id]`.
 
 ## Scope and non-goals
 
@@ -28,8 +28,8 @@ The owner sees requests for their properties with the tenant's contact snapshot,
 
 ## Implementation checklist
 
-- [ ] Only requests for the owner's properties; filter by status and property
-- [ ] Opening or calling never changes status
+- [x] Only requests for the owner's properties; filter by status and property
+- [x] Opening or calling never changes status
 - [ ] Detail shows banners for withdrawn/rejected/accepted
 
 ## API and data contract

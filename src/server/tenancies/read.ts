@@ -154,6 +154,73 @@ export async function getOwnerTenancies(page = 1) {
   return { tenancies, total, page: safePage, pageSize: PAGE_SIZE };
 }
 
+const ownerRequestTabs = {
+  pending: "PENDING",
+  accepted: "ACCEPTED",
+  rejected: "REJECTED",
+  withdrawn: "WITHDRAWN",
+} as const;
+
+export type OwnerRequestTab = keyof typeof ownerRequestTabs;
+
+export async function getOwnerRequests(
+  options: { tab?: OwnerRequestTab; page?: number; propertyId?: string } = {},
+) {
+  const user = await requireUser();
+  const tab =
+    options.tab && options.tab in ownerRequestTabs ? options.tab : "pending";
+  const page =
+    Number.isInteger(options.page) &&
+    options.page! > 0 &&
+    options.page! <= 100000
+      ? options.page!
+      : 1;
+  const propertyId = z.guid().safeParse(options.propertyId).success
+    ? options.propertyId
+    : undefined;
+  const owner = {
+    listing: {
+      property: { ownerId: user.profileId },
+      ...(propertyId ? { propertyId } : {}),
+    },
+  };
+  const where = { ...owner, status: ownerRequestTabs[tab] };
+  const [requests, total, pendingCount, properties] = await Promise.all([
+    prisma.rentalRequest.findMany({
+      where,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        preferredUnit: { select: { label: true } },
+        listing: { select: { title: true } },
+      },
+    }),
+    prisma.rentalRequest.count({ where }),
+    prisma.rentalRequest.count({
+      where: {
+        status: "PENDING",
+        listing: { property: { ownerId: user.profileId } },
+      },
+    }),
+    prisma.property.findMany({
+      where: { ownerId: user.profileId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+  return {
+    requests,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    tab,
+    pendingCount,
+    propertyId: propertyId ?? "",
+    properties,
+  };
+}
+
 export async function getContractDownloadUrl(contractId: string) {
   return runAction(async () => {
     if (!z.guid().safeParse(contractId).success)
