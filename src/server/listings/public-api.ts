@@ -105,6 +105,13 @@ function detailJson(listing: PublicListing) {
       shared_rules: listing.property.sharedRules,
       shared_amenities: listing.property.sharedAmenities,
       custom_amenities: listing.property.customAmenities,
+      area: listing.property.area
+        ? {
+            latitude: listing.property.area.latitude,
+            longitude: listing.property.area.longitude,
+            radius_m: listing.property.area.radiusMeters,
+          }
+        : null,
     },
     owner: { name: listing.ownerName },
     units: listing.units.map((unit) => ({

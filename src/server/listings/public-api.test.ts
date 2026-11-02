@@ -48,6 +48,7 @@ vi.mock("./public-listing", () => ({
             sharedRules: [],
             pets: "ASK_OWNER",
             smoking: "NOT_ALLOWED",
+            area: null,
           },
           ownerName: "Lan",
           units: [],

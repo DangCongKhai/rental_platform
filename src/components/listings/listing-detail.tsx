@@ -1,6 +1,7 @@
 "use client";
 
 import { FavouriteButton } from "./favourite-button";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
@@ -37,6 +38,16 @@ import type { RequestProfile } from "./rental-request-form";
 function ListingPhotos({ slides }: { slides: Promise<Slide[]> }) {
   return <ListingPhotoGrid slides={use(slides)} />;
 }
+
+const ListingAreaMap = dynamic(
+  () => import("./listing-area-map").then((mod) => mod.ListingAreaMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[400px] animate-pulse rounded-2xl bg-[#e8ebf0]" />
+    ),
+  },
+);
 
 export function ListingDetailView({
   listing,
@@ -135,6 +146,7 @@ export function ListingDetailView({
               ) : null}
             </header>
 
+
             <AvailableUnits
               units={listing.units}
               selectedUnitId={preferredUnitId}
@@ -176,7 +188,21 @@ export function ListingDetailView({
                 </p>
               ) : null}
             </section>
-
+            {listing.property.area ? (
+            <section className="grid gap-3" aria-label="Vị trí gần đúng">
+              <h2 className="text-2xl font-bold text-[#091216]">
+                Vị trí gần đúng
+              </h2>
+              <p className="text-sm text-[#454e5c]">
+                Ghim nằm trong khu vực lân cận, không phải địa chỉ cửa nhà.
+                Địa chỉ chính xác được trao đổi sau khi bạn gửi yêu cầu thuê.
+              </p>
+              <ListingAreaMap
+                latitude={listing.property.area.latitude}
+                longitude={listing.property.area.longitude}
+              />
+            </section>
+          ) : null}
             <section
               aria-label="Nội quy đang quảng cáo"
               className="grid gap-4 rounded-2xl border border-[#d5dee7] bg-white p-6"

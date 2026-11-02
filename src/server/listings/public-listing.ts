@@ -1,5 +1,9 @@
 import { AMENITY_CATALOG, validateAmenities } from "@/domain/amenities";
 import {
+  approximateArea,
+  type ApproximateArea,
+} from "@/domain/discovery/approximate-area";
+import {
   describeUnitAvailability,
   type DateBlock,
 } from "@/domain/discovery/unit-availability";
@@ -68,6 +72,7 @@ export type PublicListing = {
     sharedRules: string[];
     pets: string;
     smoking: string;
+    area: ApproximateArea | null;
   };
   ownerName: string | null;
   units: PublicUnit[];
@@ -301,6 +306,13 @@ export async function getPublicListing(
       smoking: propertyPolicies.success
         ? propertyPolicies.data.defaults.smoking
         : "NOT_ALLOWED",
+      area:
+        property.latitude == null || property.longitude == null
+          ? null
+          : approximateArea(
+              Number(property.latitude),
+              Number(property.longitude),
+            ),
     },
     ownerName: property.owner.fullName,
     units,
