@@ -154,7 +154,21 @@ export function authErrorMessage(error: unknown) {
       return "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.";
     case "same_password":
       return "Mật khẩu mới phải khác mật khẩu cũ.";
-    default:
-      return error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
+    case "pkce_code_verifier_not_found":
+      return "Liên kết này chỉ đăng nhập được trên đúng trình duyệt đã dùng để đăng ký. Email đã được xác nhận — hãy đăng nhập bằng mật khẩu vừa tạo.";
+    case "otp_expired":
+      return "Liên kết đã hết hạn hoặc đã được dùng. Hãy đăng nhập, hoặc gửi lại email xác nhận.";
+    default: {
+      if (
+        typeof error === "object" &&
+        error &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        error.message
+      ) {
+        return error.message;
+      }
+      return "Đã có lỗi xảy ra.";
+    }
   }
 }

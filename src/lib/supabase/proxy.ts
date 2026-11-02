@@ -13,6 +13,12 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // /auth/confirm verifies the email token and writes the session itself.
+  // getClaims() on a request with no session deletes auth cookies first.
+  if (request.nextUrl.pathname === "/auth/confirm") {
+    return supabaseResponse;
+  }
+
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(

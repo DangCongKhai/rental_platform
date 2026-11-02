@@ -36,7 +36,7 @@ export function SignUpForm({ next }: { next?: string | null }) {
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
+    console.log("Handle sign up")
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -46,6 +46,7 @@ export function SignUpForm({ next }: { next?: string | null }) {
           emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
         },
       });
+      console.log("error", error);
       if (error) throw error;
       setSent(true);
     } catch (error: unknown) {

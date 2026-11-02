@@ -1,9 +1,13 @@
 import { expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+
+const { getClaims } = vi.hoisted(() => ({
+  getClaims: vi.fn(async () => ({ data: { claims: null } })),
+}));
 vi.mock("../utils", () => ({ hasEnvVars: true }));
 vi.mock("@supabase/ssr", () => ({
   createServerClient: () => ({
-    auth: { getClaims: async () => ({ data: { claims: null } }) },
+    auth: { getClaims },
   }),
 }));
 import { updateSession } from "./proxy";
@@ -27,4 +31,16 @@ it("lets only the exact protected cron route reach its secret check without a br
       "http://localhost/auth/login",
     );
   }
+});
+
+it("does not load a session on the email confirm callback", async () => {
+  getClaims.mockClear();
+  const response = await updateSession(
+    new NextRequest(
+      "http://localhost:3001/auth/confirm?code=auth-code&next=%2F",
+    ),
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("location")).toBeNull();
+  expect(getClaims).not.toHaveBeenCalled();
 });
