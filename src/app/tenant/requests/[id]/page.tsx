@@ -4,6 +4,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { notFound } from "next/navigation";
 import { getMyRentalRequest } from "@/server/requests/my-requests";
 import { RequestStatus, requestDate } from "@/components/tenant/request-status";
+import { ConfirmationCountdown } from "@/components/tenancies/confirmation-countdown";
 export default function RequestPage({
   params,
 }: {
@@ -25,6 +26,13 @@ export default function RequestPage({
 async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
   const r = await getMyRentalRequest((await params).id);
   if (!r) notFound();
+  const deadline =
+    r.status === "ACCEPTED" &&
+    r.tenancy?.status === "PENDING_CONFIRMATION" &&
+    r.tenancy.confirmationExpiresAt
+      ? r.tenancy.confirmationExpiresAt
+      : null;
+  const serverNow = new Date().toISOString();
   return (
     <section className="max-w-[1100px]">
       <Link
@@ -52,6 +60,20 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
                 ? "Chủ nhà sẽ liên lạc cho bạn. Chưa có căn nào được giữ chỗ."
                 : (r.outcomeReason ?? "Theo dõi trạng thái yêu cầu của bạn.")}
             </p>
+            {deadline && (
+              <>
+                <p className="mt-2 text-sm">
+                  Hạn phản hồi:{" "}
+                  {deadline.toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}
+                </p>
+                <ConfirmationCountdown
+                  expiresAt={deadline.toISOString()}
+                  serverNow={serverNow}
+                />
+              </>
+            )}
             {r.status === "ACCEPTED" && r.tenancy && (
               <Link
                 className="mt-3 inline-flex rounded-xl bg-primary px-5 py-3 text-white"

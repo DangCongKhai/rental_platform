@@ -33,8 +33,12 @@ function fromSession(user: User): CurrentUser | null {
 
 export function AccountMenu() {
   const [user, setUser] = useState<CurrentUser | null | undefined>(remembered);
-  const [notifications, setNotifications] = useState<InboxNotification[]>([]);
+  const [loaded, setLoaded] = useState<{
+    userId: string;
+    notifications: InboxNotification[];
+  } | null>(null);
   const userId = user?.id;
+  const notifications = loaded?.userId === userId ? loaded?.notifications : [];
 
   const remember = useCallback((next: CurrentUser | null) => {
     remembered = next;
@@ -45,9 +49,12 @@ export function AccountMenu() {
     try {
       const result = await previewNavbarAccount();
       remember(result.user);
-      setNotifications(result.notifications);
+      if (!result.user) return;
+      setLoaded({ userId: result.user.id, notifications: result.notifications });
     } catch {
-      setNotifications([]);
+      setLoaded((current) =>
+        current ? { ...current, notifications: [] } : current,
+      );
     }
   }, [remember]);
 
@@ -74,19 +81,20 @@ export function AccountMenu() {
   }, [remember]);
 
   useEffect(() => {
-    if (!userId) {
-      setNotifications([]);
-      return;
-    }
+    if (!userId) return;
     let cancelled = false;
     previewNavbarAccount()
       .then((result) => {
         if (cancelled) return;
         remember(result.user);
-        setNotifications(result.notifications);
+        if (!result.user) return;
+        setLoaded({
+          userId: result.user.id,
+          notifications: result.notifications,
+        });
       })
       .catch(() => {
-        if (!cancelled) setNotifications([]);
+        if (!cancelled) setLoaded({ userId, notifications: [] });
       });
     return () => {
       cancelled = true;

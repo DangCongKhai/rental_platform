@@ -67,7 +67,7 @@ export async function TenancyScreen({
         </div>
         <TenancyStatus status={t.status} />
       </header>
-      {proposed && (
+      {!owner && proposed && (
         <div className="rounded-2xl border border-line-brand bg-brand-soft p-5">
           <p className="font-semibold">
             Đang chờ xác nhận phiên bản {proposed.versionNumber}

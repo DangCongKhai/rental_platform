@@ -31,11 +31,20 @@ export type Slide = {
 };
 
 export function photoSlides(listing: ListingDetail): Slide[] {
-  const shared = listing.gallery.map((photo) => slide(photo, "Ảnh chung"));
-  const units = listing.units.flatMap((unit) =>
-    unit.photos.map((photo) => slide(photo, unit.label)),
-  );
-  return [...shared, ...units];
+  // A whole-space unit repeats the property gallery, and one shared photo can
+  // also be assigned to a unit. Keep each photo once so the grid keys stay unique.
+  const seen = new Set<string>();
+  const slides: Slide[] = [];
+  const add = (photo: PublicMedia, label: string) => {
+    if (seen.has(photo.id)) return;
+    seen.add(photo.id);
+    slides.push(slide(photo, label));
+  };
+  for (const photo of listing.gallery) add(photo, "Ảnh chung");
+  for (const unit of listing.units) {
+    for (const photo of unit.photos) add(photo, unit.label);
+  }
+  return slides;
 }
 
 function slide(photo: PublicMedia, label: string): Slide {

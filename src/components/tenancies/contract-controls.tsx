@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,41 +56,47 @@ export function ContractDecision({
   const [reason, setReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
   const [error, setError] = useState("");
-  const [pending, start] = useTransition();
+  const [busy, setBusy] = useState<"confirm" | "decline" | null>(null);
+  const busyRef = useRef(false);
   const router = useRouter();
-  function act(decline: boolean) {
+  async function act(decline: boolean) {
+    if (busyRef.current) return;
     if (isExpired()) {
       setError("Hợp đồng đã hết hạn.");
       router.refresh();
       return;
     }
     setError("");
-    start(async () => {
-      try {
-        const r = decline
-          ? await declineContract(id, reason)
-          : await confirmContract(id, sha256);
-        if (!r.ok) setError(r.error);
-        else router.refresh();
-      } catch {
-        setError("Không lưu được phản hồi. Thử lại.");
-      }
-    });
+    busyRef.current = true;
+    setBusy(decline ? "decline" : "confirm");
+    try {
+      const r = decline
+        ? await declineContract(id, reason)
+        : await confirmContract(id, sha256);
+      if (!r.ok) setError(r.error);
+      else router.refresh();
+    } catch {
+      setError("Không lưu được phản hồi. Thử lại.");
+    } finally {
+      busyRef.current = false;
+      setBusy(null);
+    }
   }
   return (
     <div className="space-y-3">
       <Button
         className="w-full"
         variant={expired ? "disabled" : "primary"}
-        disabled={pending || rejecting || expired}
-        onClick={() => act(false)}
+        disabled={busy !== null || rejecting || expired}
+        aria-busy={busy === "confirm"}
+        onClick={() => void act(false)}
       >
-        Xác nhận phiên bản {version}
+        {busy === "confirm" ? "Đang xác nhận…" : `Xác nhận phiên bản ${version}`}
       </Button>
       <Button
         className="w-full"
         variant={expired ? "disabled" : "secondary"}
-        disabled={pending || expired}
+        disabled={busy !== null || expired}
         onClick={() => setRejecting(!rejecting)}
       >
         Từ chối
@@ -100,7 +106,7 @@ export function ContractDecision({
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
-            act(true);
+            void act(true);
           }}
         >
           <label className="grid gap-2 text-sm">
@@ -113,7 +119,9 @@ export function ContractDecision({
               className="min-h-24 rounded-xl border border-line p-3"
             />
           </label>
-          <Button disabled={pending || expired}>Gửi lý do</Button>
+          <Button disabled={busy !== null || expired} aria-busy={busy === "decline"}>
+            {busy === "decline" ? "Đang gửi…" : "Gửi lý do"}
+          </Button>
         </form>
       )}
       {error && (

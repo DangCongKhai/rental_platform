@@ -13,8 +13,8 @@ const NAV_LINKS = [
   },
   {
     label: "Hướng dẫn",
-    href: "/",
-    isActive: () => false,
+    href: "/guide",
+    isActive: (pathname: string) => pathname === "/guide",
   },
   {
     label: "FAQ",
@@ -24,7 +24,7 @@ const NAV_LINKS = [
   {
     label: "Cổng cư dân",
     href: "/tenant",
-    isActive: () => false,
+    isActive: (pathname: string) => pathname.startsWith("/tenant"),
   },
   {
     label: "Cổng chủ nhà",

@@ -58,6 +58,7 @@ export async function updateSession(request: NextRequest) {
     // Exact cron endpoint authenticates with assertCronRequest, not a browser session.
     pathname === "/api/cron/expire-holds" ||
     pathname === "/" ||
+    pathname === "/guide" ||
     pathname === "/listings" ||
     pathname.startsWith("/listings/") ||
     pathname.startsWith("/api/listings") ||
