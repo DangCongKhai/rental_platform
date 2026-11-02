@@ -38,7 +38,8 @@ export function AccountMenu() {
     notifications: InboxNotification[];
   } | null>(null);
   const userId = user?.id;
-  const notifications = loaded?.userId === userId ? loaded?.notifications : [];
+  const notifications =
+    loaded !== null && loaded.userId === userId ? loaded.notifications : [];
 
   const remember = useCallback((next: CurrentUser | null) => {
     remembered = next;
