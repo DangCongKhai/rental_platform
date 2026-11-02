@@ -34,7 +34,9 @@ async function AuthPage({ searchParams }: AuthPageProps) {
   await connection();
   const { next } = await searchParams;
   const destination = safeNext(typeof next === "string" ? next : null);
-  if (await getCurrentUser()) {
+  const currentUser = await getCurrentUser();
+  
+  if (currentUser) {
     let refererDestination: string | null = null;
     const requestHeaders = await headers();
     try {
@@ -50,6 +52,7 @@ async function AuthPage({ searchParams }: AuthPageProps) {
     } catch {
       // Missing or malformed Referer: use the home page fallback.
     }
+    
     redirect(destination ?? refererDestination ?? "/");
   }
   return (

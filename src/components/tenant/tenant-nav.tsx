@@ -26,7 +26,7 @@ export function TenantNav() {
             label: "Yêu cầu thuê",
             Icon: RequestIcon,
           },
-          { href: "/tenant#tenancies", label: "Hợp đồng", Icon: ContractIcon },
+          { href: "/tenant/tenancies", label: "Hợp đồng", Icon: ContractIcon },
           {
             href: "/account/notifications",
             label: "Thông báo",
@@ -37,15 +37,9 @@ export function TenantNav() {
             key={href}
             href={href}
             aria-current={
-              (
-                href === "/tenant"
-                  ? path === href
-                  : path.startsWith(
-                      href === "/tenant#tenancies"
-                        ? "/tenant/tenancies/"
-                        : href,
-                    )
-              )
+              (href === "/tenant"
+                ? path === href
+                : path === href || path.startsWith(`${href}/`))
                 ? "page"
                 : undefined
             }

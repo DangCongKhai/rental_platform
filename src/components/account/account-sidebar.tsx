@@ -38,7 +38,7 @@ function AccountSidebarNav({ pathname }: { pathname: string }) {
             Icon: RequestIcon,
           },
           {
-            href: "/tenant#tenancies",
+            href: "/tenant/tenancies",
             label: "Căn hộ và hợp đồng",
             Icon: ContractIcon,
           },
@@ -48,23 +48,19 @@ function AccountSidebarNav({ pathname }: { pathname: string }) {
             Icon: BellIcon,
           },
           { href: "/account/reports", label: "Báo cáo của tôi" },
-        ].map(({ href, label, Icon }) => (
+        ].map(({ href, label, Icon }) => {
+          const current =
+            href === "/tenant"
+              ? pathname === href
+              : pathname === href || pathname.startsWith(`${href}/`);
+          return (
           <Link
             key={href}
             href={href}
-            aria-current={
-              pathname === href ||
-              (href === "/tenant/requests" &&
-                pathname.startsWith("/tenant/requests/"))
-                ? "page"
-                : undefined
-            }
+            aria-current={current ? "page" : undefined}
             className={cn(
               "flex min-h-[46px] shrink-0 items-center gap-3 rounded-[9px] px-3 text-[15px] font-medium hover:bg-white/10",
-              (pathname === href ||
-                (href === "/tenant/requests" &&
-                  pathname.startsWith("/tenant/requests/"))) &&
-                "bg-[#22313a] text-white",
+              current && "bg-[#22313a] text-white",
             )}
           >
             {Icon ? (
@@ -79,7 +75,8 @@ function AccountSidebarNav({ pathname }: { pathname: string }) {
             )}
             {label}
           </Link>
-        ))}
+          );
+        })}
       </nav>
       <div className="mt-[22px] hidden rounded-[10px] border border-[#22313a] p-3 lg:block">
         <p className="text-[13px] font-bold text-white">

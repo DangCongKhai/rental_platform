@@ -8,6 +8,7 @@ import {
   validateUnitPolicyOverrides,
 } from "@/domain/policies";
 import { ConfirmationCountdown } from "./confirmation-countdown";
+import { TenancyStatus } from "./tenancy-status";
 import { Button, buttonClass } from "@/components/ui/button";
 import {
   ContractDecision,
@@ -15,15 +16,6 @@ import {
   MoveInButton,
 } from "./contract-controls";
 const money = (value: string) => `${Number(value).toLocaleString("vi-VN")} ₫`;
-const labels: Record<string, string> = {
-  PENDING_CONFIRMATION: "Đang chờ xác nhận",
-  AWAITING_REVISION: "Đang chờ phiên bản sửa đổi",
-  CONFIRMED: "Đã xác nhận · Chờ dọn vào",
-  ACTIVE: "Đang hoạt động",
-  EXPIRED: "Hết hạn",
-  ENDED: "Đã kết thúc",
-  CANCELLED: "Đã hủy",
-};
 export async function TenancyScreen({
   params,
   owner = false,
@@ -60,12 +52,11 @@ export async function TenancyScreen({
   return (
     <section className="max-w-[1100px] space-y-5">
       <Link
-        className="text-sm text-brand"
-        href={
-          owner ? `/owner/requests/${t.rentalRequestId}` : "/tenant/requests"
-        }
+        className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-brand"
+        href={owner ? "/owner/tenancies" : "/tenant/tenancies"}
       >
-        {owner ? "Kỳ thuê và hợp đồng" : "Yêu cầu thuê"}
+        <span aria-hidden="true">←</span>
+        {owner ? "Kỳ thuê và hợp đồng" : "Căn hộ và hợp đồng"}
       </Link>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -74,9 +65,7 @@ export async function TenancyScreen({
           </h1>
           <p className="mt-1 text-sm text-muted">{t.address}</p>
         </div>
-        <span className="rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-brand-deep">
-          {labels[t.status] ?? t.status}
-        </span>
+        <TenancyStatus status={t.status} />
       </header>
       {proposed && (
         <div className="rounded-2xl border border-line-brand bg-brand-soft p-5">

@@ -4,6 +4,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { notFound } from "next/navigation";
 import { getOwnerRentalRequest } from "@/server/tenancies/read";
 import { requestDate } from "@/components/tenant/request-status";
+import { BackLink } from "@/components/back-link";
 import { buttonClass } from "@/components/ui/button";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -24,7 +25,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   if (!r) notFound();
   return (
     <section className="max-w-[1100px] space-y-5">
-      <p className="text-sm text-brand">Yêu cầu thuê</p>
+      <BackLink href="/owner/requests">Yêu cầu thuê</BackLink>
       <h1 className="text-[28px] font-bold">{r.contactName}</h1>
       <p className="rounded-2xl border border-line-brand bg-brand-soft p-5 text-sm">
         Hãy gọi cho người thuê để trao đổi. Việc xem nhà và thương lượng diễn ra

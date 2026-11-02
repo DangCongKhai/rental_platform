@@ -27,7 +27,11 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
   if (!r) notFound();
   return (
     <section className="max-w-[1100px]">
-      <Link className="text-sm text-primary" href="/tenant/requests">
+      <Link
+        className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-primary"
+        href="/tenant/requests"
+      >
+        <span aria-hidden="true">←</span>
         Yêu cầu thuê của tôi
       </Link>
       <div className="my-5 flex flex-wrap items-center justify-between gap-3">
