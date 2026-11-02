@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CurrentUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/client";
@@ -61,6 +62,16 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             </div>
           </div>
           <div className="my-1 h-px bg-line-soft" />
+          {user.isAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center rounded-[10px] px-3 text-[15px] font-medium text-ink-2 hover:bg-brand-soft"
+            >
+              Bảng điều khiển Admin
+            </Link>
+          )}
           <button
             type="button"
             role="menuitem"
