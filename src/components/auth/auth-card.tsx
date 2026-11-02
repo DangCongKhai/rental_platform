@@ -155,7 +155,7 @@ export function authErrorMessage(error: unknown) {
     case "same_password":
       return "Mật khẩu mới phải khác mật khẩu cũ.";
     case "pkce_code_verifier_not_found":
-      return "Liên kết này chỉ đăng nhập được trên đúng trình duyệt đã dùng để đăng ký. Email đã được xác nhận — hãy đăng nhập bằng mật khẩu vừa tạo.";
+      return "Liên kết này chỉ dùng được trên đúng trình duyệt đã yêu cầu email. Hãy gửi lại liên kết từ trình duyệt đó.";
     case "otp_expired":
       return "Liên kết đã hết hạn hoặc đã được dùng. Hãy đăng nhập, hoặc gửi lại email xác nhận.";
     default: {

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/ui/alert";
@@ -14,7 +13,6 @@ export function UpdatePasswordForm() {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const mismatch = repeatPassword !== "" && password !== repeatPassword;
 
@@ -28,10 +26,26 @@ export function UpdatePasswordForm() {
     setError(null);
 
     try {
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) throw exchangeError;
+      } else {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          setError(
+            "Liên kết đặt lại mật khẩu không còn hiệu lực. Hãy gửi lại liên kết.",
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      router.push("/");
-      router.refresh();
+      // Full navigation leaves this auth route once the recovery session exists.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign("/");
     } catch (error: unknown) {
       setError(authErrorMessage(error));
       setIsLoading(false);
