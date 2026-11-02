@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Logo } from "@/components/ui/logo";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { requireUser } from "@/server/auth";
@@ -7,6 +8,7 @@ import { requireUser } from "@/server/auth";
 export const instant = false;
 
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await connection();
   const user = await requireUser();
   if (!user.isAdmin) notFound();
 

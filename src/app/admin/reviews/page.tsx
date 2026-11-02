@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { buttonClass } from "@/components/ui/button";
 import { getReviewQueue } from "@/server/admin/review";
 
 export const instant = false;
 
 export default async function AdminReviewQueuePage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string; decision?: string }> }) {
+  await connection();
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const queue = await getReviewQueue(page, params.q ?? "");

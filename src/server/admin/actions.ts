@@ -6,7 +6,9 @@ import { runAction } from "@/server/action";
 import { requireAdmin } from "@/server/auth";
 import { decideListing } from "./review";
 
-const uuid = z.string().uuid();
+// PostgreSQL accepts any hexadecimal UUID bit pattern. Some seeded UUIDv7 IDs
+// have non-RFC variant bits, so validate the database format instead of RFC variant bits.
+const uuid = z.string().regex(/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i);
 
 export async function approveListing(listingId: string, expectedRevision: number) {
   const auth = await runAction(() => requireAdmin());
