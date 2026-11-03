@@ -5,20 +5,25 @@ Actors: Authenticated user
 Requirements: FR88
 
 ## Preconditions and trigger
+
 Signed in. Trigger is the named user action or due system evaluation.
 
 ## Main flow
+
 1. Read paginated own saved relations and private saved-row count.
 2. Resolve property current listing through content visibility gate.
 3. Return normal card if public-content-visible, even if date availability is zero; show date availability separately.
 4. Otherwise return generic unavailable placeholder without hidden content; allow removal.
 
 ## Alternative and failure flows
+
 - Account switch clears user-specific client state.
 - Saved relation never bypasses suspension/archive/hide; new visible listing for same property reuses same bookmark.
 
 ## Postcondition
+
 Private consistent saved list, badge and heart state.
 
 ## Consistency boundary
+
 Use server access checks and the shared server functions; each state change runs in one transaction and inserts its notifications in that transaction. A read/favourite is never an allocation authority.

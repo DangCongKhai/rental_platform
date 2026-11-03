@@ -1,4 +1,5 @@
 # Architecture overview
+
 Next.js serves the UI and all server logic. Server components read data; Server Actions perform every write. Both call shared server functions in `src/server/` that own proposals, confirmation, renewal, expiry, 15-day decisions, initial moderation and visibility.
 
 Each write runs in one database transaction that re-reads and locks the rows it changes, then relies on database constraints (unique, exclusion, triggers) as the final guard. Notifications are inserted in the same transaction, so a rolled-back action never leaves a notice behind. Availability is a query, never a stored counter. Photo and contract files are uploaded before their rows are written; a failed upload leaves no row.

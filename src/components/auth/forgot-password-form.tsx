@@ -30,7 +30,15 @@ export function ForgotPasswordForm() {
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
-      setError(authErrorMessage(error));
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? error.code
+          : null;
+      if (code === "user_not_found") {
+        setSuccess(true);
+      } else {
+        setError(authErrorMessage(error));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,12 +71,17 @@ export function ForgotPasswordForm() {
       </Button>
       {success && (
         <Alert tone="info">
-          Nếu email này tồn tại trong hệ thống, bạn sẽ nhận được một liên kết để đặt lại mật khẩu trong vòng vài phút. Vui lòng kiểm tra hộp thư của bạn.
+          Nếu email này tồn tại trong hệ thống, bạn sẽ nhận được một liên kết để
+          đặt lại mật khẩu trong vòng vài phút. Vui lòng kiểm tra hộp thư của
+          bạn.
         </Alert>
       )}
       <AuthSwitch>
         Nhớ ra mật khẩu?
-        <Link href="/auth/login" className="font-semibold text-brand hover:text-brand-deep">
+        <Link
+          href="/auth/login"
+          className="font-semibold text-brand hover:text-brand-deep"
+        >
           Đăng nhập
         </Link>
       </AuthSwitch>

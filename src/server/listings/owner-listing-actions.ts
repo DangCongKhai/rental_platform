@@ -11,6 +11,7 @@ import { ActionError, runAction } from "@/server/action";
 import { requireUser } from "@/server/auth";
 import { createNotification } from "@/server/notifications";
 import { prisma } from "@/server/db";
+import { withTransaction } from "@/server/transaction";
 import { marketedUnitSql, publicPropertyContentSql } from "./visibility";
 
 const uuid = z.string().uuid();
@@ -121,7 +122,7 @@ export async function saveListing(propertyId: string, input: unknown) {
 
   const user = auth.data;
   const data = parsed.data;
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const locked = await tx.$queryRaw<Array<{ contentRevision: number; rentalArrangement: string }>>`
       SELECT content_revision AS "contentRevision",
              rental_arrangement AS "rentalArrangement"
@@ -219,7 +220,7 @@ export async function saveListingCover(propertyId: string, input: unknown) {
   const parsed = coverSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, error: "Ảnh bìa không hợp lệ." };
 
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const locked = await tx.$queryRaw<Array<{ contentRevision: number }>>`
       SELECT content_revision AS "contentRevision"
       FROM properties
@@ -278,7 +279,7 @@ export async function submitListing(listingId: string) {
   if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
   const user = auth.data;
 
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ id: string; contentRevision: number }>>`
       SELECT p.id, p.content_revision AS "contentRevision"
       FROM properties p JOIN listings l ON l.property_id = p.id
@@ -332,7 +333,7 @@ export async function withdrawListing(listingId: string) {
   if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
   const user = auth.data;
 
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ propertyId: string }>>`
       SELECT p.id AS "propertyId"
       FROM properties p JOIN listings l ON l.property_id = p.id
@@ -369,7 +370,7 @@ export async function publishListing(listingId: string) {
   if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
   const user = auth.data;
 
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ propertyId: string }>>`
       SELECT p.id AS "propertyId" FROM properties p JOIN listings l ON l.property_id = p.id
       WHERE l.id = ${listingId}::uuid AND p.owner_id = ${user.profileId}::uuid
@@ -417,7 +418,7 @@ async function changePublication(listingId: string, operation: "hide" | "archive
   if (!auth.ok) return auth;
   if (!auth.data) return { ok: false as const, error: "Vui lòng đăng nhập lại." };
   const user = auth.data;
-  const result = await runAction(async () => prisma.$transaction(async (tx) => {
+  const result = await runAction(async () => withTransaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ propertyId: string }>>`
       SELECT p.id AS "propertyId" FROM properties p JOIN listings l ON l.property_id = p.id
       WHERE l.id = ${listingId}::uuid AND p.owner_id = ${user.profileId}::uuid AND l.archived_at IS NULL

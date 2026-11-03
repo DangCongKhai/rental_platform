@@ -1,14 +1,17 @@
 # M02 Product requirements
 
 ## Purpose
+
 Owner physical inventory, whole-space auto-unit, editable bulk units, image lifecycle and controlled JSONB policies/amenities.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR07 Create property draft without moderation
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Physical inventory; owner linkage
@@ -24,6 +27,7 @@ Acceptance criteria:
 - FR07-AC03 [Security] Caller supplies owner_id belonging to another user → Ignore/reject forged ownership; derive owner from verified JWT.
 
 ### FR08 Manage and archive own property
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: History preservation; optimistic concurrency
@@ -40,6 +44,7 @@ Acceptance criteria:
 - FR08-AC04 [Integrity] Property has referenced units or agreements → No destructive cascading deletion of business history.
 
 ### FR09 Upload property and unit photos
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Validation; private staging; durable file references
@@ -55,6 +60,7 @@ Acceptance criteria:
 - FR09-AC03 [Security] Upload references another owner property/unit → 403/422; no cross-property association.
 
 ### FR24 Geocode address
+
 Priority: P2 Defer. Actors: System; Owner. Dependencies: FR07.
 
 Factors: External service failure; stale jobs
@@ -70,6 +76,7 @@ Acceptance criteria:
 - FR24-AC03 [Failure] Rate limit/provider failure → Address remains saved; retry bounded and logged.
 
 ### FR41 Property and unit server actions
+
 Priority: P0 Must. Actors: Owner; Admin where explicitly allowed. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization parity; archival
@@ -85,6 +92,7 @@ Acceptance criteria:
 - FR41-AC03 [Race] Stale content revision submitted → Refused with a reload message; no lost update.
 
 ### FR50 Create and bulk create units
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Inventory identity; structured input
@@ -101,6 +109,7 @@ Acceptance criteria:
 - FR50-AC04 [Integrity] WHOLE_SPACE owner invokes Add units → Reject second unit; backend auto-unit remains sole unit.
 
 ### FR51 Edit unit details and advertised terms
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Unit versus template; stale writes
@@ -117,6 +126,7 @@ Acceptance criteria:
 - FR51-AC04 [Integrity] Existing contracts have different policy/rent → Never synchronize live unit values into contract versions.
 
 ### FR52 Manage operational status independently of availability
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Availability derivation; maintenance
@@ -133,6 +143,7 @@ Acceptance criteria:
 - FR52-AC04 [Integrity] Owner unmarkets unit → Existing tenancy/reservation remains; operational and occupancy data unchanged.
 
 ### FR55 Track content revisions for property, unit and policy edits
+
 Priority: P0 Must. Actors: Owner; System. Dependencies: Shared identity/resource foundation.
 
 Factors: Source-linked public content; revision propagation
@@ -148,6 +159,7 @@ Acceptance criteria:
 - FR55-AC04 [Integrity] Photo file changed → Use a new unique storage object and keep the old object's hash; never overwrite reviewed bytes.
 
 ### FR56 Select reorder and remove gallery images
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Selection versus approval; cover references
@@ -164,6 +176,7 @@ Acceptance criteria:
 - FR56-AC04 [Integrity] Deselect photo → Hide from gallery; do not physically delete merely because unselected.
 
 ### FR57 Update photos without a replacement-review workflow
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Immutable storage; predecessor consistency
@@ -180,11 +193,13 @@ Acceptance criteria:
 - FR57-AC04 [Security] Owner overwrites a shared object path → Reject path reuse; issue unique object path.
 
 ### FR59 Safely clean orphaned and deleted media
+
 Priority: Removed (was Removed (was P1 Should)). Actors: System.
 
 Removed by team decision: No background cleanup. Deleted photos stay soft-deleted. The ID is kept and not reused.
 
 ### FR60 Manage controlled property JSONB policies
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Validated schema; reusable defaults
@@ -201,6 +216,7 @@ Acceptance criteria:
 - FR60-AC04 [Race] Policy edit races with initial listing approval → Stale initial approval rejected; after approval no reapproval.
 
 ### FR61 Resolve unit policy overrides and additional rules
+
 Priority: P0 Must. Actors: Owner; Guest; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Inheritance; consistency; historical terms
@@ -217,6 +233,7 @@ Acceptance criteria:
 - FR61-AC04 [Race] Property changes while proposal snapshots terms → Transaction reads coherent agreed values; explicit negotiated form wins, not later live data.
 
 ### FR87 Manage consistent standard and custom amenities
+
 Priority: P0 Must. Actors: Owner; Guest; System. Dependencies: FR07 FR20 FR21 FR50 FR51 FR55.
 
 Factors: Canonical identifiers; shared/private scope; Unicode; search consistency; concurrent edits
@@ -239,13 +256,17 @@ Acceptance criteria:
 - FR87-AC10 [Integrity] Migrate old amenity arrays into new JSONB structure → Preserve recognized canonical codes under standard; map legacy labels only via reviewed explicit aliases, keep unknown descriptions under custom and audit migration. Do not conflate shared/private scope or blindly slugify labels.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 Same-property references, complete published data, upload failures and stale content revisions. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 No property or per-image moderation; no amenity/policy management tables; geocoding remains domain-deferred unless separately selected for course evidence.

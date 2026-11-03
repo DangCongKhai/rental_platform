@@ -42,10 +42,7 @@ type ButtonProps = React.ComponentProps<"button"> & {
 
 export function Button({ variant, size, className, ...props }: ButtonProps) {
   return (
-    <button
-      className={buttonClass({ variant, size, className })}
-      {...props}
-    />
+    <button className={buttonClass({ variant, size, className })} {...props} />
   );
 }
 

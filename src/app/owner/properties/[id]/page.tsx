@@ -10,53 +10,66 @@ type PropertyType = NonNullable<Draft["propertyType"]>;
 type RentalArrangement = NonNullable<Draft["rentalArrangement"]>;
 
 function asPropertyType(value: string): PropertyType | null {
-    if (value === "HOUSE" || value === "APARTMENT" || value === "APARTMENT_BUILDING") {
-        return value;
-    }
-    return null;
+  if (
+    value === "HOUSE" ||
+    value === "APARTMENT" ||
+    value === "APARTMENT_BUILDING"
+  ) {
+    return value;
+  }
+  return null;
 }
 
 function asRentalArrangement(value: string): RentalArrangement | null {
-    if (value === "WHOLE_SPACE" || value === "SEPARATE_UNITS") {
-        return value;
-    }
-    return null;
+  if (value === "WHOLE_SPACE" || value === "SEPARATE_UNITS") {
+    return value;
+  }
+  return null;
 }
 
-export default async function EditPropertyPage({params}: {params: Promise<{ id: string }>}) {
-    const { id } = await params;
-    const property = await getMyProperty(id);
+export default async function EditPropertyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const property = await getMyProperty(id);
 
-    if (!property) notFound();
+  if (!property) notFound();
 
-    const propertyType = asPropertyType(property.propertyType);
-    const rentalArrangement = asRentalArrangement(property.rentalArrangement);
-    const amenities = validateAmenities(property.sharedAmenities, "PROPERTY");
-    const policies = validatePropertyPolicies(property.policies);
+  const propertyType = asPropertyType(property.propertyType);
+  const rentalArrangement = asRentalArrangement(property.rentalArrangement);
+  const amenities = validateAmenities(property.sharedAmenities, "PROPERTY");
+  const policies = validatePropertyPolicies(property.policies);
 
-    if (!propertyType || !rentalArrangement || !amenities.success || !policies.success) {
-        throw new Error("Saved property data is invalid.");
-    }
+  if (
+    !propertyType ||
+    !rentalArrangement ||
+    !amenities.success ||
+    !policies.success
+  ) {
+    throw new Error("Saved property data is invalid.");
+  }
 
-    const draft: Draft = {
-        name: property.name,
-        description: property.description ?? "",
-        propertyType,
-        rentalArrangement,
-        addressLine: property.addressLine ?? "",
-        ward: property.ward ?? "",
-        city: property.city ?? "",
-        sharedAmenities: amenities.data,
-        policies: policies.data,
-    };
+  const draft: Draft = {
+    name: property.name,
+    description: property.description ?? "",
+    propertyType,
+    rentalArrangement,
+    addressLine: property.addressLine ?? "",
+    ward: property.ward ?? "",
+    city: property.city ?? "",
+    sharedAmenities: amenities.data,
+    policies: policies.data,
+  };
 
-    return (
-        <PropertyWizard
-            initial={{
-                propertyId: property.id,
-                revision: property.contentRevision,
-                draft,
-            }}
-        />
-    );
+  return (
+    <PropertyWizard
+      initial={{
+        propertyId: property.id,
+        revision: property.contentRevision,
+        draft,
+      }}
+    />
+  );
 }

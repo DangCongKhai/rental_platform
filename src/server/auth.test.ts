@@ -25,6 +25,10 @@ vi.mock("@/server/db", () => ({
   },
 }));
 
+vi.mock("next/server", () => ({
+  connection: async () => {},
+}));
+
 vi.mock("next/navigation", () => ({
   redirect,
   unstable_rethrow: (error: unknown) => {

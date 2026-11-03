@@ -19,7 +19,11 @@ function findRollback(error: unknown): RollbackSignal | undefined {
 export async function withTransaction<T>(
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction((tx) => fn(tx));
+  // Remote pooler latency plus row locks can exceed Prisma's 5s default.
+  return prisma.$transaction((tx) => fn(tx), {
+    maxWait: 10_000,
+    timeout: 20_000,
+  });
 }
 
 /** Runs `fn` inside a transaction and always rolls it back. For tests. */
@@ -27,10 +31,13 @@ export async function withRolledBackTransaction<T>(
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
 ): Promise<T> {
   try {
-    await prisma.$transaction(async (tx) => {
-      const result = await fn(tx);
-      throw new RollbackSignal(result);
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        const result = await fn(tx);
+        throw new RollbackSignal(result);
+      },
+      { maxWait: 10_000, timeout: 20_000 },
+    );
   } catch (error) {
     const rolledBack = findRollback(error);
     if (rolledBack) return rolledBack.result as T;

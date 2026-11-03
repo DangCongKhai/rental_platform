@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLinks } from "@/components/page-links";
 import { buttonClass } from "@/components/ui/button";
 import { getMyProperties } from "@/server/properties";
 
@@ -12,8 +13,16 @@ const moderationLabels: Record<string, string> = {
 };
 const publicationLabels: Record<string, string> = { DRAFT: "Chưa đăng", PUBLISHED: "Đang công khai", HIDDEN: "Đã ẩn" };
 
-export default async function OwnerListingsPage() {
-  const properties = await getMyProperties();
+export default async function OwnerListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const parsed = Number((await searchParams).page);
+  const page =
+    Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
+  const result = await getMyProperties(false, page);
+  const properties = result.properties;
   return (
     <section className="space-y-5">
       <header>
@@ -27,36 +36,108 @@ export default async function OwnerListingsPage() {
           <Link href="/owner/properties/new" className={`${buttonClass()} mt-4`}>Tạo bất động sản</Link>
         </div>
       ) : (
-        <ul className="space-y-4">
-          {properties.map((property) => {
-            const listing = property.listings[0];
-            return (
-              <li key={property.id} className="rounded-2xl border border-line bg-white p-5 sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-ink">{property.name}</h2>
-                    <p className="mt-1 text-sm text-subtle">{[property.ward, property.city].filter(Boolean).join(", ") || property.addressLine || "Chưa thêm địa chỉ"}</p>
-                    {listing ? (
-                      <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                        <span className="rounded-full bg-brand-soft px-3 py-1 font-semibold text-brand-deep">{moderationLabels[listing.moderationStatus] ?? listing.moderationStatus}</span>
-                        <span className="rounded-full bg-surface px-3 py-1 font-semibold text-ink-2">{publicationLabels[listing.publicationStatus] ?? listing.publicationStatus}</span>
-                        {listing.adminSuspendedAt && <span className="rounded-full bg-[#fdf2f1] px-3 py-1 font-semibold text-danger-ink">Bị đình chỉ bởi quản trị viên</span>}
-                      </div>
-                    ) : <p className="mt-3 text-sm text-subtle">Chưa có tin đăng</p>}
-                  </div>
-                  {listing ? (
-                    <Link href={`/owner/listings/${listing.id}`} className={buttonClass({ variant: "secondary" })}>Quản lý tin đăng</Link>
-                  ) : (
-                    <Link href={`/owner/listings/new?propertyId=${property.id}`} className={buttonClass()}>Tạo tin đăng</Link>
-                  )}
-                </div>
-                {listing?.moderationStatus === "REJECTED" && listing.reviewReason && <p className="mt-4 rounded-xl border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">Lý do từ chối: {listing.reviewReason}</p>}
-                {listing?.adminSuspendedAt && listing.suspensionReason && <p className="mt-4 rounded-xl border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">Lý do đình chỉ: {listing.suspensionReason}</p>}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="overflow-x-auto rounded-[15px] border border-line bg-white">
+          <table className="w-full min-w-[860px] border-collapse text-left">
+            <thead>
+              <tr className="bg-[#f7f9fb] text-[13px] font-semibold text-subtle">
+                <th scope="col" className="px-4 py-4 font-semibold">
+                  Bất động sản
+                </th>
+                <th scope="col" className="px-4 py-4 font-semibold">
+                  Kiểm duyệt
+                </th>
+                <th scope="col" className="px-4 py-4 font-semibold">
+                  Công khai
+                </th>
+                <th scope="col" className="px-4 py-4 font-semibold">
+                  Ghi chú
+                </th>
+                <th scope="col" className="px-4 py-4">
+                  <span className="sr-only">Thao tác</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {properties.map((property) => {
+                const listing = property.listings[0];
+                const place =
+                  [property.ward, property.city].filter(Boolean).join(", ") ||
+                  property.addressLine ||
+                  "Chưa thêm địa chỉ";
+                const note = listing?.adminSuspendedAt
+                  ? listing.suspensionReason
+                  : listing?.moderationStatus === "REJECTED"
+                    ? listing.reviewReason
+                    : null;
+                return (
+                  <tr
+                    key={property.id}
+                    className="border-t border-line-soft align-middle"
+                  >
+                    <td className="px-4 py-3.5">
+                      <p className="text-[15px] font-semibold leading-snug text-ink-2">
+                        {property.name}
+                      </p>
+                      <p className="mt-0.5 max-w-[240px] text-[13px] leading-5 text-subtle">
+                        {place}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3.5 text-[15px] text-ink">
+                      {listing
+                        ? (moderationLabels[listing.moderationStatus] ??
+                          listing.moderationStatus)
+                        : "Chưa có tin"}
+                    </td>
+                    <td className="px-4 py-3.5 text-[15px] text-ink">
+                      {listing ? (
+                        <span>
+                          {publicationLabels[listing.publicationStatus] ??
+                            listing.publicationStatus}
+                          {listing.adminSuspendedAt
+                            ? " · Bị đình chỉ"
+                            : ""}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-danger-ink">
+                      {note ?? <span className="text-subtle">—</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      {listing ? (
+                        <Link
+                          href={`/owner/listings/${listing.id}`}
+                          className={buttonClass({ variant: "secondary" })}
+                        >
+                          Quản lý tin đăng
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/owner/listings/new?propertyId=${property.id}`}
+                          className={buttonClass()}
+                        >
+                          Tạo tin đăng
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
+      <div className="flex justify-end">
+        <PageLinks
+          page={page}
+          total={result.total}
+          pageSize={result.pageSize}
+          href={(nextPage) =>
+            nextPage > 1 ? `/owner/listings?page=${nextPage}` : "/owner/listings"
+          }
+        />
+      </div>
     </section>
   );
 }

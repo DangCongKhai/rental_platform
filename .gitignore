@@ -44,12 +44,19 @@ next-env.d.ts
 /generated/prisma
 
 
-# ignore local supabase
-supabase/
+# Keep the shared auth redirect configuration; ignore local Supabase state.
+/supabase/*
+!/supabase/config.toml
 
 
 # ignore local plan
 .local_plans/
 
-# Ignore .cursor
-.cursor/
+# Keep the shared Figma rule; ignore other local Cursor configuration.
+/.cursor/*
+!/.cursor/rules/
+/.cursor/rules/*
+!/.cursor/rules/figma-design.mdc
+
+# Local implementation and review notes
+/.superpowers/
