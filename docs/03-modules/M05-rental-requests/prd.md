@@ -1,14 +1,17 @@
 # M05 Product requirements
 
 ## Purpose
+
 Contact snapshots, pending enquiries, owner phone discussion, rejection/withdrawal and age15day availability outcome.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR25 Submit rental request with contact details
+
 Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Eligibility; no reservation; duplicate semantics
@@ -26,6 +29,7 @@ Acceptance criteria:
 - FR25-AC05 [Integrity] Tenant later changes profile phone → Submitted contact snapshot remains unchanged.
 
 ### FR26 Prevent duplicate pending rental requests
+
 Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Concurrent duplication; usable threads
@@ -41,6 +45,7 @@ Acceptance criteria:
 - FR26-AC03 [Integrity] Owner calls tenant or views message → Request remains PENDING; no implied acceptance or allocation.
 
 ### FR27 Tenant rental request dashboard
+
 Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Private data; state clarity
@@ -57,6 +62,7 @@ Acceptance criteria:
 - FR27-AC04 [Positive] Owner discusses by phone → Request stays PENDING until proposal created.
 
 ### FR28 Withdraw pending rental request
+
 Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Pending state transitions; withdrawal versus proposal race
@@ -72,6 +78,7 @@ Acceptance criteria:
 - FR28-AC03 [Validation] Withdraw accepted thread → 409 with link to tenancy workflow.
 
 ### FR29 Owner rental request inbox
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Ownership; meaningful lead state
@@ -88,6 +95,7 @@ Acceptance criteria:
 - FR29-AC04 [Race] Inbox stale after tenant withdraws → Create action rechecks request PENDING and fails safely.
 
 ### FR30 Accept request when tenancy proposal commits
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Atomic final acceptance; offline agreement
@@ -104,6 +112,7 @@ Acceptance criteria:
 - FR30-AC04 [Integrity] Other requests concern same or alternative units → Do not immediately reject them; apply 15-day availability policy.
 
 ### FR31 Reject pending rental request
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Explainability; cancellation
@@ -119,11 +128,13 @@ Acceptance criteria:
 - FR31-AC03 [Race] Reject races with Create tenancy proposal → One terminal transition; no duplicate tenancy/outcome.
 
 ### FR32 Audit request and tenancy outcomes
+
 Priority: Removed (was Removed (was P0 Must)). Actors: System.
 
 Removed by team decision: No separate audit log. History comes from status fields, timestamps and immutable contract versions. The ID is kept and not reused.
 
 ### FR85 Apply 15-day rejection using actual availability
+
 Priority: P0 Must. Actors: Owner; Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: Authorization; immutable versions; concurrent transitions
@@ -144,13 +155,17 @@ Acceptance criteria:
 - FR85-AC08 [Boundary] Desired move-in already in past → Do not silently shift dates; use stored interval, flag for discussion. Stale-date expiry is deferred.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 Request acceptance atomic with tenancy proposal; one pending thread; cron versus withdrawal/create races. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 No calendar, chat or separate manual Accept. Another acceptance does not immediately reject other prospects.

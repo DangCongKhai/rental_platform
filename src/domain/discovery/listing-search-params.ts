@@ -33,18 +33,28 @@ export class ListingSearchValidationError extends Error {
   }
 }
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).refine((value) => {
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}, "Ngày không hợp lệ.");
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/u)
+  .refine((value) => {
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    );
+  }, "Ngày không hợp lệ.");
 
 const optionalNumber = z
   .string()
   .trim()
   .optional()
   .transform((value) => (value ? Number(value) : null))
-  .refine((value) => value === null || (Number.isInteger(value) && value >= 0), "Số không hợp lệ.");
+  .refine(
+    (value) => value === null || (Number.isInteger(value) && value >= 0),
+    "Số không hợp lệ.",
+  );
 
 function first(input: URLSearchParams, key: string): string | undefined {
   const value = input.get(key);
@@ -56,7 +66,9 @@ function fail(field: string, message: string): never {
   throw new ListingSearchValidationError(field, message);
 }
 
-export function parseListingSearchParams(input: URLSearchParams): ListingSearchFilters {
+export function parseListingSearchParams(
+  input: URLSearchParams,
+): ListingSearchFilters {
   const location = locationQueryFromInput(input.get("location"));
 
   let moveInDate: string | null = null;
@@ -76,7 +88,8 @@ export function parseListingSearchParams(input: URLSearchParams): ListingSearchF
   const unitKindRaw = first(input, "unit_kind");
   let unitKind: UnitKind | null = null;
   if (unitKindRaw) {
-    if (!UNIT_KINDS.includes(unitKindRaw as UnitKind)) fail("unit_kind", "Loại phòng không hợp lệ.");
+    if (!UNIT_KINDS.includes(unitKindRaw as UnitKind))
+      fail("unit_kind", "Loại phòng không hợp lệ.");
     unitKind = unitKindRaw as UnitKind;
   }
 
@@ -86,7 +99,10 @@ export function parseListingSearchParams(input: URLSearchParams): ListingSearchF
 
   const amenityKeys: string[] = [];
   const catalogKeys = new Set(AMENITY_CATALOG.map((item) => item.key));
-  for (const key of [...input.getAll("amenities"), ...input.getAll("amenities[]")]) {
+  for (const key of [
+    ...input.getAll("amenities"),
+    ...input.getAll("amenities[]"),
+  ]) {
     if (!key) continue;
     if (!catalogKeys.has(key as (typeof AMENITY_CATALOG)[number]["key"])) {
       fail("amenities", "Tiện ích không hợp lệ.");
@@ -97,14 +113,16 @@ export function parseListingSearchParams(input: URLSearchParams): ListingSearchF
   const petsRaw = first(input, "pets");
   let pets: PetPolicy | null = null;
   if (petsRaw) {
-    if (!PET_VALUES.includes(petsRaw as PetPolicy)) fail("pets", "Chính sách thú cưng không hợp lệ.");
+    if (!PET_VALUES.includes(petsRaw as PetPolicy))
+      fail("pets", "Chính sách thú cưng không hợp lệ.");
     pets = petsRaw as PetPolicy;
   }
 
   const page = parseCount(input, "page") ?? 1;
   const perPageRaw = parseCount(input, "per_page") ?? 12;
   if (page < 1) fail("page", "Trang không hợp lệ.");
-  if (perPageRaw < 1 || perPageRaw > 20) fail("per_page", "Số tin mỗi trang không hợp lệ.");
+  if (perPageRaw < 1 || perPageRaw > 20)
+    fail("per_page", "Số tin mỗi trang không hợp lệ.");
 
   return {
     location,
@@ -126,7 +144,8 @@ function parseMoney(input: URLSearchParams, key: string): number | null {
   const raw = first(input, key);
   if (!raw) return null;
   const parsed = optionalNumber.safeParse(raw);
-  if (!parsed.success || parsed.data == null) fail(key, "Mức giá không hợp lệ.");
+  if (!parsed.success || parsed.data == null)
+    fail(key, "Mức giá không hợp lệ.");
   return parsed.data;
 }
 
@@ -142,20 +161,26 @@ function parseCount(input: URLSearchParams, key: string): number | null {
   const raw = first(input, key);
   if (!raw) return null;
   const parsed = optionalNumber.safeParse(raw);
-  if (!parsed.success || parsed.data == null || parsed.data < 1) fail(key, "Số không hợp lệ.");
+  if (!parsed.success || parsed.data == null || parsed.data < 1)
+    fail(key, "Số không hợp lệ.");
   return parsed.data;
 }
 
-export function toListingSearchParams(filters: ListingSearchFilters): URLSearchParams {
+export function toListingSearchParams(
+  filters: ListingSearchFilters,
+): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.location) params.set("location", filters.location.value);
   if (filters.moveInDate) params.set("move_in_date", filters.moveInDate);
   if (filters.minRent != null) params.set("min_rent", String(filters.minRent));
   if (filters.maxRent != null) params.set("max_rent", String(filters.maxRent));
   if (filters.unitKind) params.set("unit_kind", filters.unitKind);
-  if (filters.bedrooms != null) params.set("bedrooms", String(filters.bedrooms));
-  if (filters.bathrooms != null) params.set("bathrooms", String(filters.bathrooms));
-  if (filters.occupants != null) params.set("occupants", String(filters.occupants));
+  if (filters.bedrooms != null)
+    params.set("bedrooms", String(filters.bedrooms));
+  if (filters.bathrooms != null)
+    params.set("bathrooms", String(filters.bathrooms));
+  if (filters.occupants != null)
+    params.set("occupants", String(filters.occupants));
   for (const key of filters.amenityKeys) params.append("amenities", key);
   if (filters.pets) params.set("pets", filters.pets);
   params.set("page", String(filters.page));
@@ -163,11 +188,17 @@ export function toListingSearchParams(filters: ListingSearchFilters): URLSearchP
   return params;
 }
 
-export function clearLocation(filters: ListingSearchFilters): ListingSearchFilters {
+export function clearLocation(
+  filters: ListingSearchFilters,
+): ListingSearchFilters {
   return { ...filters, location: null, page: 1 };
 }
 
-export function homeSearchHref(location: string, minRent: string, maxRent: string): string {
+export function homeSearchHref(
+  location: string,
+  minRent: string,
+  maxRent: string,
+): string {
   const params = toListingSearchParams(
     parseListingSearchParams(
       new URLSearchParams({

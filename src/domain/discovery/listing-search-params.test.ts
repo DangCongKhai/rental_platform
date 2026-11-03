@@ -30,7 +30,9 @@ describe("listing search params", () => {
 
   it("clears only the location and resets the page", () => {
     const parsed = parseListingSearchParams(
-      new URLSearchParams("location=H%E1%BA%A3i+Ch%C3%A2u&max_rent=5000000&amenities=wifi&page=3"),
+      new URLSearchParams(
+        "location=H%E1%BA%A3i+Ch%C3%A2u&max_rent=5000000&amenities=wifi&page=3",
+      ),
     );
     const cleared = toListingSearchParams(clearLocation(parsed));
 
@@ -41,13 +43,15 @@ describe("listing search params", () => {
   });
 
   it("rejects an invalid move-in date", () => {
-    expect(() => parseListingSearchParams(new URLSearchParams("move_in_date=not-a-date"))).toThrow(
-      ListingSearchValidationError,
-    );
+    expect(() =>
+      parseListingSearchParams(new URLSearchParams("move_in_date=not-a-date")),
+    ).toThrow(ListingSearchValidationError);
   });
 
   it("omits a blank location", () => {
-    const parsed = parseListingSearchParams(new URLSearchParams("location=+++"));
+    const parsed = parseListingSearchParams(
+      new URLSearchParams("location=+++"),
+    );
     expect(parsed.location).toBeNull();
     expect(toListingSearchParams(parsed).has("location")).toBe(false);
   });

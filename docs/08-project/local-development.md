@@ -37,12 +37,12 @@ The first `supabase start` downloads images and can take several minutes. Later 
 
 `supabase status` prints the URLs and keys for this machine. A single local project usually uses:
 
-| Service | Default |
-|---|---|
-| API | http://127.0.0.1:54321 |
+| Service  | Default                                                   |
+| -------- | --------------------------------------------------------- |
+| API      | http://127.0.0.1:54321                                    |
 | Postgres | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
-| Studio | http://127.0.0.1:54323 |
-| Mailpit | http://127.0.0.1:54324 |
+| Studio   | http://127.0.0.1:54323                                    |
+| Mailpit  | http://127.0.0.1:54324                                    |
 
 If those ports are taken, use the values `supabase status` prints.
 

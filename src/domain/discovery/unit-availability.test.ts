@@ -15,7 +15,9 @@ describe("describeUnitAvailability", () => {
 
   it("labels a block that covers today as free the next day", () => {
     expect(
-      describeUnitAvailability(today, [{ start: "2026-11-01", end: "2027-05-01" }]),
+      describeUnitAvailability(today, [
+        { start: "2026-11-01", end: "2027-05-01" },
+      ]),
     ).toEqual({
       availableNow: false,
       availableFrom: "2027-05-02",
@@ -26,7 +28,9 @@ describe("describeUnitAvailability", () => {
 
   it("labels a later block with the last free day", () => {
     expect(
-      describeUnitAvailability(today, [{ start: "2027-02-01", end: "2027-08-01" }]),
+      describeUnitAvailability(today, [
+        { start: "2027-02-01", end: "2027-08-01" },
+      ]),
     ).toEqual({
       availableNow: true,
       availableFrom: null,

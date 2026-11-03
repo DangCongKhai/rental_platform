@@ -1,4 +1,7 @@
-import { listingsIndexJson, validationResponse } from "@/server/listings/public-api";
+import {
+  listingsIndexJson,
+  validationResponse,
+} from "@/server/listings/public-api";
 
 export async function GET(request: Request) {
   try {

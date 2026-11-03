@@ -48,7 +48,9 @@ export const GlobeIcon = icon(
 export const PinIcon = icon(
   "M8 14s5-4.2 5-8A5 5 0 003 6c0 3.8 5 8 5 8zM8 7.7a1.7 1.7 0 100-3.4 1.7 1.7 0 000 3.4z",
 );
-export const SearchIcon = icon("M7 12a5 5 0 100-10 5 5 0 000 10zM10.6 10.6L14 14");
+export const SearchIcon = icon(
+  "M7 12a5 5 0 100-10 5 5 0 000 10zM10.6 10.6L14 14",
+);
 export const LogoutIcon = icon("M6 2.5H3v11h3M10 5l3 3-3 3M13 8H6");
 export const EyeIcon = icon(
   "M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4zM8 6.3a1.7 1.7 0 100 3.4 1.7 1.7 0 000-3.4z",
@@ -59,7 +61,9 @@ export const PhoneIcon = icon(
 export const ContractIcon = icon(
   "M4 1.5h5.5L13 5v9.5H4zM9.5 1.5V5H13M6 9.5l1.4 1.4L10 8.3",
 );
-export const CalendarIcon = icon("M2.5 4h11v9.5h-11zM2.5 7h11M5.5 2v3M10.5 2v3");
+export const CalendarIcon = icon(
+  "M2.5 4h11v9.5h-11zM2.5 7h11M5.5 2v3M10.5 2v3",
+);
 
 export function BellIcon(props: IconProps) {
   return (

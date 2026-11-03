@@ -4,7 +4,7 @@ export async function createNotification(
   tx: Prisma.TransactionClient,
   input: {
     recipientId: string;
-    audience: "ADMIN" | "TENANT" | "OWNER";
+    audience: "TENANT" | "OWNER" | "ADMIN";
     eventKey: string;
     title: string;
     body: string;

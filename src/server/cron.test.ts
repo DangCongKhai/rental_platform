@@ -15,9 +15,7 @@ describe("assertCronRequest", () => {
   it("accepts the configured bearer token", () => {
     vi.stubEnv("CRON_SECRET", "secret-value");
 
-    expect(
-      assertCronRequest(cronRequest("Bearer secret-value")),
-    ).toBeNull();
+    expect(assertCronRequest(cronRequest("Bearer secret-value"))).toBeNull();
   });
 
   it("returns 401 when the header is missing", () => {

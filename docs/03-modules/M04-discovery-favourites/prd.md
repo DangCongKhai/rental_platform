@@ -1,14 +1,17 @@
 # M04 Product requirements
 
 ## Purpose
+
 Text/address search, same-unit filtering, date availability, public cards/details and private saved properties.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR19 Search listings by date-based availability
+
 Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource foundation.
 
 Factors: Eligibility; pagination; cost
@@ -25,6 +28,7 @@ Acceptance criteria:
 - FR19-AC04 [Race] Reservation commits between search and proposal → Search is indicative; proposal rechecks database exclusion and returns conflict if needed.
 
 ### FR20 Filter eligible units for the full requested interval
+
 Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource foundation.
 
 Factors: Same-unit semantics; client response order
@@ -41,6 +45,7 @@ Acceptance criteria:
 - FR20-AC04 [Race] Operational status changes during pagination → Fresh query respects new status; no authoritative reservation inferred.
 
 ### FR21 Display listing details and eligible unit cards
+
 Priority: P0 Must. Actors: Guest; User. Dependencies: Shared identity/resource foundation.
 
 Factors: Accurate linked data; privacy
@@ -57,6 +62,7 @@ Acceptance criteria:
 - FR21-AC04 [Race] Listing suspended while a visitor has the page open → The next request checks current visibility before returning any listing data.
 
 ### FR22 Interactive listing map
+
 Priority: P2 Defer. Actors: Guest; User. Dependencies: FR19 FR24.
 
 Factors: Location privacy; scope
@@ -71,6 +77,7 @@ Acceptance criteria:
 - FR22-AC02 [Failure] Provider unavailable or coordinates missing → List search remains usable.
 
 ### FR23 Synchronize map and filters
+
 Priority: P2 Defer. Actors: Guest; User. Dependencies: FR22 FR20.
 
 Factors: Consistent query scope
@@ -85,6 +92,7 @@ Acceptance criteria:
 - FR23-AC02 [Race] Map requests finish out of order → Stale result discarded.
 
 ### FR40 Public listing reads
+
 Priority: P0 Must. Actors: Guest; API client. Dependencies: Shared identity/resource foundation.
 
 Factors: Consistent DTO; pagination
@@ -100,11 +108,13 @@ Acceptance criteria:
 - FR40-AC03 [Security] Public response serialized → No private documents, tokens, admin flags or tenant contacts.
 
 ### FR46 Cache public listing content with fresh visibility checks
+
 Priority: Removed (was Removed (was P1 Should)). Actors: System.
 
 Removed by team decision: Caching work is not required for this project. The ID is kept and not reused.
 
 ### FR77 Calculate availability counts and rent ranges
+
 Priority: P0 Must. Actors: System. Dependencies: Shared identity/resource foundation.
 
 Factors: No stale counters; same-unit search
@@ -121,6 +131,7 @@ Acceptance criteria:
 - FR77-AC04 [Integrity] Last unit unavailable → Hide from available search for that interval; do not change stored publication_status or auto-republish owner-hidden content.
 
 ### FR88 Save and manage favourite properties
+
 Priority: P0 Must. Actors: Authenticated user. Dependencies: FR05 FR19 FR21 FR43 FR78.
 
 Factors: Stable property identity; private data; repeat-safe writes; race-safe UI; visibility
@@ -143,13 +154,17 @@ Acceptance criteria:
 - FR88-AC10 [Boundary] Property has no unit available for chosen dates, but listing remains owner-published and unsuspended → Keep favourite; availability is not a reservation or permanent deletion. Show availability only through authorized/current visibility response. No query holds a unit.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 No shared-cache private favourite flags, no availability promises, correct unavailable placeholders. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 Maps deferred. Save properties, not listings/units. Favourites never allocate units or send enquiries.

@@ -161,7 +161,8 @@ The table below is the current column list, including the managed auth reference
 | listing_reports | Core | id | uuid | PK | No | gen_random_uuid() | Report UUID |
 | listing_reports | Core | listing_id | uuid | FK | No |  | Reported advertisement |
 | listing_reports | Core | reporter_id | uuid | FK | No |  | Authenticated reporter |
-| listing_reports | Core | reason_code | text |  | No |  | FRAUD MISLEADING HARMFUL OTHER |
+| listing_reports | Core | reason_code | text |  | No |  | First selected code: FRAUD MISLEADING HARMFUL OTHER (legacy/admin reads) |
+| listing_reports | Core | reason_codes | text[] |  | No |  | All selected report reasons; existing rows backfilled from reason_code |
 | listing_reports | Core | description | text |  | No |  | Reporter explanation |
 | listing_reports | Core | status | text |  | No | OPEN | OPEN REVIEWING RESOLVED DISMISSED |
 | listing_reports | Core | resolution_summary | text |  | Yes |  | Sanitized reporter-visible outcome |
@@ -172,6 +173,7 @@ The table below is the current column list, including the managed auth reference
 | listing_reports | Core | updated_at | timestamptz |  | No | now() | Last record update time in UTC |
 | notifications | P1 infrastructure | id | uuid | PK | No | gen_random_uuid() | Inbox UUID |
 | notifications | P1 infrastructure | recipient_id | uuid | FK | No |  | Only this user can read/mark read |
+| notifications | P1 infrastructure | audience | text | CHECK | No |  | TENANT / OWNER / ADMIN; event side, independent of recipient or link target |
 | notifications | P1 infrastructure | event_key | text |  | No |  | Unique with recipient_id |
 | notifications | P1 infrastructure | title | text |  | No |  | Safe summary |
 | notifications | P1 infrastructure | body | text |  | No |  | Safe message |
@@ -195,3 +197,5 @@ The table below is the current column list, including the managed auth reference
 | favourite_properties | Core | created_at | timestamptz |  | No | now() | Server save time for private pagination |
 
 `favourite_properties` additionally has UNIQUE(user_id,property_id); this composite uniqueness is not a separate UUID identity. The current workbook itself remains version3; this package is the newer additive specification.
+
+Notification inbox index: `(recipient_id, audience, created_at DESC)`. Audience has no default; legacy events require explicit backfill.

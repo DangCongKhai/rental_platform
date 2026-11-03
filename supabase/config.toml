@@ -1,0 +1,5 @@
+project_id = "rental_platform"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/**", "http://localhost:3001/**", "http://localhost:3000/auth/callback", "http://localhost:3001/auth/callback", "http://localhost:3000/auth/update-password", "http://localhost:3001/auth/update-password", "http://localhost:3001"]

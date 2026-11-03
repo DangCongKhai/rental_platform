@@ -13,7 +13,9 @@ export type UnitAvailability = {
 function parseIso(iso: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(iso);
   if (!match) throw new Error(`Invalid date: ${iso}`);
-  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  return new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+  );
 }
 
 function formatIso(date: Date): string {
@@ -41,11 +43,17 @@ function covers(block: DateBlock, day: string): boolean {
   return block.start <= day && day <= block.end;
 }
 
-export function describeUnitAvailability(today: string, blocks: DateBlock[]): UnitAvailability {
+export function describeUnitAvailability(
+  today: string,
+  blocks: DateBlock[],
+): UnitAvailability {
   const covering = blocks.filter((block) => covers(block, today));
   if (covering.length > 0) {
     const availableFrom = addDays(
-      covering.reduce((latest, block) => (block.end > latest ? block.end : latest), covering[0].end),
+      covering.reduce(
+        (latest, block) => (block.end > latest ? block.end : latest),
+        covering[0].end,
+      ),
       1,
     );
     return {
@@ -78,10 +86,16 @@ export function describeUnitAvailability(today: string, blocks: DateBlock[]): Un
 }
 
 export function todayInVietnam(now = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(now);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(now);
 }
 
-export function stayIsFree(moveIn: string, minimumMonths: number, blocks: DateBlock[]): boolean {
+export function stayIsFree(
+  moveIn: string,
+  minimumMonths: number,
+  blocks: DateBlock[],
+): boolean {
   const stayEnd = addMonths(moveIn, minimumMonths);
   return blocks.every((block) => {
     const blockEnd = addDays(block.end, 1);

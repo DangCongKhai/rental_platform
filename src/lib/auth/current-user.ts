@@ -1,9 +1,11 @@
 import { cache } from "react";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import { prisma } from "@/server/db";
 
 export type CurrentUser = {
+  id: string;
   email: string;
   name: string;
   initials: string;
@@ -20,6 +22,9 @@ function initialsOf(name: string) {
 // Cached per request so the navbar and page sections share one lookup.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!hasEnvVars) return null;
+  // getClaims() reads Date.now(). Call this before that so cacheComponents
+  // renders the route dynamically instead of aborting the prerender.
+  await connection();
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
@@ -30,14 +35,19 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const profile = await prisma.userProfile.findUnique({
     where: { userId: subject },
-    select: { isAdmin: true },
+    select: { fullName: true, isAdmin: true },
   });
-
-  const fullName = claims.user_metadata?.full_name;
+  const fullName = profile?.fullName ?? claims.user_metadata?.full_name;
   const name =
     typeof fullName === "string" && fullName.trim()
       ? fullName.trim()
       : claims.email.split("@")[0];
 
-  return { email: claims.email, name, initials: initialsOf(name), isAdmin: profile?.isAdmin ?? false };
+  return {
+    id: subject,
+    email: claims.email,
+    name,
+    initials: initialsOf(name),
+    isAdmin: profile?.isAdmin ?? false,
+  };
 });

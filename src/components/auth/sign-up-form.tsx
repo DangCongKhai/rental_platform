@@ -1,5 +1,6 @@
 "use client";
 
+import { safeNext } from "@/lib/auth/safe-next";
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -18,7 +19,11 @@ import {
 import { PasswordStrength } from "./password-strength";
 import { ResendButton } from "./resend-button";
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string | null }) {
+  const destination = safeNext(next);
+  const loginHref = destination
+    ? `/auth/login?next=${encodeURIComponent(destination)}`
+    : "/auth/login";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,20 +36,29 @@ export function SignUpForm() {
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
+    console.log("Handle sign up")
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { full_name: fullName.trim() },
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
         },
       });
+      console.log("error", error);
       if (error) throw error;
       setSent(true);
     } catch (error: unknown) {
-      setError(authErrorMessage(error));
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? error.code
+          : null;
+      if (code === "user_already_exists" || code === "email_exists") {
+        setSent(true);
+      } else {
+        setError(authErrorMessage(error));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +68,9 @@ export function SignUpForm() {
     await createClient().auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destination ?? "/")}`,
+      },
     });
   };
 
@@ -62,13 +78,16 @@ export function SignUpForm() {
     return (
       <>
         <AuthStatus icon={<MailIcon />} title="Kiểm tra email của bạn">
-          Chúng tôi đã gửi liên kết xác nhận tới <b>{email}</b>. Mở email và
-          bấm vào liên kết để kích hoạt tài khoản.
+          Chúng tôi đã gửi liên kết xác nhận tới <b>{email}</b>. Mở email và bấm
+          vào liên kết để kích hoạt tài khoản.
         </AuthStatus>
         <ResendButton onResend={resend} />
         <AuthSwitch>
           Đã xác nhận?
-          <Link href="/auth/login" className="font-semibold text-brand hover:text-brand-deep">
+          <Link
+            href={loginHref}
+            className="font-semibold text-brand hover:text-brand-deep"
+          >
             Đăng nhập
           </Link>
         </AuthSwitch>
@@ -140,7 +159,10 @@ export function SignUpForm() {
 
       <AuthSwitch>
         Đã có tài khoản?
-        <Link href="/auth/login" className="font-semibold text-brand hover:text-brand-deep">
+        <Link
+          href={loginHref}
+          className="font-semibold text-brand hover:text-brand-deep"
+        >
           Đăng nhập
         </Link>
       </AuthSwitch>

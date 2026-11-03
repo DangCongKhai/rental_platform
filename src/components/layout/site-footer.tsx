@@ -28,11 +28,13 @@ export function SiteFooter() {
                   href={
                     label === "FAQ"
                       ? "/#faq"
-                      : label === "Không gian quản lý"
-                        ? "/owner/properties"
-                        : label === "Tất cả tin đăng"
-                          ? "/listings"
-                          : "/"
+                      : label === "Hướng dẫn"
+                        ? "/guide"
+                        : label === "Không gian quản lý"
+                          ? "/owner/properties"
+                          : label === "Tất cả tin đăng"
+                            ? "/listings"
+                            : "/"
                   }
                   className="text-on-dark-muted hover:text-white"
                 >

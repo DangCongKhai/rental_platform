@@ -2,13 +2,8 @@
   "sets": [
     {
       "id": "studio-01",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-01/exterior.webp",
@@ -62,13 +57,8 @@
     },
     {
       "id": "studio-02",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-02/exterior.webp",
@@ -122,13 +112,8 @@
     },
     {
       "id": "studio-03",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-03/exterior.webp",
@@ -182,13 +167,8 @@
     },
     {
       "id": "studio-04",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-04/exterior.webp",
@@ -242,13 +222,8 @@
     },
     {
       "id": "studio-05",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-05/exterior.webp",
@@ -302,13 +277,8 @@
     },
     {
       "id": "studio-06",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-06/exterior.webp",
@@ -362,13 +332,8 @@
     },
     {
       "id": "studio-07",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-07/exterior.webp",
@@ -422,13 +387,8 @@
     },
     {
       "id": "studio-08",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "STUDIO"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["STUDIO"],
       "images": [
         {
           "file": "library/studios/studio-08/exterior.webp",
@@ -482,13 +442,8 @@
     },
     {
       "id": "apartment-01",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-01/exterior.webp",
@@ -554,13 +509,8 @@
     },
     {
       "id": "apartment-02",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-02/exterior.webp",
@@ -626,13 +576,8 @@
     },
     {
       "id": "apartment-03",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-03/exterior.webp",
@@ -698,13 +643,8 @@
     },
     {
       "id": "apartment-04",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-04/exterior.webp",
@@ -770,13 +710,8 @@
     },
     {
       "id": "apartment-05",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-05/exterior.webp",
@@ -842,13 +777,8 @@
     },
     {
       "id": "apartment-06",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-06/exterior.webp",
@@ -914,13 +844,8 @@
     },
     {
       "id": "apartment-07",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-07/exterior.webp",
@@ -986,13 +911,8 @@
     },
     {
       "id": "apartment-08",
-      "property_types": [
-        "APARTMENT",
-        "APARTMENT_BUILDING"
-      ],
-      "unit_kinds": [
-        "APARTMENT"
-      ],
+      "property_types": ["APARTMENT", "APARTMENT_BUILDING"],
+      "unit_kinds": ["APARTMENT"],
       "images": [
         {
           "file": "library/apartments/apartment-08/exterior.webp",
@@ -1058,13 +978,8 @@
     },
     {
       "id": "house-01",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-01/exterior.webp",
@@ -1130,13 +1045,8 @@
     },
     {
       "id": "house-02",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-02/exterior.webp",
@@ -1202,13 +1112,8 @@
     },
     {
       "id": "house-03",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-03/exterior.webp",
@@ -1274,13 +1179,8 @@
     },
     {
       "id": "house-04",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-04/exterior.webp",
@@ -1346,13 +1246,8 @@
     },
     {
       "id": "house-05",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-05/exterior.webp",
@@ -1418,13 +1313,8 @@
     },
     {
       "id": "house-06",
-      "property_types": [
-        "HOUSE"
-      ],
-      "unit_kinds": [
-        "HOUSE",
-        "ROOM"
-      ],
+      "property_types": ["HOUSE"],
+      "unit_kinds": ["HOUSE", "ROOM"],
       "images": [
         {
           "file": "library/houses/house-06/exterior.webp",

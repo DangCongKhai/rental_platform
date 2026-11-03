@@ -1,14 +1,17 @@
 # M07 Product requirements
 
 ## Purpose
+
 Tenant renewal request, negotiated consecutive segment proposal, extension hold and mutual confirmation under same tenancy.
 
 ## Actors and permissions
+
 Use server access checks from each FR below. UI guards never replace server checks.
 
 ## Functional requirements
 
 ### FR68 Submit one pending renewal request
+
 Priority: P0 Must. Actors: Tenant. Dependencies: Shared identity/resource foundation.
 
 Factors: One pending request; original proposal integrity
@@ -25,6 +28,7 @@ Acceptance criteria:
 - FR68-AC04 [Integrity] Owner discusses different final rent offline → Keep requested value; final version stores separately negotiated amount.
 
 ### FR69 Withdraw or reject pending renewal request
+
 Priority: P0 Must. Actors: Tenant; Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Explicit final states; no approval-only extension
@@ -41,6 +45,7 @@ Acceptance criteria:
 - FR69-AC04 [Integrity] Old notification refers to cancelled renewal version → Confirmation endpoint rejects stale/terminal workflow.
 
 ### FR70 Propose renewal as new immutable version
+
 Priority: P0 Must. Actors: Owner. Dependencies: Shared identity/resource foundation.
 
 Factors: Atomic agreement linkage; consecutive terms
@@ -59,13 +64,17 @@ Acceptance criteria:
 - FR70-AC06 [Failure] Mutual confirmation transaction fails → No partial ACCEPTED renewal or confirmed extension.
 
 ## Data and API boundary
+
 Use the shared data dictionary and the server action contract in `07-architecture/api-design.md`; do not invent tables/enums to suit one screen. Every issue names the actions, schema fields and stale-state behavior it changes.
 
 ## Failure and concurrency
+
 One pending request; future-booking conflict; expire/decline releases only extension. Ordinary permission/validation/empty/network states are part of completion, alongside the specific race cases above. PostgreSQL invariants require real database tests.
 
 ## Definition of done
+
 UI and server actions integrated; unit and integration tests; public pages expose no private data; docs synchronized; issue-linked PR and reviewer evidence. No implementation is claimed here.
 
 ## Out of scope
+
 Never rewrite original contract, never accept renewal on owner submission alone; many draft corrections may reference one request.
