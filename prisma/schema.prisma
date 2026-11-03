@@ -307,6 +307,7 @@ model ListingReport {
   listingId         String    @map("listing_id") @db.Uuid
   reporterId        String    @map("reporter_id") @db.Uuid
   reasonCode        String    @map("reason_code")
+  reasonCodes       String[]  @map("reason_codes")
   description       String
   status            String    @default("OPEN")
   resolutionSummary String?   @map("resolution_summary")

@@ -655,13 +655,13 @@ async function insertStory(tx: Tx) {
   await exec(
     tx,
     `INSERT INTO listing_reports (
-       id, listing_id, reporter_id, reason_code, description, status,
+       id, listing_id, reporter_id, reason_code, reason_codes, description, status,
        resolution_summary, reviewed_by, reviewed_at
      ) VALUES
-       ($1::uuid, $5::uuid, $6::uuid, 'MISLEADING', 'The photos do not match the studio.', 'OPEN', NULL, NULL, NULL),
-       ($2::uuid, $5::uuid, $7::uuid, 'OTHER', 'The rent on the listing looks wrong.', 'REVIEWING', NULL, NULL, NULL),
-       ($3::uuid, $5::uuid, $8::uuid, 'OTHER', 'This listing should no longer be public.', 'RESOLVED', 'The listing was suspended.', $9::uuid, now()),
-       ($4::uuid, $10::uuid, $8::uuid, 'OTHER', 'Hidden listing report.', 'DISMISSED', 'The listing is not public.', $9::uuid, now())`,
+       ($1::uuid, $5::uuid, $6::uuid, 'MISLEADING', ARRAY['MISLEADING']::text[], 'The photos do not match the studio.', 'OPEN', NULL, NULL, NULL),
+       ($2::uuid, $5::uuid, $7::uuid, 'OTHER', ARRAY['OTHER']::text[], 'The rent on the listing looks wrong.', 'REVIEWING', NULL, NULL, NULL),
+       ($3::uuid, $5::uuid, $8::uuid, 'OTHER', ARRAY['OTHER']::text[], 'This listing should no longer be public.', 'RESOLVED', 'The listing was suspended.', $9::uuid, now()),
+       ($4::uuid, $10::uuid, $8::uuid, 'OTHER', ARRAY['OTHER']::text[], 'Hidden listing report.', 'DISMISSED', 'The listing is not public.', $9::uuid, now())`,
     seedId(11, 1),
     seedId(11, 2),
     seedId(11, 3),

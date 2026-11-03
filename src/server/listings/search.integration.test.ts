@@ -119,10 +119,11 @@ describe.skipIf(!databaseUrl)("public listing search", { timeout: 30_000 }, () =
   });
 
   it("labels an occupied listing as free from the next day and keeps its rent", async () => {
-    const listing = await publishedListing({ units: [{ rent: 3_800_000 }] });
+    const location = `rent003-occupied-${crypto.randomUUID()}`;
+    const listing = await publishedListing({ ward: location, units: [{ rent: 3_800_000 }] });
     await blockUnit(listing.unitIds[0], "2026-11-01", "2027-05-01");
 
-    const page = await searchListings(filters("location=Hải Châu"), TODAY);
+    const page = await searchListings(filters(`location=${encodeURIComponent(location)}`), TODAY);
     const card = page.items.find((item) => item.id === listing.listingId);
     expect(card?.availabilityLabel).toBe("Trống từ 02/05/2027");
     expect(card?.rentMin).toBe("3800000");
@@ -131,12 +132,13 @@ describe.skipIf(!databaseUrl)("public listing search", { timeout: 30_000 }, () =
   });
 
   it("shows a later block as still free until that block", async () => {
-    const listing = await publishedListing();
+    const location = `rent003-upcoming-${crypto.randomUUID()}`;
+    const listing = await publishedListing({ ward: location });
     await blockUnit(listing.unitIds[0], "2027-02-01", "2027-08-01");
 
     const detail = await getPublicListing(listing.listingId, filters(), TODAY);
     expect(detail?.units[0]?.availabilityLabel).toContain("Còn trống đến");
-    const page = await searchListings(filters("location=Hải Châu"), TODAY);
+    const page = await searchListings(filters(`location=${encodeURIComponent(location)}`), TODAY);
     expect(page.items.find((item) => item.id === listing.listingId)?.availabilityLabel).toBe(
       "Còn trống đến 31/01/2027",
     );

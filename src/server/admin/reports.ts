@@ -28,7 +28,7 @@ export async function getAdminReports(filters: { page?: number; q?: string; stat
       skip: (page - 1) * ADMIN_REPORT_PAGE_SIZE,
       take: ADMIN_REPORT_PAGE_SIZE,
       select: {
-        id: true, reasonCode: true, description: true, status: true, createdAt: true,
+        id: true, reasonCode: true, reasonCodes: true, description: true, status: true, createdAt: true,
         listing: { select: { id: true, title: true, property: { select: { name: true, owner: { select: { fullName: true } } } } } },
         reporter: { select: { fullName: true, email: true } },
       },

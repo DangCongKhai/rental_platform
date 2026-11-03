@@ -34,6 +34,7 @@ async function reportFixture(publicationStatus: "PUBLISHED" | "HIDDEN" = "PUBLIS
       listingId: fixture.listingId,
       reporterId: fixture.owner.profileId,
       reasonCode: "FRAUD",
+      reasonCodes: ["FRAUD"],
       description: "Báo cáo thử nghiệm RENT-016.",
       status: "OPEN",
       resolutionSummary: null,

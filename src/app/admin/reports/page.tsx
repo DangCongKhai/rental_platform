@@ -30,7 +30,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
         <td className="whitespace-nowrap px-4 py-4 text-xs">{report.createdAt.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
         <td className="break-words px-4 py-4"><Link href={`/admin/reports/${report.id}`} className="font-semibold text-[#1c4d78] hover:underline">{report.listing.title || "Chưa đặt tiêu đề"}</Link><p className="mt-1 text-xs text-[#718096]">{report.listing.property.name}</p></td>
         <td className="break-words px-4 py-4">{report.reporter.fullName}<p className="mt-1 text-xs text-[#718096]">{report.reporter.email}</p></td>
-        <td className="px-4 py-4">{getReportReasonLabel(report.reasonCode)}</td><td className="break-words px-4 py-4 text-[#627184]">{report.description}</td>
+        <td className="px-4 py-4">{(report.reasonCodes.length ? report.reasonCodes : [report.reasonCode]).map(getReportReasonLabel).join(", ")}</td><td className="break-words px-4 py-4 text-[#627184]">{report.description}</td>
         <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusColors[report.status] ?? "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200"}`}>{labels[report.status] ?? report.status}</span><Link href={`/admin/reports/${report.id}`} className="mt-2 block text-xs font-semibold text-[#1c4d78] hover:underline">Mở báo cáo →</Link></td>
       </tr>)}</tbody>
     </table>

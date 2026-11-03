@@ -189,14 +189,17 @@ export async function saveListing(propertyId: string, input: unknown) {
         select: { id: true },
       });
       const eventKey = `listing-updated-during-review:${current.id}:${randomUUID()}`;
-      for (const admin of admins) {
-        await createNotification(tx, {
-          recipientId: admin.id,
-          audience: "ADMIN",
-          eventKey,
-          title: "Tin đăng đang duyệt đã thay đổi",
-          body: `Tin “${listing.title || "Chưa đặt tiêu đề"}” đã được chủ nhà cập nhật. Vui lòng xem lại nội dung mới nhất.`,
-          link: { resourceType: "listing", resourceId: listing.id },
+      if (admins.length > 0) {
+        await tx.notification.createMany({
+          data: admins.map((admin) => ({
+            recipientId: admin.id,
+            audience: "ADMIN",
+            eventKey,
+            title: "Tin đăng đang duyệt đã thay đổi",
+            body: `Tin “${listing.title || "Chưa đặt tiêu đề"}” đã được chủ nhà cập nhật. Vui lòng xem lại nội dung mới nhất.`,
+            resourceType: "listing",
+            resourceId: listing.id,
+          })),
         });
       }
     }
@@ -205,7 +208,7 @@ export async function saveListing(propertyId: string, input: unknown) {
       throw new ActionError("CONFLICT", `Không thể lưu vì tin đang công khai sẽ thiếu nội dung bắt buộc. ${issuesAsMessage(issues)}`);
     }
     return { id: listing.id, contentRevision: locked[0].contentRevision + (contentChanged ? 1 : 0), issues };
-  }));
+  }, { timeout: 15_000 }));
   if (result.ok && result.data) revalidateListingPaths(propertyId, result.data.id);
   return result;
 }
@@ -309,18 +312,19 @@ export async function submitListing(listingId: string) {
     const admins = await tx.userProfile.findMany({ where: { isAdmin: true, accountStatus: "ACTIVE" }, select: { id: true } });
     if (admins.length === 0) throw new ActionError("CONFLICT", "Chưa có quản trị viên đang hoạt động để nhận yêu cầu xét duyệt.");
     const eventKey = `listing-submitted:${submitted.id}:${randomUUID()}`;
-    for (const admin of admins) {
-      await createNotification(tx, {
+    await tx.notification.createMany({
+      data: admins.map((admin) => ({
         recipientId: admin.id,
         audience: "ADMIN",
         eventKey,
         title: "Tin đăng cần duyệt",
         body: `Tin “${submitted.title || "Chưa đặt tiêu đề"}” đã được gửi để xét duyệt.`,
-        link: { resourceType: "listing", resourceId: submitted.id },
-      });
-    }
+        resourceType: "listing",
+        resourceId: submitted.id,
+      })),
+    });
     return { propertyId: listing.propertyId };
-  }));
+  }, { timeout: 15_000 }));
   if (result.ok && result.data) revalidateListingPaths(result.data.propertyId, listingId);
   return result;
 }
