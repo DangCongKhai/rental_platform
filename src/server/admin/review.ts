@@ -10,7 +10,7 @@ export async function getAdminDashboard() {
   await requireAdmin();
   const [pendingListings, openReports, suspendedListings, oldest, recent] = await Promise.all([
     prisma.listing.count({ where: { moderationStatus: "PENDING", archivedAt: null } }),
-    prisma.listingReport.count({ where: { status: "OPEN" } }),
+    prisma.listingReport.count({ where: { status: { in: ["OPEN", "REVIEWING"] } } }),
     prisma.listing.count({ where: { adminSuspendedAt: { not: null }, archivedAt: null } }),
     prisma.listing.findMany({
       where: { moderationStatus: "PENDING", archivedAt: null },
