@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
+import { NavbarVisibility } from "@/components/layout/navbar-visibility";
 import {
   FavouriteBoundary,
   FavouriteBoundaryFallback,
@@ -27,7 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="relative flex min-h-svh flex-col">
-        <Navbar />
+        <Suspense fallback={null}>
+          <NavbarVisibility>
+            <Navbar />
+          </NavbarVisibility>
+        </Suspense>
         <Suspense
           fallback={
             <FavouriteBoundaryFallback>{children}</FavouriteBoundaryFallback>

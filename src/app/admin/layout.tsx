@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -23,6 +24,13 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
         <span className="hidden text-xs text-white/60 md:block">Chỉ dành cho nhân viên · công cụ kiểm duyệt rentOS</span>
         <span className="ml-auto grid size-8 place-items-center rounded-full bg-[#f5a400] text-sm font-bold text-[#172331]">{user.fullName.slice(0, 1).toUpperCase()}</span>
         <span className="text-sm font-semibold">{user.fullName}</span>
+        <Link
+          href="/owner"
+          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/25 px-3 text-xs font-semibold hover:bg-white/10"
+        >
+          <span aria-hidden="true">↙</span>
+          Thoát chế độ Admin
+        </Link>
       </header>
       <div className="flex min-h-0 flex-1">
         <Suspense fallback={<AdminSidebarFallback userName={user.fullName} />}>
