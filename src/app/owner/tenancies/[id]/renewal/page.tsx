@@ -1,9 +1,29 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTenancy } from "@/server/tenancies/read";
 import { RenewalProposalForm } from "@/components/tenancies/renewal-proposal-form";
 
-export default async function RenewalPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ requestId?: string }> }) {
+export default function RenewalPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ requestId?: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <section
+          aria-busy="true"
+          className="mx-auto min-h-80 max-w-3xl animate-pulse rounded-2xl border border-line bg-white p-6"
+        >
+          <div className="h-4 w-36 rounded bg-slate-200" />
+          <div className="mt-5 h-8 w-56 rounded bg-slate-200" />
+          <div className="mt-8 h-48 rounded-xl bg-slate-100" />
+        </section>
+      }
+    >
+      <RenewalPageContent params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function RenewalPageContent({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ requestId?: string }> }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const tenancy = await getTenancy(id);
   if (!tenancy?.isOwner) notFound();
