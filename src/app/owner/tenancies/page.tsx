@@ -64,9 +64,7 @@ async function Content({
   return (
     <section className="space-y-5">
       <header>
-        <h1 className="text-[28px] font-bold">
-          Kỳ thuê và hợp đồng
-        </h1>
+        <h1 className="text-[28px] font-bold">Kỳ thuê và hợp đồng</h1>
 
         <p className="mt-1 text-sm text-muted">
           Ngày dọn vào và dọn ra, giá thuê, tiền cọc và phiên bản hợp đồng của
@@ -118,9 +116,7 @@ async function Content({
 
             const query = params.toString();
 
-            return query
-              ? `/owner/tenancies?${query}`
-              : "/owner/tenancies";
+            return query ? `/owner/tenancies?${query}` : "/owner/tenancies";
           }}
         />
       </div>

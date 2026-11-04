@@ -1,4 +1,3 @@
-
 import { connection } from "next/server";
 
 import { requireUser } from "./auth";

@@ -110,9 +110,7 @@ export default async function OwnerPropertiesPage({
   const page =
     Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
 
-  const unitStatus = unitStatuses.find(
-    (status) => status === unitStatusValue,
-  );
+  const unitStatus = unitStatuses.find((status) => status === unitStatusValue);
 
   const result = await getMyProperties(showArchived, page, { unitStatus });
   const properties = result.properties;

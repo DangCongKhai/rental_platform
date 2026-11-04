@@ -170,10 +170,7 @@ const tenancyListInclude = {
 } as const;
 
 export type OwnerTenancyTab =
-  | "all"
-  | "waiting-tenant"
-  | "revision-needed"
-  | "renewal-pending";
+  "all" | "waiting-tenant" | "revision-needed" | "renewal-pending";
 
 const ownerTenancyFilters = {
   all: {},
@@ -184,10 +181,7 @@ const ownerTenancyFilters = {
   },
 } satisfies Record<OwnerTenancyTab, Prisma.TenancyWhereInput>;
 
-async function listTenancies(
-  where: Prisma.TenancyWhereInput,
-  page = 1,
-) {
+async function listTenancies(where: Prisma.TenancyWhereInput, page = 1) {
   const safePage =
     Number.isInteger(page) && page > 0 && page <= 100000 ? page : 1;
   const [tenancies, total] = await Promise.all([

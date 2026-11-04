@@ -142,7 +142,7 @@ async function Overview() {
             />
           </div>
 
-                    <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 xl:grid-cols-2">
             <section className="rounded-2xl border border-line bg-white p-5">
               <h2 className="mb-3 font-bold">Căn/phòng theo tình trạng</h2>
               <div className="space-y-2">

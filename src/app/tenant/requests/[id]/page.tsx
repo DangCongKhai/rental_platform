@@ -85,7 +85,11 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
                 Xem đề xuất hợp đồng
               </Link>
             )}
-            {r.status === "PENDING" && <div className="mt-4"><WithdrawRequestButton id={r.id} /></div>}
+            {r.status === "PENDING" && (
+              <div className="mt-4">
+                <WithdrawRequestButton id={r.id} />
+              </div>
+            )}
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
             <h2 className="mb-4 text-lg font-bold">Thông tin bạn đã gửi</h2>

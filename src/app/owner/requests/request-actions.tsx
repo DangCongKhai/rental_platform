@@ -23,12 +23,14 @@ export function RequestActions({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      {showView && <Link
-        href={`/owner/requests/${id}`}
-        className={buttonClass({ variant: "secondary" })}
-      >
-        Xem
-      </Link>}
+      {showView && (
+        <Link
+          href={`/owner/requests/${id}`}
+          className={buttonClass({ variant: "secondary" })}
+        >
+          Xem
+        </Link>
+      )}
       {pending && (
         <button
           type="button"

@@ -29,7 +29,10 @@ export async function evaluateDueRentalRequests(scope: {
   const byProperty = new Map<string, string[]>();
   for (const candidate of candidates) {
     const propertyId = candidate.listing.propertyId;
-    byProperty.set(propertyId, [...(byProperty.get(propertyId) ?? []), candidate.id]);
+    byProperty.set(propertyId, [
+      ...(byProperty.get(propertyId) ?? []),
+      candidate.id,
+    ]);
   }
 
   for (const [propertyId, requestIds] of byProperty) {
@@ -45,7 +48,11 @@ export async function evaluateDueRentalRequests(scope: {
       for (const unit of units) {
         await tx.$queryRaw`SELECT id FROM units WHERE id = ${unit.id}::uuid FOR UPDATE`;
       }
-      await releaseExpiredHolds(tx, units.map((unit) => unit.id), new Date());
+      await releaseExpiredHolds(
+        tx,
+        units.map((unit) => unit.id),
+        new Date(),
+      );
       for (const id of requestIds) {
         // Lock/re-read after inventory locks so a concurrent proposal or withdrawal wins cleanly.
         await tx.$queryRaw`SELECT id FROM rental_requests WHERE id = ${id}::uuid FOR UPDATE`;

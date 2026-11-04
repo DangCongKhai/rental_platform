@@ -52,9 +52,7 @@ export async function getMyProperties(
           },
         }
       : {}),
-    ...(hasListingFilter
-      ? { listings: { some: listingWhere } }
-      : {}),
+    ...(hasListingFilter ? { listings: { some: listingWhere } } : {}),
   };
 
   const [properties, total] = await Promise.all([

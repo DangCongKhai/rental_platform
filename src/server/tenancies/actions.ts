@@ -269,7 +269,11 @@ export async function confirmContract(contractId: string, sha256: string) {
         if (!renewal) conflict("Yêu cầu gia hạn không còn hiệu lực.");
         await tx.tenancyRenewalRequest.update({
           where: { id: renewal.id },
-          data: { status: "ACCEPTED", reviewedById: user.profileId, reviewedAt: now },
+          data: {
+            status: "ACCEPTED",
+            reviewedById: user.profileId,
+            reviewedAt: now,
+          },
         });
       }
       await notify(

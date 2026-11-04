@@ -27,7 +27,10 @@ import {
   cleanupPublicListings,
   publishedListing,
 } from "./listings/public-listing-fixture";
-import { insertAccountProfile, deleteAccountProfile } from "./account-test-fixtures";
+import {
+  insertAccountProfile,
+  deleteAccountProfile,
+} from "./account-test-fixtures";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;
