@@ -1,8 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { Suspense } from "react";
 import { Logo } from "@/components/ui/logo";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import {
+  AdminSidebar,
+  AdminSidebarFallback,
+} from "@/components/admin/admin-sidebar";
 import { requireUser } from "@/server/auth";
 
 export const instant = false;
@@ -20,10 +23,11 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
         <span className="hidden text-xs text-white/60 md:block">Chỉ dành cho nhân viên · công cụ kiểm duyệt rentOS</span>
         <span className="ml-auto grid size-8 place-items-center rounded-full bg-[#f5a400] text-sm font-bold text-[#172331]">{user.fullName.slice(0, 1).toUpperCase()}</span>
         <span className="text-sm font-semibold">{user.fullName}</span>
-        <Link href="/owner" className="rounded-lg border border-white/20 px-3 py-2 text-xs hover:bg-white/10">Thoát chế độ Admin</Link>
       </header>
       <div className="flex min-h-0 flex-1">
-        <AdminSidebar />
+        <Suspense fallback={<AdminSidebarFallback userName={user.fullName} />}>
+          <AdminSidebar userName={user.fullName} />
+        </Suspense>
         <main className="min-w-0 flex-1 p-6 lg:p-8">{children}</main>
       </div>
     </div>
