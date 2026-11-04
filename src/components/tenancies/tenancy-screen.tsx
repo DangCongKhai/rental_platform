@@ -22,6 +22,7 @@ import {
 
 import { EndCancelControls } from "./end-cancel-controls";
 import { canCancelConfirmedTenancy } from "@/domain/tenancies/end-cancel";
+import { OwnerRenewalRequests, TenantRenewalControls } from "./renewal-controls";
 
 const money = (value: string) => `${Number(value).toLocaleString("vi-VN")} ₫`;
 
@@ -123,6 +124,14 @@ export async function TenancyScreen({
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
+          {owner && !review && <OwnerRenewalRequests tenancyId={t.id} renewals={t.renewalRequests} />}
+          {!owner && !review && <TenantRenewalControls
+            tenancyId={t.id}
+            status={t.status}
+            confirmedEndDate={t.confirmedEndDate?.toISOString().slice(0, 10) ?? null}
+            currentRent={t.currentTerms?.monthlyRent ?? null}
+            renewals={t.renewalRequests}
+          />}
           <section className="rounded-2xl border border-line bg-white p-6">
             <h2 className="mb-4 text-lg font-bold">
               {review

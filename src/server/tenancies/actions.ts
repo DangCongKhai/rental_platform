@@ -1,5 +1,5 @@
 "use server";
-import { validate, z } from "zod";
+import { z } from "zod";
 import type { Prisma } from "../../../generated/prisma/client";
 import { meetsMinimumTerm } from "@/domain/tenancies/calendar-months";
 import { requireUser } from "../auth";
@@ -261,6 +261,17 @@ export async function confirmContract(contractId: string, sha256: string) {
           confirmationExpiresAt: null,
         },
       });
+      if (c.type === "RENEWAL" && c.renewalRequestId) {
+        const renewal = await tx.tenancyRenewalRequest.findFirst({
+          where: { id: c.renewalRequestId, tenancyId: t.id, status: "PENDING" },
+          select: { id: true },
+        });
+        if (!renewal) conflict("Yêu cầu gia hạn không còn hiệu lực.");
+        await tx.tenancyRenewalRequest.update({
+          where: { id: renewal.id },
+          data: { status: "ACCEPTED", reviewedById: user.profileId, reviewedAt: now },
+        });
+      }
       await notify(
         tx,
         t,

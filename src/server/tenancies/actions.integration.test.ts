@@ -57,6 +57,7 @@ import {
   recordMoveIn,
 } from "./actions";
 import { getContractDownloadUrl, getTenancy } from "./read";
+import { requestRenewal, proposeRenewal, rejectRenewal, withdrawRenewal } from "./renewal-actions";
 
 const users: string[] = [];
 const tenantIds: string[] = [];
@@ -77,6 +78,9 @@ afterEach(async () => {
     const ts = await tx.tenancy.findMany({
       where: { tenantId: { in: tenantIds } },
       select: { id: true },
+    });
+    await tx.tenancyRenewalRequest.deleteMany({
+      where: { tenancyId: { in: ts.map((t) => t.id) } },
     });
     await tx.tenancyContract.deleteMany({
       where: { tenancyId: { in: ts.map((t) => t.id) } },
@@ -460,6 +464,49 @@ describe.skipIf(!process.env.DATABASE_URL)(
       } finally {
         vi.useRealTimers();
       }
+    });
+    it("requests, proposes and mutually confirms a renewal without changing current terms early", async () => {
+      const { t, c, a, listing } = await proposal();
+      actor.profileId = a.id;
+      expect((await confirmContract(c.id, c.documentSha256)).ok).toBe(true);
+      const before = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } });
+      const asked = await requestRenewal(t.id, { requestedEndDate: "2091-06-01", proposedMonthlyRent: 4_200_000, message: "Xin gia hạn" });
+      expect(asked.ok).toBe(true);
+      const renewal = await prisma.tenancyRenewalRequest.findFirstOrThrow({ where: { tenancyId: t.id, status: "PENDING" } });
+      const afterRequest = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } });
+      expect(afterRequest.confirmedEndDate).toEqual(before.confirmedEndDate);
+      actor.profileId = listing.owner.profileId;
+      const offer = await proposeRenewal(t.id, { renewalRequestId: renewal.id, monthlyRent: 4_000_000 }, pdf());
+      expect(offer.ok).toBe(true);
+      const pending = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id }, include: { pendingContract: true } });
+      expect(pending.pendingContract?.type).toBe("RENEWAL");
+      expect(pending.confirmedEndDate).toEqual(before.confirmedEndDate);
+      actor.profileId = a.id;
+      expect((await confirmContract(pending.pendingContract!.id, pending.pendingContract!.documentSha256)).ok).toBe(true);
+      const confirmed = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } });
+      expect(confirmed.confirmedEndDate).toEqual(new Date("2091-06-01T00:00:00.000Z"));
+      expect((await prisma.tenancyRenewalRequest.findUniqueOrThrow({ where: { id: renewal.id } })).status).toBe("ACCEPTED");
+      expect(await prisma.tenancyContract.count({ where: { tenancyId: t.id, type: "RENEWAL", tenantConfirmedAt: { not: null } } })).toBe(1);
+    });
+    it("withdraws or rejects a renewal and restores the confirmed reservation envelope", async () => {
+      const { t, c, a, listing } = await proposal();
+      actor.profileId = a.id;
+      expect((await confirmContract(c.id, c.documentSha256)).ok).toBe(true);
+      const original = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } });
+      await requestRenewal(t.id, { requestedEndDate: "2091-06-01", proposedMonthlyRent: 4_200_000 });
+      let renewal = await prisma.tenancyRenewalRequest.findFirstOrThrow({ where: { tenancyId: t.id, status: "PENDING" } });
+      expect((await withdrawRenewal(renewal.id, "Đổi kế hoạch")).ok).toBe(true);
+      expect((await prisma.tenancyRenewalRequest.findUniqueOrThrow({ where: { id: renewal.id } })).status).toBe("CANCELLED");
+      await requestRenewal(t.id, { requestedEndDate: "2091-07-01", proposedMonthlyRent: 4_200_000 });
+      renewal = await prisma.tenancyRenewalRequest.findFirstOrThrow({ where: { tenancyId: t.id, status: "PENDING" } });
+      actor.profileId = listing.owner.profileId;
+      expect((await proposeRenewal(t.id, { renewalRequestId: renewal.id, monthlyRent: 4_000_000 }, pdf())).ok).toBe(true);
+      expect((await rejectRenewal(renewal.id, "Không thể gia hạn theo ngày đề nghị.")).ok).toBe(true);
+      const saved = await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } });
+      expect(saved.pendingContractId).toBeNull();
+      expect(saved.confirmedEndDate).toEqual(original.confirmedEndDate);
+      expect(saved.blockedEndDate).toEqual(original.confirmedEndDate);
+      expect((await prisma.tenancyRenewalRequest.findUniqueOrThrow({ where: { id: renewal.id } })).status).toBe("REJECTED");
     });
   },
 );

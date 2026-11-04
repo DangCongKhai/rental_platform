@@ -53,7 +53,9 @@ Actions never take the actor's id, `owner_id` or `is_admin` from input. Enquiry 
 Every action returns `{ ok: true, data? }` or `{ ok: false, error, fieldErrors? }`. Use these error kinds consistently: not signed in, not found (also used instead of "forbidden" to avoid revealing records), conflict (stale or overlapping state, e.g. database 23505/23P01), validation, too many requests, and storage unavailable. Lists paginate and load related rows in one query.
 
 ## Time-based rules
-Expired 48-hour holds and 15-day-old requests are handled lazily inside the actions and page loads above (see FR83 and FR85). No worker or scheduler is deployed.
+Expired 48-hour holds and 15-day-old requests are handled lazily inside the actions and page loads above (see FR83 and FR85). Opening an owner or tenant request inbox rechecks each due PENDING request against all non-archived, READY, marketed units for the complete requested date interval. If any unit fits, the request stays pending and its availability check time is recorded; if none fit, it closes as `REJECTED` with `NO_AVAILABLE_UNIT` and the tenant is notified. No worker or scheduler is deployed.
+
+Renewal requests do not change current tenancy dates or terms. The owner creates a new immutable `RENEWAL` contract version with the next-day start date; only the tenant's mutual confirmation updates the confirmed end date. Withdrawing or rejecting a pending renewal clears its pending contract pointer and restores the availability hold to the currently confirmed interval.
 
 ## Fallback if synchronous processing is not enough
 Only if a rule must run without a user action (for example, sending emails or expiring holds nobody opens), add a small Route Handler and let Supabase call it. There is still no separate worker to deploy:
