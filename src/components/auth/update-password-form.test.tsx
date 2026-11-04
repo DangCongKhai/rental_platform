@@ -1,6 +1,12 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { UpdatePasswordForm } from "./update-password-form";
 
 const { exchangeCodeForSession, updateUser, getSession } = vi.hoisted(() => ({
@@ -33,7 +39,11 @@ function fillAndSubmit() {
 }
 
 it("does not create a session until the new password is submitted", async () => {
-  window.history.replaceState({}, "", "/auth/update-password?code=recovery-code");
+  window.history.replaceState(
+    {},
+    "",
+    "/auth/update-password?code=recovery-code",
+  );
   exchangeCodeForSession.mockResolvedValue({ error: null });
   updateUser.mockReturnValue(new Promise(() => {}));
   render(<UpdatePasswordForm />);

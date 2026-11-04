@@ -39,6 +39,8 @@ export async function getPropertyMedia(propertyId: string) {
     mimeType: item.mimeType,
     sizeBytes: Number(item.sizeBytes),
     signedUrl: urls[index],
-    assignedUnitIds: item.unitAssignments.map((assignment) => assignment.unitId),
+    assignedUnitIds: item.unitAssignments.map(
+      (assignment) => assignment.unitId,
+    ),
   }));
 }

@@ -45,8 +45,11 @@ describe.skipIf(!process.env.DATABASE_URL)("owner rejects a request", () => {
     const blank = await rejectRequest(request.id, "  ");
     expect(blank.ok).toBe(false);
     expect(
-      (await prisma.rentalRequest.findUniqueOrThrow({ where: { id: request.id } }))
-        .status,
+      (
+        await prisma.rentalRequest.findUniqueOrThrow({
+          where: { id: request.id },
+        })
+      ).status,
     ).toBe("PENDING");
 
     const result = await rejectRequest(request.id, "Đã cho người khác thuê");

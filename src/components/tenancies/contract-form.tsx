@@ -37,12 +37,7 @@ export function ContractForm({
 }) {
   const steps = revision
     ? ["Điều khoản", "Quy định đã thỏa thuận", "Tài liệu hợp đồng"]
-    : [
-        "Chọn căn",
-        "Điều khoản",
-        "Quy định đã thỏa thuận",
-        "Tài liệu hợp đồng",
-      ];
+    : ["Chọn căn", "Điều khoản", "Quy định đã thỏa thuận", "Tài liệu hợp đồng"];
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState(
     preferredUnitId ??
@@ -245,7 +240,10 @@ export function ContractForm({
                   : "Gửi đề xuất kỳ thuê"}
             </Button>
           ) : (
-            <Button type="button" onClick={() => setStep((current) => current + 1)}>
+            <Button
+              type="button"
+              onClick={() => setStep((current) => current + 1)}
+            >
               Tiếp tục
             </Button>
           )}

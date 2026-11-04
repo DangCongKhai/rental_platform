@@ -6,7 +6,10 @@ export async function GET(
 ) {
   const { provinceCode } = await params;
   if (!/^\d{1,3}$/u.test(provinceCode)) {
-    return Response.json({ error: "Mã tỉnh/thành không hợp lệ." }, { status: 400 });
+    return Response.json(
+      { error: "Mã tỉnh/thành không hợp lệ." },
+      { status: 400 },
+    );
   }
 
   try {

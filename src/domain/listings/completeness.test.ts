@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { checkListingCompleteness, type ListingCompletenessInput } from "./completeness";
+import {
+  checkListingCompleteness,
+  type ListingCompletenessInput,
+} from "./completeness";
 
 const completePackage: ListingCompletenessInput = {
   rentalArrangement: "SEPARATE_UNITS",
@@ -11,18 +14,20 @@ const completePackage: ListingCompletenessInput = {
   hasSelectedSharedPhoto: true,
   hasSelectedCover: true,
   policiesValid: true,
-  units: [{
-    id: "unit-1",
-    label: "S201",
-    isMarketed: true,
-    description: "Studio rộng rãi.",
-    areaM2: 24,
-    advertisedMonthlyRent: 3_800_000,
-    deposit: 3_800_000,
-    minimumRentalMonths: 3,
-    maxOccupants: 2,
-    hasSelectedPhoto: true,
-  }],
+  units: [
+    {
+      id: "unit-1",
+      label: "S201",
+      isMarketed: true,
+      description: "Studio rộng rãi.",
+      areaM2: 24,
+      advertisedMonthlyRent: 3_800_000,
+      deposit: 3_800_000,
+      minimumRentalMonths: 3,
+      maxOccupants: 2,
+      hasSelectedPhoto: true,
+    },
+  ],
 };
 
 describe("checkListingCompleteness", () => {
@@ -44,21 +49,29 @@ describe("checkListingCompleteness", () => {
   it("names each marketed unit missing its own selected photo", () => {
     const issues = checkListingCompleteness({
       ...completePackage,
-      units: completePackage.units.map((unit) => ({ ...unit, hasSelectedPhoto: false })),
+      units: completePackage.units.map((unit) => ({
+        ...unit,
+        hasSelectedPhoto: false,
+      })),
     });
 
-    expect(issues).toContainEqual(expect.objectContaining({
-      field: "unit.photos",
-      unitLabel: "S201",
-      message: expect.stringContaining("S201"),
-    }));
+    expect(issues).toContainEqual(
+      expect.objectContaining({
+        field: "unit.photos",
+        unitLabel: "S201",
+        message: expect.stringContaining("S201"),
+      }),
+    );
   });
 
   it("uses the property gallery for a whole-space listing without requiring unit photo assignment", () => {
     const issues = checkListingCompleteness({
       ...completePackage,
       rentalArrangement: "WHOLE_SPACE",
-      units: completePackage.units.map((unit) => ({ ...unit, hasSelectedPhoto: false })),
+      units: completePackage.units.map((unit) => ({
+        ...unit,
+        hasSelectedPhoto: false,
+      })),
     });
 
     expect(issues).toEqual([]);
@@ -73,9 +86,17 @@ describe("checkListingCompleteness", () => {
 
     const unitIssues = checkListingCompleteness({
       ...completePackage,
-      units: [{ ...completePackage.units[0]!, advertisedMonthlyRent: 0, minimumRentalMonths: 2 }],
+      units: [
+        {
+          ...completePackage.units[0]!,
+          advertisedMonthlyRent: 0,
+          minimumRentalMonths: 2,
+        },
+      ],
     });
     expect(unitIssues.map((issue) => issue.field)).toContain("unit.rent");
-    expect(unitIssues.map((issue) => issue.field)).toContain("unit.minimumRentalMonths");
+    expect(unitIssues.map((issue) => issue.field)).toContain(
+      "unit.minimumRentalMonths",
+    );
   });
 });

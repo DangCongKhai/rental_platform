@@ -38,11 +38,9 @@ function parseTerms(input: unknown) {
       issue.message.includes("3 tháng"),
     );
     if (shortTerm) {
-      throw new ActionError(
-        "CONFLICT",
-        "Thời hạn thuê tối thiểu 3 tháng.",
-        { endDate: "Thời hạn thuê tối thiểu 3 tháng." },
-      );
+      throw new ActionError("CONFLICT", "Thời hạn thuê tối thiểu 3 tháng.", {
+        endDate: "Thời hạn thuê tối thiểu 3 tháng.",
+      });
     }
     conflict(
       "Kiểm tra ngày thuê, giá thuê và tiền cọc. Thời hạn tối thiểu 3 tháng.",

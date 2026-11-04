@@ -35,10 +35,6 @@ async function ListingDetailContent({
   const user = await getCurrentUser();
   const profile = user ? await getMyProfile() : undefined;
   return (
-    <ListingDetailScreen
-      id={id}
-      profile={profile}
-      isSignedIn={user != null}
-    />
+    <ListingDetailScreen id={id} profile={profile} isSignedIn={user != null} />
   );
 }

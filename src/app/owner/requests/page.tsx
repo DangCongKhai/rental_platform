@@ -222,9 +222,14 @@ async function Content({
         Sắp xếp mục cũ nhất lên trước. Dùng Xem để mở chi tiết.
       </p>
       {result.total > result.pageSize && (
-        <nav aria-label="Phân trang" className="flex items-center gap-5 text-sm">
+        <nav
+          aria-label="Phân trang"
+          className="flex items-center gap-5 text-sm"
+        >
           {page > 1 && (
-            <Link href={href(tab, page - 1, result.propertyId)}>Trang trước</Link>
+            <Link href={href(tab, page - 1, result.propertyId)}>
+              Trang trước
+            </Link>
           )}
           <span>
             Trang {page} · {result.total} yêu cầu

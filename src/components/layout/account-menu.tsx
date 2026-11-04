@@ -28,7 +28,15 @@ function fromSession(user: User): CurrentUser | null {
     typeof fullName === "string" && fullName.trim()
       ? fullName.trim()
       : user.email.split("@")[0];
-  return { id: user.id, email: user.email, name, initials: initialsOf(name) };
+  return {
+    id: user.id,
+    email: user.email,
+    name,
+    initials: initialsOf(name),
+    // The browser session does not carry the trusted profile role. The server
+    // refresh replaces this with the role from user_profiles.
+    isAdmin: false,
+  };
 }
 
 export function AccountMenu() {
@@ -51,7 +59,10 @@ export function AccountMenu() {
       const result = await previewNavbarAccount();
       remember(result.user);
       if (!result.user) return;
-      setLoaded({ userId: result.user.id, notifications: result.notifications });
+      setLoaded({
+        userId: result.user.id,
+        notifications: result.notifications,
+      });
     } catch {
       setLoaded((current) =>
         current ? { ...current, notifications: [] } : current,

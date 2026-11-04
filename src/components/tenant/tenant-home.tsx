@@ -141,9 +141,7 @@ export function TenantHome({
           <QuickLink href="/listings">Khám phá căn hộ</QuickLink>
           <QuickLink href="/tenant/requests">Xem yêu cầu của tôi</QuickLink>
           <QuickLink
-            href={
-              upcoming ? `/tenant/tenancies/${upcoming.id}` : "#tenancies"
-            }
+            href={upcoming ? `/tenant/tenancies/${upcoming.id}` : "#tenancies"}
           >
             Yêu cầu gia hạn kỳ thuê
           </QuickLink>
@@ -174,9 +172,7 @@ export function TenantHome({
             ))
           )}
         </section>
-        <section
-          className="overflow-hidden rounded-[15px] border border-line bg-white"
-        >
+        <section className="overflow-hidden rounded-[15px] border border-line bg-white">
           <h2 className="px-[22px] py-[18px] text-lg font-semibold">
             Hoạt động gần đây
           </h2>
@@ -263,7 +259,9 @@ function UpcomingTenancy({ tenancy }: { tenancy: Tenancy | undefined }) {
         className="scroll-mt-24 rounded-[15px] border border-line bg-white p-6"
       >
         <p className="text-[13px] text-subtle">Kỳ thuê sắp tới</p>
-        <h2 className="mt-2 text-[22px] font-bold">Chưa có kỳ thuê hiện tại.</h2>
+        <h2 className="mt-2 text-[22px] font-bold">
+          Chưa có kỳ thuê hiện tại.
+        </h2>
       </section>
     );
   }
@@ -359,12 +357,16 @@ function RequestRowView({ request }: { request: RequestRow }) {
     >
       <Thumb src={photo} alt="" className="h-[52px] w-[72px] rounded-lg" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-bold">{request.listing.title}</p>
+        <p className="truncate text-[15px] font-bold">
+          {request.listing.title}
+        </p>
         <p className="text-[13px] text-subtle">
           Gửi {requestDate(request.createdAt)} ·{" "}
           {requestDate(request.desiredMoveInDate)} –{" "}
           {requestDate(request.desiredEndDate)}
-          {request.preferredUnit ? ` · ưu tiên ${request.preferredUnit.label}` : ""}
+          {request.preferredUnit
+            ? ` · ưu tiên ${request.preferredUnit.label}`
+            : ""}
         </p>
         {request.tenancy?.confirmationExpiresAt &&
           request.status === "ACCEPTED" && (
@@ -415,13 +417,7 @@ function Stat({
   );
 }
 
-function QuickLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
+function QuickLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
@@ -467,7 +463,13 @@ function Thumb({
   return (
     <span className={`relative block overflow-hidden bg-canvas ${className}`}>
       {src ? (
-        <Image src={src} alt={alt} fill sizes="360px" className="object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="360px"
+          className="object-cover"
+        />
       ) : null}
     </span>
   );

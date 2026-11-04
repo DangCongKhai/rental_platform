@@ -4,7 +4,9 @@ import { MAX_PHOTO_SIZE_BYTES, validatePhotoBytes } from "./media-validation";
 
 describe("validatePhotoBytes", () => {
   it("accepts a decodable image and returns its content type and dimensions", async () => {
-    const png = await sharp({ create: { width: 3, height: 2, channels: 3, background: "red" } })
+    const png = await sharp({
+      create: { width: 3, height: 2, channels: 3, background: "red" },
+    })
       .png()
       .toBuffer();
 
@@ -17,13 +19,17 @@ describe("validatePhotoBytes", () => {
   });
 
   it("rejects text disguised as a JPEG", async () => {
-    await expect(validatePhotoBytes(Buffer.from("not an image"), "image/jpeg")).resolves.toMatchObject({
+    await expect(
+      validatePhotoBytes(Buffer.from("not an image"), "image/jpeg"),
+    ).resolves.toMatchObject({
       ok: false,
     });
   });
 
   it("rejects a claimed MIME type that does not match the decoded image", async () => {
-    const png = await sharp({ create: { width: 1, height: 1, channels: 3, background: "blue" } })
+    const png = await sharp({
+      create: { width: 1, height: 1, channels: 3, background: "blue" },
+    })
       .png()
       .toBuffer();
 
@@ -34,7 +40,9 @@ describe("validatePhotoBytes", () => {
   });
 
   it("rejects an image over the configured byte limit before decoding", async () => {
-    await expect(validatePhotoBytes(Buffer.alloc(MAX_PHOTO_SIZE_BYTES + 1))).resolves.toMatchObject({
+    await expect(
+      validatePhotoBytes(Buffer.alloc(MAX_PHOTO_SIZE_BYTES + 1)),
+    ).resolves.toMatchObject({
       ok: false,
       error: "Mỗi ảnh phải có dung lượng tối đa 10 MB.",
     });

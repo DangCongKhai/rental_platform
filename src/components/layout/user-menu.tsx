@@ -68,6 +68,16 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             </div>
           </div>
           <div className="my-1 h-px bg-line-soft" />
+          {user.isAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center rounded-[10px] px-3 text-[15px] font-medium text-ink-2 hover:bg-brand-soft"
+            >
+              Bảng điều khiển Admin
+            </Link>
+          )}
           {[
             {
               href: "/account/profile",

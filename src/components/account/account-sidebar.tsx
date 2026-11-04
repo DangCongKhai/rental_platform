@@ -54,27 +54,27 @@ function AccountSidebarNav({ pathname }: { pathname: string }) {
               ? pathname === href
               : pathname === href || pathname.startsWith(`${href}/`);
           return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={current ? "page" : undefined}
-            className={cn(
-              "flex min-h-[46px] shrink-0 items-center gap-3 rounded-[9px] px-3 text-[15px] font-medium hover:bg-white/10",
-              current && "bg-[#22313a] text-white",
-            )}
-          >
-            {Icon ? (
-              <Icon className="size-[18px]" />
-            ) : (
-              <Image
-                src="/images/account/reports.svg"
-                alt=""
-                width={18}
-                height={18}
-              />
-            )}
-            {label}
-          </Link>
+            <Link
+              key={href}
+              href={href}
+              aria-current={current ? "page" : undefined}
+              className={cn(
+                "flex min-h-[46px] shrink-0 items-center gap-3 rounded-[9px] px-3 text-[15px] font-medium hover:bg-white/10",
+                current && "bg-[#22313a] text-white",
+              )}
+            >
+              {Icon ? (
+                <Icon className="size-[18px]" />
+              ) : (
+                <Image
+                  src="/images/account/reports.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                />
+              )}
+              {label}
+            </Link>
           );
         })}
       </nav>

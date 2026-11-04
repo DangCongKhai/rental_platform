@@ -1,14 +1,15 @@
-import { prisma } from "@/server/db";
 import { cache } from "react";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
+import { prisma } from "@/server/db";
 
 export type CurrentUser = {
   id: string;
   email: string;
   name: string;
   initials: string;
+  isAdmin: boolean;
 };
 
 function initialsOf(name: string) {
@@ -29,10 +30,12 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   if (!claims?.email) return null;
+  const subject = claims.sub;
+  if (typeof subject !== "string") return null;
 
   const profile = await prisma.userProfile.findUnique({
-    where: { userId: claims.sub },
-    select: { fullName: true },
+    where: { userId: subject },
+    select: { fullName: true, isAdmin: true },
   });
   const fullName = profile?.fullName ?? claims.user_metadata?.full_name;
   const name =
@@ -41,9 +44,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       : claims.email.split("@")[0];
 
   return {
-    id: claims.sub,
+    id: subject,
     email: claims.email,
     name,
     initials: initialsOf(name),
+    isAdmin: profile?.isAdmin ?? false,
   };
 });

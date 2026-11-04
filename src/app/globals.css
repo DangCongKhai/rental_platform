@@ -85,7 +85,12 @@ button {
 
 /* Homepage hero sits under the bar. The bar stays in normal flow on every other page.
    Leaving home keeps that page mounted with display:none, so ignore the hidden copy. */
-body:has([data-home]:not([hidden]):not([style*="display: none"]):not([style*="display:none"])) > header {
+body:has(
+    [data-home]:not([hidden]):not([style*="display: none"]):not(
+        [style*="display:none"]
+      )
+  )
+  > header {
   position: absolute;
   inset-inline: 0;
   top: 0;

@@ -24,7 +24,10 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   return (
     <section className="max-w-[1100px] space-y-6">
       <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-brand">
-        <Link href="/owner/requests" className="inline-flex items-center gap-1.5">
+        <Link
+          href="/owner/requests"
+          className="inline-flex items-center gap-1.5"
+        >
           <span aria-hidden="true">←</span>
           Yêu cầu thuê
         </Link>
