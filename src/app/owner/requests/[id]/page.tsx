@@ -6,6 +6,7 @@ import { getOwnerRentalRequest } from "@/server/tenancies/read";
 import { requestDate } from "@/components/tenant/request-status";
 import { BackLink } from "@/components/back-link";
 import { buttonClass } from "@/components/ui/button";
+import { RequestActions } from "../request-actions";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense
@@ -32,6 +33,15 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         ngoài ứng dụng rentOS. Yêu cầu chuyển sang Đã chấp nhận khi bạn tạo đề
         xuất hợp đồng.
       </p>
+      {r.status !== "PENDING" && (
+        <p className="rounded-2xl border border-line bg-white p-5 text-sm">
+          {r.outcomeReason === "NO_AVAILABLE_UNIT"
+            ? "Yêu cầu đã tự đóng vì không còn căn phù hợp trong khoảng thời gian người thuê chọn."
+            : r.outcomeReason
+              ? `Lý do đóng yêu cầu: ${r.outcomeReason}`
+              : "Yêu cầu này đã được đóng."}
+        </p>
+      )}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-white p-6">
@@ -69,12 +79,15 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         <aside className="space-y-4 rounded-2xl border border-line bg-white p-6">
           <h2 className="text-lg font-bold">Hành động</h2>
           {r.status === "PENDING" ? (
-            <Link
-              className={buttonClass({ className: "w-full" })}
-              href={`/owner/requests/${r.id}/proposal`}
-            >
-              Tạo đề xuất kỳ thuê
-            </Link>
+            <>
+              <Link
+                className={buttonClass({ className: "w-full" })}
+                href={`/owner/requests/${r.id}/proposal`}
+              >
+                Tạo đề xuất kỳ thuê
+              </Link>
+              <RequestActions id={r.id} pending showView={false} />
+            </>
           ) : r.tenancyId ? (
             <Link
               className={buttonClass()}

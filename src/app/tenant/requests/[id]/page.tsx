@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getMyRentalRequest } from "@/server/requests/my-requests";
 import { RequestStatus, requestDate } from "@/components/tenant/request-status";
 import { ConfirmationCountdown } from "@/components/tenancies/confirmation-countdown";
+import { WithdrawRequestButton } from "@/components/tenant/withdraw-request-button";
 export default function RequestPage({
   params,
 }: {
@@ -58,7 +59,9 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
             <p className="font-semibold">
               {r.status === "PENDING"
                 ? "Chủ nhà sẽ liên lạc cho bạn. Chưa có căn nào được giữ chỗ."
-                : (r.outcomeReason ?? "Theo dõi trạng thái yêu cầu của bạn.")}
+                : r.outcomeReason === "NO_AVAILABLE_UNIT"
+                  ? "Yêu cầu đã tự đóng vì không còn căn phù hợp trong khoảng thời gian bạn chọn."
+                  : (r.outcomeReason ?? "Theo dõi trạng thái yêu cầu của bạn.")}
             </p>
             {deadline && (
               <>
@@ -82,6 +85,7 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
                 Xem đề xuất hợp đồng
               </Link>
             )}
+            {r.status === "PENDING" && <div className="mt-4"><WithdrawRequestButton id={r.id} /></div>}
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
             <h2 className="mb-4 text-lg font-bold">Thông tin bạn đã gửi</h2>

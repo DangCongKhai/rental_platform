@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Prisma } from "../../../generated/prisma/client";
 import { requireUser } from "../auth";
 import { prisma } from "../db";
+import { evaluateDueRentalRequests } from "./evaluate-due-requests";
 
 const closed = ["EXPIRED", "CANCELLED", "ENDED"];
 const openWhere: Prisma.RentalRequestWhereInput = {
@@ -39,6 +40,7 @@ const requestSelect = {
   contactPhone: true,
   message: true,
   outcomeReason: true,
+  availabilityCheckedAt: true,
   preferredUnit: { select: { label: true } },
   listing: {
     select: {
@@ -65,6 +67,7 @@ export async function getMyRentalRequests(
   options: { tab?: "open" | "closed"; page?: number } = {},
 ) {
   const user = await requireUser();
+  await evaluateDueRentalRequests({ tenantId: user.profileId });
   const { tab, page } = z
     .object({
       tab: z.enum(["open", "closed"]).default("open"),
@@ -91,6 +94,7 @@ export async function getMyRentalRequests(
 
 export async function getMyRentalRequest(id: string) {
   const user = await requireUser();
+  await evaluateDueRentalRequests({ tenantId: user.profileId });
   if (!z.guid().safeParse(id).success) return null;
   return prisma.rentalRequest.findFirst({
     where: { id, tenantId: user.profileId },

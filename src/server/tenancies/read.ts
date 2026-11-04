@@ -9,6 +9,7 @@ import { agreedRulesView } from "@/components/tenancies/agreed-rules";
 import { signContractDownload } from "../contracts/storage";
 import { ActionError, runAction } from "../action";
 import { Prisma } from "../../../generated/prisma/client";
+import { evaluateDueRentalRequests } from "../requests/evaluate-due-requests";
 
 export async function getTenancy(id: string) {
   if (!z.guid().safeParse(id).success) return null;
@@ -36,6 +37,7 @@ export async function getTenancy(id: string) {
         select: { contactName: true, contactPhone: true, listingId: true },
       },
       contracts: { orderBy: { versionNumber: "desc" } },
+      renewalRequests: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!t) return null;
@@ -82,6 +84,15 @@ export async function getTenancy(id: string) {
     currentTerms: currentTerms(contracts),
     pendingContract:
       contracts.find((c) => c.id === t.pendingContractId) ?? null,
+    renewalRequests: t.renewalRequests.map((request) => ({
+      id: request.id,
+      requestedEndDate: request.requestedEndDate,
+      proposedMonthlyRent: request.proposedMonthlyRent.toString(),
+      message: request.message,
+      status: request.status,
+      reviewReason: request.reviewReason,
+      createdAt: request.createdAt,
+    })),
   };
 }
 export async function getOwnerRentalRequest(id: string) {
@@ -107,6 +118,7 @@ export async function getOwnerRentalRequest(id: string) {
   return {
     id: r.id,
     status: r.status,
+    outcomeReason: r.outcomeReason,
     contactName: r.contactName,
     contactPhone: r.contactPhone,
     desiredMoveInDate: r.desiredMoveInDate,
@@ -224,6 +236,7 @@ export async function getOwnerRequests(
   options: { tab?: OwnerRequestTab; page?: number; propertyId?: string } = {},
 ) {
   const user = await requireUser();
+  await evaluateDueRentalRequests({ ownerId: user.profileId });
   const tab =
     options.tab && options.tab in ownerRequestTabs ? options.tab : "pending";
   const page =

@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { requireUser } from "../auth";
 import { ActionError, runAction } from "../action";
-import { prisma } from "../db";
 import { withTransaction } from "../transaction";
 import { createNotification } from "../notifications";
 
