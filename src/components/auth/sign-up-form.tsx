@@ -36,7 +36,7 @@ export function SignUpForm({ next }: { next?: string | null }) {
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-    console.log("Handle sign up")
+    console.log("Handle sign up");
     try {
       const { error } = await supabase.auth.signUp({
         email,

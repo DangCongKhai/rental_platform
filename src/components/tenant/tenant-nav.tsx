@@ -37,9 +37,11 @@ export function TenantNav() {
             key={href}
             href={href}
             aria-current={
-              (href === "/tenant"
-                ? path === href
-                : path === href || path.startsWith(`${href}/`))
+              (
+                href === "/tenant"
+                  ? path === href
+                  : path === href || path.startsWith(`${href}/`)
+              )
                 ? "page"
                 : undefined
             }

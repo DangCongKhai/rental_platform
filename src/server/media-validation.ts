@@ -32,15 +32,23 @@ export async function validatePhotoBytes(
       limitInputPixels: MAX_PHOTO_PIXELS,
     });
     const metadata = await image.metadata();
-    const mimeType = metadata.format ? MIME_BY_FORMAT[metadata.format] : undefined;
+    const mimeType = metadata.format
+      ? MIME_BY_FORMAT[metadata.format]
+      : undefined;
     if (!mimeType || !metadata.width || !metadata.height) {
-      return { ok: false, error: "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP hợp lệ." };
+      return {
+        ok: false,
+        error: "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP hợp lệ.",
+      };
     }
     if (claimedMimeType && claimedMimeType !== mimeType) {
       return { ok: false, error: "Định dạng ảnh không khớp với nội dung tệp." };
     }
     if (metadata.pages && metadata.pages > 1) {
-      return { ok: false, error: "Ảnh động nhiều khung hình chưa được hỗ trợ." };
+      return {
+        ok: false,
+        error: "Ảnh động nhiều khung hình chưa được hỗ trợ.",
+      };
     }
     if (metadata.width * metadata.height > MAX_PHOTO_PIXELS) {
       return { ok: false, error: "Kích thước ảnh vượt quá giới hạn cho phép." };
@@ -57,6 +65,9 @@ export async function validatePhotoBytes(
       height: metadata.height,
     };
   } catch {
-    return { ok: false, error: "Tệp không phải là ảnh hợp lệ hoặc không thể đọc được." };
+    return {
+      ok: false,
+      error: "Tệp không phải là ảnh hợp lệ hoặc không thể đọc được.",
+    };
   }
 }

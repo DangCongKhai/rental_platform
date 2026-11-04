@@ -59,7 +59,10 @@ export function AccountMenu() {
       const result = await previewNavbarAccount();
       remember(result.user);
       if (!result.user) return;
-      setLoaded({ userId: result.user.id, notifications: result.notifications });
+      setLoaded({
+        userId: result.user.id,
+        notifications: result.notifications,
+      });
     } catch {
       setLoaded((current) =>
         current ? { ...current, notifications: [] } : current,

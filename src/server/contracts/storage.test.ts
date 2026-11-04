@@ -16,20 +16,16 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ data: { public: false }, error: null });
   upload.mockReset().mockResolvedValue({ error: null });
-  sign
-    .mockReset()
-    .mockResolvedValue({
-      data: { signedUrl: "https://signed.test" },
-      error: null,
-    });
-  client
-    .mockReset()
-    .mockReturnValue({
-      storage: {
-        getBucket: bucket,
-        from: vi.fn(() => ({ upload, createSignedUrl: sign })),
-      },
-    });
+  sign.mockReset().mockResolvedValue({
+    data: { signedUrl: "https://signed.test" },
+    error: null,
+  });
+  client.mockReset().mockReturnValue({
+    storage: {
+      getBucket: bucket,
+      from: vi.fn(() => ({ upload, createSignedUrl: sign })),
+    },
+  });
 });
 describe("private PDF storage", () => {
   it("computes digest and unpredictable owner-scoped path from bytes", async () => {

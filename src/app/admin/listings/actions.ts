@@ -9,16 +9,36 @@ import { changeListingSuspension } from "@/server/admin/listings";
 
 const schema = z.object({
   listingId: databaseUuidSchema,
-  reason: z.string().trim().min(1, "Vui lòng nhập lý do.").max(1000, "Lý do tối đa 1.000 ký tự."),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập lý do.")
+    .max(1000, "Lý do tối đa 1.000 ký tự."),
 });
 
-async function updateSuspension(listingId: string, reason: string, operation: "suspend" | "restore") {
+async function updateSuspension(
+  listingId: string,
+  reason: string,
+  operation: "suspend" | "restore",
+) {
   const auth = await runAction(() => requireAdmin());
   if (!auth.ok) return auth;
-  if (!auth.data) return { ok: false as const, error: "Phiên đăng nhập đã hết hạn." };
+  if (!auth.data)
+    return { ok: false as const, error: "Phiên đăng nhập đã hết hạn." };
   const parsed = schema.safeParse({ listingId, reason });
-  if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Thông tin không hợp lệ." };
-  const result = await runAction(() => changeListingSuspension(auth.data!.profileId, listingId, operation, parsed.data.reason));
+  if (!parsed.success)
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Thông tin không hợp lệ.",
+    };
+  const result = await runAction(() =>
+    changeListingSuspension(
+      auth.data!.profileId,
+      listingId,
+      operation,
+      parsed.data.reason,
+    ),
+  );
   if (result.ok && result.data) {
     revalidatePath("/admin");
     revalidatePath("/admin/listings");

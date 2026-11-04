@@ -41,7 +41,9 @@ it("keeps a safe next path and drops the token from the redirect", async () => {
     ),
   );
 
-  expect(response.headers.get("location")).toBe("http://localhost:3000/account");
+  expect(response.headers.get("location")).toBe(
+    "http://localhost:3000/account",
+  );
 });
 
 it("sends a link with no token to the error page", async () => {

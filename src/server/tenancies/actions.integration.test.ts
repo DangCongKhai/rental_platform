@@ -145,9 +145,9 @@ describe.skipIf(!process.env.DATABASE_URL)(
       expect(result.fieldErrors?.endDate).toBe(
         "Thời hạn thuê tối thiểu 3 tháng.",
       );
-      expect(await prisma.tenancy.count({ where: { rentalRequestId: r.id } })).toBe(
-        0,
-      );
+      expect(
+        await prisma.tenancy.count({ where: { rentalRequestId: r.id } }),
+      ).toBe(0);
       expect(
         (await prisma.rentalRequest.findUniqueOrThrow({ where: { id: r.id } }))
           .status,

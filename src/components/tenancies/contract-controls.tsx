@@ -91,7 +91,9 @@ export function ContractDecision({
         aria-busy={busy === "confirm"}
         onClick={() => void act(false)}
       >
-        {busy === "confirm" ? "Đang xác nhận…" : `Xác nhận phiên bản ${version}`}
+        {busy === "confirm"
+          ? "Đang xác nhận…"
+          : `Xác nhận phiên bản ${version}`}
       </Button>
       <Button
         className="w-full"
@@ -119,7 +121,10 @@ export function ContractDecision({
               className="min-h-24 rounded-xl border border-line p-3"
             />
           </label>
-          <Button disabled={busy !== null || expired} aria-busy={busy === "decline"}>
+          <Button
+            disabled={busy !== null || expired}
+            aria-busy={busy === "decline"}
+          >
             {busy === "decline" ? "Đang gửi…" : "Gửi lý do"}
           </Button>
         </form>

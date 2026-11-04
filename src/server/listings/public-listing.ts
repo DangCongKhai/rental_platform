@@ -240,23 +240,37 @@ export async function getPublicListing(
         : `${availability.label}`;
       const unitSpecificPhotos = [
         ...unit.mediaAssignments
-          .filter((assignment) =>
-            assignment.isSelectedForListing &&
-            assignment.media.deletedAt == null &&
-            assignment.media.purgedAt == null,
+          .filter(
+            (assignment) =>
+              assignment.isSelectedForListing &&
+              assignment.media.deletedAt == null &&
+              assignment.media.purgedAt == null,
           )
           .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map((assignment) => ({ ...assignment.media, sortOrder: assignment.sortOrder })),
+          .map((assignment) => ({
+            ...assignment.media,
+            sortOrder: assignment.sortOrder,
+          })),
         ...unit.media
-          .filter((item) => item.deletedAt == null && item.purgedAt == null && item.isSelectedForListing)
+          .filter(
+            (item) =>
+              item.deletedAt == null &&
+              item.purgedAt == null &&
+              item.isSelectedForListing,
+          )
           .sort((left, right) => left.sortOrder - right.sortOrder),
       ];
-      const unitPhotos = property.rentalArrangement === "WHOLE_SPACE"
-        ? [...new Map([
-            ...liveMedia.filter((item) => item.unitId === null),
-            ...unitSpecificPhotos,
-          ].map((photo) => [photo.id, photo])).values()]
-        : unitSpecificPhotos;
+      const unitPhotos =
+        property.rentalArrangement === "WHOLE_SPACE"
+          ? [
+              ...new Map(
+                [
+                  ...liveMedia.filter((item) => item.unitId === null),
+                  ...unitSpecificPhotos,
+                ].map((photo) => [photo.id, photo]),
+              ).values(),
+            ]
+          : unitSpecificPhotos;
 
       return {
         id: unit.id,
