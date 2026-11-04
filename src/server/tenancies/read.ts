@@ -8,6 +8,7 @@ import { currentTerms } from "@/domain/tenancies/current-terms";
 import { agreedRulesView } from "@/components/tenancies/agreed-rules";
 import { signContractDownload } from "../contracts/storage";
 import { ActionError, runAction } from "../action";
+import { Prisma } from "../../../generated/prisma/client";
 
 export async function getTenancy(id: string) {
   if (!z.guid().safeParse(id).success) return null;
@@ -156,8 +157,23 @@ const tenancyListInclude = {
   },
 } as const;
 
+export type OwnerTenancyTab =
+  | "all"
+  | "waiting-tenant"
+  | "revision-needed"
+  | "renewal-pending";
+
+const ownerTenancyFilters = {
+  all: {},
+  "waiting-tenant": { status: "PENDING_CONFIRMATION" },
+  "revision-needed": { status: "AWAITING_REVISION" },
+  "renewal-pending": {
+    renewalRequests: { some: { status: "PENDING" } },
+  },
+} satisfies Record<OwnerTenancyTab, Prisma.TenancyWhereInput>;
+
 async function listTenancies(
-  where: { ownerId: string } | { tenantId: string },
+  where: Prisma.TenancyWhereInput,
   page = 1,
 ) {
   const safePage =
@@ -175,9 +191,19 @@ async function listTenancies(
   return { tenancies, total, page: safePage, pageSize: PAGE_SIZE };
 }
 
-export async function getOwnerTenancies(page = 1) {
+export async function getOwnerTenancies(
+  page = 1,
+  tab: OwnerTenancyTab = "all",
+) {
   const user = await requireUser();
-  return listTenancies({ ownerId: user.profileId }, page);
+
+  return listTenancies(
+    {
+      ownerId: user.profileId,
+      ...ownerTenancyFilters[tab],
+    },
+    page,
+  );
 }
 
 export async function getTenantTenancies(page = 1) {
