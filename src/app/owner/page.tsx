@@ -62,6 +62,23 @@ async function Overview() {
   const listingsNeedingAttention = rejectedListings + suspendedListings;
   const maintenanceUnits = overview.units.maintenance;
 
+  const countListings = (
+    predicate: (listing: (typeof overview.listings)[number]) => boolean,
+  ) =>
+    overview.listings
+      .filter(predicate)
+      .reduce((total, listing) => total + listing.count, 0);
+
+  const listingCounts = {
+    draft: countListings((item) => item.moderationStatus === "DRAFT"),
+    pending: countListings((item) => item.moderationStatus === "PENDING"),
+    approved: countListings((item) => item.moderationStatus === "APPROVED"),
+    rejected: rejectedListings,
+    published: countListings((item) => item.publicationStatus === "PUBLISHED"),
+    hidden: countListings((item) => item.publicationStatus === "HIDDEN"),
+    suspended: suspendedListings,
+  };
+
   return (
     <section className="space-y-5">
       <header>
@@ -123,6 +140,70 @@ async function Overview() {
               href="/owner/properties"
               tone="blue"
             />
+          </div>
+
+                    <div className="grid gap-5 xl:grid-cols-2">
+            <section className="rounded-2xl border border-line bg-white p-5">
+              <h2 className="mb-3 font-bold">Căn/phòng theo tình trạng</h2>
+              <div className="space-y-2">
+                <StatusLink
+                  title="Sẵn sàng"
+                  count={overview.units.ready}
+                  href="/owner/properties?unitStatus=READY"
+                />
+                <StatusLink
+                  title="Đang bảo trì"
+                  count={overview.units.maintenance}
+                  href="/owner/properties?unitStatus=MAINTENANCE"
+                />
+                <StatusLink
+                  title="Đã ngừng hoạt động"
+                  count={overview.units.retired}
+                  href="/owner/properties?unitStatus=RETIRED"
+                />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-line bg-white p-5">
+              <h2 className="mb-3 font-bold">Tin đăng theo trạng thái</h2>
+              <div className="space-y-2">
+                <StatusLink
+                  title="Bản nháp"
+                  count={listingCounts.draft}
+                  href="/owner/listings?moderationStatus=DRAFT"
+                />
+                <StatusLink
+                  title="Đang chờ duyệt"
+                  count={listingCounts.pending}
+                  href="/owner/listings?moderationStatus=PENDING"
+                />
+                <StatusLink
+                  title="Đã duyệt"
+                  count={listingCounts.approved}
+                  href="/owner/listings?moderationStatus=APPROVED"
+                />
+                <StatusLink
+                  title="Bị từ chối"
+                  count={listingCounts.rejected}
+                  href="/owner/listings?moderationStatus=REJECTED"
+                />
+                <StatusLink
+                  title="Đang công khai"
+                  count={listingCounts.published}
+                  href="/owner/listings?publicationStatus=PUBLISHED"
+                />
+                <StatusLink
+                  title="Đã ẩn"
+                  count={listingCounts.hidden}
+                  href="/owner/listings?publicationStatus=HIDDEN"
+                />
+                <StatusLink
+                  title="Bị đình chỉ"
+                  count={listingCounts.suspended}
+                  href="/owner/listings?suspended=1"
+                />
+              </div>
+            </section>
           </div>
 
           <section className="overflow-hidden rounded-2xl border border-line bg-white">
@@ -366,6 +447,26 @@ async function Overview() {
         </>
       )}
     </section>
+  );
+}
+
+function StatusLink({
+  title,
+  count,
+  href,
+}: {
+  title: string;
+  count: number;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2.5 text-sm transition-colors hover:bg-slate-50"
+    >
+      <span>{title}</span>
+      <Badge tone={count > 0 ? "warning" : "neutral"}>{count}</Badge>
+    </Link>
   );
 }
 

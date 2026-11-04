@@ -26,6 +26,15 @@ const arrangementLabels: Record<string, string> = {
   SEPARATE_UNITS: "Từng căn riêng lẻ",
 };
 
+const unitStatuses = ["READY", "MAINTENANCE", "RETIRED"] as const;
+type UnitStatus = (typeof unitStatuses)[number];
+
+const unitStatusLabels: Record<UnitStatus, string> = {
+  READY: "Sẵn sàng",
+  MAINTENANCE: "Đang bảo trì",
+  RETIRED: "Đã ngừng hoạt động",
+};
+
 const moderationBadges: Record<
   string,
   { label: string; tone: "success" | "danger" | "neutral" }
@@ -81,29 +90,65 @@ function StatusBadge({
 export default async function OwnerPropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string; saved?: string; page?: string }>;
+  searchParams: Promise<{
+    archived?: string;
+    saved?: string;
+    page?: string;
+    unitStatus?: string;
+  }>;
 }) {
-  const { archived, saved, page: pageValue } = await searchParams;
+  const {
+    archived,
+    saved,
+    page: pageValue,
+    unitStatus: unitStatusValue,
+  } = await searchParams;
+
   const showArchived = archived === "1";
+
   const parsed = Number(pageValue);
   const page =
     Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
-  const result = await getMyProperties(showArchived, page);
+
+  const unitStatus = unitStatuses.find(
+    (status) => status === unitStatusValue,
+  );
+
+  const result = await getMyProperties(showArchived, page, { unitStatus });
   const properties = result.properties;
+
+  function statusHref(status?: UnitStatus) {
+    const params = new URLSearchParams();
+
+    if (showArchived) params.set("archived", "1");
+    if (saved === "1") params.set("saved", "1");
+    if (status) params.set("unitStatus", status);
+
+    const query = params.toString();
+    return query ? `/owner/properties?${query}` : "/owner/properties";
+  }
 
   return (
     <section className="space-y-5">
       {saved === "1" && <PropertySaveNotice />}
+
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">
           Bất động sản
         </h1>
+
         <div className="flex flex-wrap items-center gap-4">
           <Link
             href={
               showArchived
-                ? "/owner/properties"
-                : "/owner/properties?archived=1"
+                ? statusHref(unitStatus)
+                : (() => {
+                    const params = new URLSearchParams();
+                    params.set("archived", "1");
+                    if (unitStatus) params.set("unitStatus", unitStatus);
+                    if (saved === "1") params.set("saved", "1");
+                    return `/owner/properties?${params.toString()}`;
+                  })()
             }
             aria-pressed={showArchived}
             className="inline-flex min-h-11 items-center gap-2.5 px-1.5 text-sm font-medium text-ink-3"
@@ -124,11 +169,91 @@ export default async function OwnerPropertiesPage({
             </span>
             Hiện mục đã lưu trữ
           </Link>
+
           <Link href="/owner/properties/new" className={buttonClass()}>
             Tạo bất động sản
           </Link>
         </div>
       </header>
+
+      <nav
+        aria-label="Lọc theo tình trạng căn"
+        className="flex flex-wrap gap-2"
+      >
+        <Link
+          href={statusHref()}
+          aria-current={!unitStatus ? "page" : undefined}
+          className={cn(
+            "inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-medium transition-colors",
+            !unitStatus
+              ? "border-brand bg-brand-soft text-brand-deep"
+              : "border-line bg-white text-ink-3 hover:bg-[#f7f9fb]",
+          )}
+        >
+          Tất cả
+        </Link>
+
+        {unitStatuses.map((status) => (
+          <Link
+            key={status}
+            href={statusHref(status)}
+            aria-current={unitStatus === status ? "page" : undefined}
+            className={cn(
+              "inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-medium transition-colors",
+              unitStatus === status
+                ? "border-brand bg-brand-soft text-brand-deep"
+                : "border-line bg-white text-ink-3 hover:bg-[#f7f9fb]",
+            )}
+          >
+            {unitStatusLabels[status]}
+          </Link>
+        ))}
+      </nav>
+
+      <form
+        method="GET"
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-4"
+      >
+        {showArchived && <input type="hidden" name="archived" value="1" />}
+        {saved === "1" && <input type="hidden" name="saved" value="1" />}
+
+        <div className="min-w-52">
+          <label
+            htmlFor="unitStatus"
+            className="mb-1.5 block text-sm font-medium text-ink"
+          >
+            Tình trạng căn
+          </label>
+
+          <select
+            id="unitStatus"
+            name="unitStatus"
+            defaultValue={unitStatus ?? ""}
+            className="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink"
+          >
+            <option value="">Tất cả tình trạng căn</option>
+
+            {unitStatuses.map((status) => (
+              <option key={status} value={status}>
+                {unitStatusLabels[status]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
+          Lọc
+        </button>
+
+        {unitStatus && (
+          <Link
+            href={statusHref()}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-ink"
+          >
+            Xóa bộ lọc
+          </Link>
+        )}
+      </form>
 
       {properties.length === 0 ? (
         <div className="flex flex-col items-center rounded-[15px] border border-dashed border-line bg-white px-6 py-10 text-center">
@@ -137,11 +262,13 @@ export default async function OwnerPropertiesPage({
               ? "Không có bất động sản đã lưu trữ"
               : "Thêm bất động sản đầu tiên của bạn"}
           </h2>
+
           <p className="mt-2 max-w-md text-sm text-ink">
             {showArchived
               ? "Các bất động sản bạn lưu trữ sẽ xuất hiện tại đây."
               : "Bắt đầu bằng thông tin cơ bản và địa chỉ, bạn có thể hoàn thiện sau."}
           </p>
+
           {!showArchived && (
             <Link
               href="/owner/properties/new"
@@ -182,12 +309,15 @@ export default async function OwnerPropertiesPage({
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {properties.map((property) => {
                 const listing = property.listings[0];
+
                 const moderation = listing
                   ? moderationBadges[listing.moderationStatus]
                   : undefined;
+
                 const publication =
                   listing && listing.publicationStatus !== "DRAFT"
                     ? publicationBadges[listing.publicationStatus]
@@ -202,14 +332,17 @@ export default async function OwnerPropertiesPage({
                       <p className="text-[15px] font-semibold leading-snug text-ink-2">
                         {property.name}
                       </p>
+
                       <p className="mt-0.5 max-w-[220px] text-[13px] leading-5 text-subtle">
                         {locationLine(property)}
                       </p>
                     </td>
+
                     <td className="px-4 py-3.5 text-[15px] text-ink">
                       {propertyTypeLabels[property.propertyType] ??
                         property.propertyType}
                     </td>
+
                     <td className="px-4 py-3.5">
                       <StatusBadge
                         label={
@@ -219,9 +352,11 @@ export default async function OwnerPropertiesPage({
                         tone="neutral"
                       />
                     </td>
+
                     <td className="px-4 py-3.5 text-[15px] whitespace-nowrap text-ink">
                       {property._count.units} căn
                     </td>
+
                     <td className="px-4 py-3.5">
                       <div className="flex flex-col items-start gap-2">
                         {moderation ? (
@@ -229,12 +364,15 @@ export default async function OwnerPropertiesPage({
                         ) : (
                           <StatusBadge label="Chưa có tin" tone="neutral" />
                         )}
+
                         {publication && <StatusBadge {...publication} />}
                       </div>
                     </td>
+
                     <td className="px-4 py-3.5 text-[15px] whitespace-nowrap text-ink">
                       {dateFormatter.format(property.updatedAt)}
                     </td>
+
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         <Link
@@ -243,18 +381,21 @@ export default async function OwnerPropertiesPage({
                         >
                           Hình ảnh
                         </Link>
+
                         <Link
                           href={`/owner/properties/${property.id}/units`}
                           className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
                         >
                           Căn/phòng
                         </Link>
+
                         <Link
                           href={`/owner/properties/${property.id}`}
                           className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-ink px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
                         >
                           Chỉnh sửa
                         </Link>
+
                         {!showArchived && (
                           <PropertyActions propertyId={property.id} />
                         )}
@@ -267,6 +408,7 @@ export default async function OwnerPropertiesPage({
           </table>
         </div>
       )}
+
       <div className="flex justify-end">
         <PageLinks
           page={page}
@@ -274,10 +416,14 @@ export default async function OwnerPropertiesPage({
           pageSize={result.pageSize}
           href={(nextPage) => {
             const params = new URLSearchParams();
+
             if (showArchived) params.set("archived", "1");
             if (saved === "1") params.set("saved", "1");
+            if (unitStatus) params.set("unitStatus", unitStatus);
             if (nextPage > 1) params.set("page", String(nextPage));
+
             const query = params.toString();
+
             return query ? `/owner/properties?${query}` : "/owner/properties";
           }}
         />
