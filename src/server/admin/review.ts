@@ -3,6 +3,7 @@ import { createMediaSignedUrls } from "@/server/media-storage";
 import { ActionError } from "@/server/action";
 import { requireAdmin } from "@/server/auth";
 import { prisma } from "@/server/db";
+import { databaseUuidSchema } from "./id-schema";
 
 export const ADMIN_REVIEW_PAGE_SIZE = 10;
 
@@ -120,7 +121,7 @@ export async function getReviewQueue(page = 1, search = "") {
 export async function getReviewPackage(listingId: string) {
   await requireAdmin();
   const listing = await prisma.listing.findFirst({
-    where: { id: listingId, archivedAt: null },
+    where: { id: databaseUuidSchema.parse(listingId), archivedAt: null },
     include: {
       property: {
         include: {
@@ -257,6 +258,7 @@ export async function decideListing(
     | { kind: "approve"; expectedRevision: number }
     | { kind: "reject"; reason: string },
 ) {
+  const validatedListingId = databaseUuidSchema.parse(listingId);
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<
       Array<{
@@ -275,7 +277,7 @@ export async function decideListing(
              l.moderation_status AS "moderationStatus", l.title
       FROM listings l
       JOIN properties p ON p.id = l.property_id
-      WHERE l.id = ${listingId}::uuid AND l.archived_at IS NULL
+      WHERE l.id = ${validatedListingId}::uuid AND l.archived_at IS NULL
       FOR UPDATE OF p, l`;
     const current = rows[0];
     if (!current)
@@ -308,7 +310,7 @@ export async function decideListing(
 
     const now = new Date();
     await tx.listing.update({
-      where: { id: listingId },
+      where: { id: validatedListingId },
       data:
         decision.kind === "approve"
           ? {
@@ -329,7 +331,7 @@ export async function decideListing(
       data: {
         recipientId: current.ownerId,
         audience: "OWNER",
-        eventKey: `listing-${decision.kind === "approve" ? "approved" : "rejected"}:${listingId}:${randomUUID()}`,
+        eventKey: `listing-${decision.kind === "approve" ? "approved" : "rejected"}:${validatedListingId}:${randomUUID()}`,
         title:
           decision.kind === "approve"
             ? "Tin đăng đã được duyệt"
@@ -339,9 +341,9 @@ export async function decideListing(
             ? `Tin “${current.title || "Chưa đặt tiêu đề"}” đã được duyệt. Bạn có thể tiếp tục bước công khai.`
             : `Tin “${current.title || "Chưa đặt tiêu đề"}” chưa được duyệt. Lý do: ${decision.reason}`,
         resourceType: "listing",
-        resourceId: listingId,
+        resourceId: validatedListingId,
       },
     });
-    return { listingId, propertyId: current.propertyId };
+    return { listingId: validatedListingId, propertyId: current.propertyId };
   });
 }

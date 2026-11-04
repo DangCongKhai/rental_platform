@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { runAction } from "@/server/action";
 import { requireAdmin } from "@/server/auth";
+import { databaseUuidSchema } from "@/server/admin/id-schema";
 import { changeListingSuspension } from "@/server/admin/listings";
 
 const schema = z.object({
-  listingId: z.string().uuid(),
+  listingId: databaseUuidSchema,
   reason: z.string().trim().min(1, "Vui lòng nhập lý do.").max(1000, "Lý do tối đa 1.000 ký tự."),
 });
 
