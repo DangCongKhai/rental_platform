@@ -48,6 +48,8 @@ vi.mock("../notifications", async (importOriginal) => {
   };
 });
 import {
+  cancelTenancy,
+  endTenancy,
   proposeTenancy,
   confirmContract,
   declineContract,
@@ -55,6 +57,7 @@ import {
   recordMoveIn,
 } from "./actions";
 import { getContractDownloadUrl, getTenancy } from "./read";
+
 const users: string[] = [];
 const tenantIds: string[] = [];
 const terms = {
@@ -315,6 +318,145 @@ describe.skipIf(!process.env.DATABASE_URL)(
           (await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } }))
             .status,
         ).toBe("ACTIVE");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+    it("cancels a confirmed pre-start tenancy and notifies the tenant", async () => {
+      const { t, c, a, listing, r } = await proposal();
+
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2090-10-31T12:00:00Z"));
+
+      try {
+        await prisma.tenancy.update({
+          where: { id: t.id },
+          data: { confirmationExpiresAt: new Date("2090-11-02T00:00:00Z") },
+        });
+
+        actor.profileId = a.id;
+        expect((await confirmContract(c.id, c.documentSha256)).ok).toBe(true);
+
+        actor.profileId = listing.owner.profileId;
+        expect(
+          (await cancelTenancy(t.id, "Hai bên thống nhất hủy kỳ thuê.")).ok,
+        ).toBe(true);
+
+        expect(
+          await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } }),
+        ).toMatchObject({
+          status: "CANCELLED",
+          endReason: "Hai bên thống nhất hủy kỳ thuê.",
+          blockedStartDate: null,
+          blockedEndDate: null,
+          pendingContractId: null,
+        });
+
+        // The accepted request and confirmed contract remain as history.
+        expect(
+          (
+            await prisma.rentalRequest.findUniqueOrThrow({
+              where: { id: r.id },
+            })
+          ).status,
+        ).toBe("ACCEPTED");
+        expect(
+          await prisma.tenancyContract.count({ where: { tenancyId: t.id } }),
+        ).toBe(1);
+
+        expect(
+          await prisma.notification.count({
+            where: {
+              recipientId: a.id,
+              resourceId: t.id,
+              audience: "TENANT",
+              title: "Chủ nhà đã hủy kỳ thuê.",
+            },
+          }),
+        ).toBe(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("ends an active tenancy, cancels its pending renewal, and notifies the tenant", async () => {
+      const { t, c, a, listing, r } = await proposal();
+
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2090-10-31T12:00:00Z"));
+
+      try {
+        await prisma.tenancy.update({
+          where: { id: t.id },
+          data: { confirmationExpiresAt: new Date("2090-11-02T00:00:00Z") },
+        });
+
+        actor.profileId = a.id;
+        expect((await confirmContract(c.id, c.documentSha256)).ok).toBe(true);
+
+        actor.profileId = listing.owner.profileId;
+        vi.setSystemTime(new Date("2090-11-01T12:00:00Z"));
+        expect((await recordMoveIn(t.id)).ok).toBe(true);
+
+        const renewal = await prisma.tenancyRenewalRequest.create({
+          data: {
+            tenancyId: t.id,
+            requestedEndDate: new Date("2091-05-01T00:00:00Z"),
+            proposedMonthlyRent: 4_200_000,
+          },
+        });
+
+        vi.setSystemTime(new Date("2090-11-03T12:00:00Z"));
+        expect(
+          (
+            await endTenancy(t.id, {
+              actual_ended_at: "2090-11-02",
+              reason: "Người thuê đã bàn giao nhà.",
+            })
+          ).ok,
+        ).toBe(true);
+
+        expect(
+          await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } }),
+        ).toMatchObject({
+          status: "ENDED",
+          endReason: "Người thuê đã bàn giao nhà.",
+          blockedStartDate: null,
+          blockedEndDate: null,
+          pendingContractId: null,
+        });
+
+        expect(
+          await prisma.tenancyRenewalRequest.findUniqueOrThrow({
+            where: { id: renewal.id },
+          }),
+        ).toMatchObject({
+          status: "CANCELLED",
+          reviewReason: "Kỳ thuê đã kết thúc: Người thuê đã bàn giao nhà.",
+        });
+
+        // Ending the tenancy does not rewrite the accepted request or contract.
+        expect(
+          (
+            await prisma.rentalRequest.findUniqueOrThrow({
+              where: { id: r.id },
+            })
+          ).status,
+        ).toBe("ACCEPTED");
+        expect(
+          await prisma.tenancyContract.count({ where: { tenancyId: t.id } }),
+        ).toBe(1);
+
+        expect(
+          await prisma.notification.count({
+            where: {
+              recipientId: a.id,
+              resourceId: t.id,
+              audience: "TENANT",
+              title: "Chủ nhà đã ghi nhận ngày kết thúc kỳ thuê",
+            },
+          }),
+        ).toBe(1);
       } finally {
         vi.useRealTimers();
       }
