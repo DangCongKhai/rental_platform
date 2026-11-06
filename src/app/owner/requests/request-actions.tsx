@@ -10,10 +10,12 @@ export function RequestActions({
   id,
   pending,
   showView = true,
+  rejectionFullWidth = false,
 }: {
   id: string;
   pending: boolean;
   showView?: boolean;
+  rejectionFullWidth?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -34,7 +36,7 @@ export function RequestActions({
       {pending && (
         <button
           type="button"
-          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-danger/40 px-4 text-[15px] font-semibold text-danger-ink hover:bg-[#fff8f7]"
+          className={`inline-flex min-h-11 items-center justify-center rounded-[15px] border border-danger/40 px-4 text-[15px] font-semibold text-danger-ink hover:bg-[#fff8f7] ${rejectionFullWidth ? "w-full" : ""}`}
           onClick={() => {
             setError("");
             setOpen(true);

@@ -86,7 +86,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
               >
                 Tạo đề xuất kỳ thuê
               </Link>
-              <RequestActions id={r.id} pending showView={false} />
+              <RequestActions id={r.id} pending showView={false} rejectionFullWidth={true}/>
             </>
           ) : r.tenancyId ? (
             <Link
