@@ -39,13 +39,29 @@ export function RequestStatus({
           ? "Đang chờ bạn xác nhận hợp đồng"
           : "Đã chấp nhận"
       : status === "PENDING"
-        ? "Đang chờ xử lý"
+        ? "Đang chờ chủ nhà xử lý"
         : status === "REJECTED"
-          ? "Đã từ chối"
-          : "Đã rút lại";
+          ? "Chủ nhà đã từ chối"
+          : status === "WITHDRAWN"
+            ? "Bạn đã rút yêu cầu"
+            : status === "EXPIRED"
+              ? "Yêu cầu đã hết hạn"
+              : status === "CANCELLED"
+                ? "Yêu cầu đã bị hủy"
+                : "Yêu cầu đã đóng";
+  const tone =
+    status === "ACCEPTED"
+      ? "bg-blue-100 text-blue-800"
+      : status === "PENDING"
+        ? "bg-amber-100 text-amber-900"
+        : status === "WITHDRAWN" || status === "CANCELLED"
+          ? "bg-slate-100 text-slate-700"
+          : status === "REJECTED" || status === "EXPIRED"
+            ? "bg-red-100 text-red-800"
+            : "bg-slate-100 text-slate-700";
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status === "ACCEPTED" ? "bg-blue-100 text-blue-800" : status === "PENDING" ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"}`}
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
     >
       {label}
     </span>

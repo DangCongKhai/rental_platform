@@ -97,6 +97,7 @@ export function ContractDecision({
       </Button>
       <Button
         className="w-full"
+        size="lg"
         variant={expired ? "disabled" : "secondary"}
         disabled={busy !== null || expired}
         onClick={() => setRejecting(!rejecting)}

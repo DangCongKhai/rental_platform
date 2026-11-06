@@ -500,7 +500,16 @@ function requestChip(request: RequestRow): {
   if (request.status === "REJECTED") {
     return { tone: "danger", label: "Đã từ chối" };
   }
-  return { tone: "danger", label: "Đã rút lại" };
+  if (request.status === "WITHDRAWN") {
+    return { tone: "danger", label: "Bạn đã rút yêu cầu" };
+  }
+  if (request.status === "EXPIRED") {
+    return { tone: "danger", label: "Yêu cầu đã hết hạn" };
+  }
+  if (request.status === "CANCELLED") {
+    return { tone: "danger", label: "Yêu cầu đã bị hủy" };
+  }
+  return { tone: "danger", label: "Yêu cầu đã đóng" };
 }
 
 function timeLeft(date: Date) {

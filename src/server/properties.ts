@@ -1,17 +1,58 @@
 import { connection } from "next/server";
 import { requireUser } from "./auth";
 import { prisma } from "./db";
+import type { Prisma } from "../../generated/prisma/client";
+
+export type OwnerPropertyFilters = {
+  unitStatus?: "READY" | "MAINTENANCE" | "RETIRED";
+  moderationStatus?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
+  publicationStatus?: "DRAFT" | "PUBLISHED" | "HIDDEN";
+  suspended?: boolean;
+};
 
 const PAGE_SIZE = 10;
 
-export async function getMyProperties(archived = false, page = 1) {
+export async function getMyProperties(
+  archived = false,
+  page = 1,
+  filters: OwnerPropertyFilters = {},
+) {
   await connection();
   const user = await requireUser();
+
   const safePage =
     Number.isInteger(page) && page > 0 && page <= 100000 ? page : 1;
-  const where = {
+
+  const listingWhere = {
+    archivedAt: null,
+    ...(filters.moderationStatus
+      ? { moderationStatus: filters.moderationStatus }
+      : {}),
+    ...(filters.publicationStatus
+      ? { publicationStatus: filters.publicationStatus }
+      : {}),
+    ...(filters.suspended ? { adminSuspendedAt: { not: null } } : {}),
+  };
+
+  const hasListingFilter =
+    Boolean(filters.moderationStatus) ||
+    Boolean(filters.publicationStatus) ||
+    Boolean(filters.suspended);
+
+  const where: Prisma.PropertyWhereInput = {
     ownerId: user.profileId,
     archivedAt: archived ? { not: null } : null,
+    ...(filters.unitStatus
+      ? {
+          units: {
+            some: {
+              archivedAt: null,
+              operationalStatus: filters.unitStatus,
+            },
+          },
+        }
+      : {}),
+    ...(hasListingFilter ? { listings: { some: listingWhere } } : {}),
   };
 
   const [properties, total] = await Promise.all([
@@ -21,9 +62,7 @@ export async function getMyProperties(archived = false, page = 1) {
       skip: (safePage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       include: {
-        _count: {
-          select: { units: true },
-        },
+        _count: { select: { units: true } },
         listings: {
           where: { archivedAt: null },
           orderBy: { updatedAt: "desc" },
@@ -44,6 +83,7 @@ export async function getMyProperties(archived = false, page = 1) {
     }),
     prisma.property.count({ where }),
   ]);
+
   return { properties, total, page: safePage, pageSize: PAGE_SIZE };
 }
 

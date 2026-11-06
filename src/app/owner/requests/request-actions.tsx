@@ -9,9 +9,13 @@ import { rejectRequest } from "@/server/requests/reject-request";
 export function RequestActions({
   id,
   pending,
+  showView = true,
+  rejectionFullWidth = false,
 }: {
   id: string;
   pending: boolean;
+  showView?: boolean;
+  rejectionFullWidth?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -21,22 +25,24 @@ export function RequestActions({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <Link
-        href={`/owner/requests/${id}`}
-        className={buttonClass({ variant: "secondary" })}
-      >
-        Xem
-      </Link>
+      {showView && (
+        <Link
+          href={`/owner/requests/${id}`}
+          className={buttonClass({ variant: "secondary" })}
+        >
+          Xem
+        </Link>
+      )}
       {pending && (
         <button
           type="button"
-          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-danger/40 px-4 text-[15px] font-semibold text-danger-ink hover:bg-[#fff8f7]"
+          className={`inline-flex min-h-11 items-center justify-center rounded-[15px] border border-danger/40 px-4 text-[15px] font-semibold text-danger-ink hover:bg-[#fff8f7] ${rejectionFullWidth ? "w-full" : ""}`}
           onClick={() => {
             setError("");
             setOpen(true);
           }}
         >
-          Huỷ
+          Từ chối
         </button>
       )}
       {open && (
@@ -62,7 +68,7 @@ export function RequestActions({
             }}
           >
             <h2 id={`cancel-${id}`} className="text-lg font-bold text-ink">
-              Huỷ yêu cầu này?
+              Từ chối yêu cầu này?
             </h2>
             <p className="text-sm text-muted">
               Người thuê sẽ thấy yêu cầu đã bị từ chối. Thao tác này không hoàn

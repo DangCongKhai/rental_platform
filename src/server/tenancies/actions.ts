@@ -9,6 +9,10 @@ import { withTransaction } from "../transaction";
 import { createNotification } from "../notifications";
 import { uploadContract } from "../contracts/storage";
 import { releaseExpiredHolds } from "./expiry";
+import {
+  canCancelConfirmedTenancy,
+  validateEarlyEnd,
+} from "@/domain/tenancies/end-cancel";
 
 const termsSchema = z
   .object({
@@ -257,6 +261,21 @@ export async function confirmContract(contractId: string, sha256: string) {
           confirmationExpiresAt: null,
         },
       });
+      if (c.type === "RENEWAL" && c.renewalRequestId) {
+        const renewal = await tx.tenancyRenewalRequest.findFirst({
+          where: { id: c.renewalRequestId, tenancyId: t.id, status: "PENDING" },
+          select: { id: true },
+        });
+        if (!renewal) conflict("Yêu cầu gia hạn không còn hiệu lực.");
+        await tx.tenancyRenewalRequest.update({
+          where: { id: renewal.id },
+          data: {
+            status: "ACCEPTED",
+            reviewedById: user.profileId,
+            reviewedAt: now,
+          },
+        });
+      }
       await notify(
         tx,
         t,
@@ -426,6 +445,152 @@ export async function recordMoveIn(tenancyId: string) {
         data: { status: "ACTIVE", movedInAt: now },
       });
       return { tenancyId: t.id };
+    });
+  });
+}
+
+const endReasonSchema = z
+  .string()
+  .trim()
+  .min(1, "Vui lòng nhập lý do.")
+  .max(1000, "Lý do tối đa 1.000 ký tự");
+
+export async function cancelTenancy(tenancyId: string, reason: string) {
+  return runAction(async () => {
+    const user = await requireUser();
+
+    if (!z.guid().safeParse(tenancyId).success) missing();
+
+    const parsedReason = endReasonSchema.safeParse(reason);
+    if (!parsedReason.success) {
+      conflict(parsedReason.error.issues[0]?.message ?? "Lý do không hợp lệ.");
+    }
+
+    return withTransaction(async (tx) => {
+      const tenancy = await lockTenancy(tx, tenancyId);
+
+      if (tenancy.ownerId !== user.profileId) missing();
+
+      const now = new Date();
+      if (
+        !canCancelConfirmedTenancy(
+          tenancy.status,
+          tenancy.confirmedStartDate,
+          now,
+        )
+      ) {
+        conflict("Chỉ có thể hủy kỳ thuê đã xác nhận trước ngày bắt đầu.");
+      }
+
+      await tx.tenancy.update({
+        where: {
+          id: tenancy.id,
+        },
+        data: {
+          status: "CANCELLED",
+          actualEndedAt: now,
+          endReason: parsedReason.data,
+          pendingContractId: null,
+          confirmationExpiresAt: null,
+          blockedStartDate: null,
+          blockedEndDate: null,
+        },
+      });
+
+      await notify(
+        tx,
+        tenancy,
+        "TENANT",
+        "tenancy.cancelled",
+        "Chủ nhà đã hủy kỳ thuê.",
+      );
+
+      return {
+        tenancyId: tenancy.id,
+      };
+    });
+  });
+}
+
+export async function endTenancy(
+  tenancyId: string,
+  input: { actual_ended_at: string; reason: string },
+) {
+  return runAction(async () => {
+    const user = await requireUser();
+    if (!z.guid().safeParse(tenancyId).success) missing();
+
+    const parsed = z
+      .object({
+        actual_ended_at: z.iso.date(),
+        reason: endReasonSchema,
+      })
+      .safeParse(input);
+
+    if (!parsed.success) {
+      conflict(
+        parsed.error.issues[0]?.message ?? "Thông tin kết thúc không hợp lệ.",
+      );
+    }
+
+    return withTransaction(async (tx) => {
+      const tenancy = await lockTenancy(tx, tenancyId);
+
+      if (tenancy.ownerId !== user.profileId) missing();
+
+      const now = new Date();
+      const validation = validateEarlyEnd({
+        status: tenancy.status,
+        startDate: tenancy.confirmedStartDate,
+        actualEndDate: parsed.data.actual_ended_at,
+        reason: parsed.data.reason,
+        now,
+      });
+
+      if (!validation.valid) conflict(validation.error);
+
+      const actualEndedAt = new Date(
+        `${parsed.data.actual_ended_at}T00:00:00.000Z`,
+      );
+
+      await tx.tenancy.update({
+        where: {
+          id: tenancy.id,
+        },
+        data: {
+          status: "ENDED",
+          actualEndedAt,
+          endReason: parsed.data.reason,
+          pendingContractId: null,
+          confirmationExpiresAt: null,
+          blockedStartDate: null,
+          blockedEndDate: null,
+        },
+      });
+
+      await tx.tenancyRenewalRequest.updateMany({
+        where: {
+          tenancyId: tenancy.id,
+          status: "PENDING",
+        },
+        data: {
+          status: "CANCELLED",
+          reviewedAt: now,
+          reviewReason: `Kỳ thuê đã kết thúc: ${parsed.data.reason}`,
+        },
+      });
+
+      await notify(
+        tx,
+        tenancy,
+        "TENANT",
+        "tenancy.ended",
+        "Chủ nhà đã ghi nhận ngày kết thúc kỳ thuê",
+      );
+
+      return {
+        tenancyId: tenancy.id,
+      };
     });
   });
 }
