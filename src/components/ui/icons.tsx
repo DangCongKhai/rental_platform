@@ -106,10 +106,50 @@ export function RequestIcon(props: IconProps) {
   );
 }
 
+export function BanIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z" />
+      <path d="M4.2 4.2l7.6 7.6" />
+    </Icon>
+  );
+}
+
 export function UserIcon(props: IconProps) {
   return (
     <Icon {...props}>
       <path d="M8 8.3a2.3 2.3 0 100-4.6 2.3 2.3 0 000 4.6zM3.2 13.3c.6-2.1 2.4-3.2 4.8-3.2s4.2 1.1 4.8 3.2" />
+    </Icon>
+  );
+}
+
+export function BedIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.4 12.6V4.8M2.4 8.4h11.2M13.6 8.4v4.2" />
+      <path d="M2.4 12.6h11.2M4.2 8.4V6.4h3.4v2" />
+    </Icon>
+  );
+}
+
+export function WrenchIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path
+        d={[
+          "M10.4 3.1a2.1 2.1 0 01-2.2 3.1L3.4 11",
+          "a1.3 1.3 0 101.8 1.8l4.8-4.8",
+          "a2.1 2.1 0 013.1-2.2L10.6 8.3 8.3 6z",
+        ].join("")}
+      />
+    </Icon>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9.2 2.6l4.2 4.2L5.8 14.4 1.8 14.6l.2-4z" />
     </Icon>
   );
 }

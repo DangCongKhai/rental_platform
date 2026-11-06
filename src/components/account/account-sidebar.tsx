@@ -12,17 +12,32 @@ import {
   HelpIcon,
 } from "@/components/ui/icons";
 
-export function AccountSidebar() {
-  return <AccountSidebarNav pathname={usePathname()} />;
+export function AccountSidebar({
+  notificationsHref = "/account/notifications",
+}: {
+  notificationsHref?: string;
+}) {
+  return (
+    <AccountSidebarNav
+      pathname={usePathname()}
+      notificationsHref={notificationsHref}
+    />
+  );
 }
 
 export function AccountSidebarFallback() {
   return <AccountSidebarNav pathname="" />;
 }
 
-function AccountSidebarNav({ pathname }: { pathname: string }) {
+function AccountSidebarNav({
+  pathname,
+  notificationsHref = "/account/notifications",
+}: {
+  pathname: string;
+  notificationsHref?: string;
+}) {
   return (
-    <aside className="shrink-0 bg-[#0e1a20] px-3.5 py-6 text-on-dark-muted lg:flex lg:min-h-[calc(100svh-75px)] lg:w-[260px] lg:flex-col h-full">
+    <aside className="shrink-0 bg-[#0e1a20] px-3.5 py-6 text-on-dark-muted lg:sticky lg:top-0 lg:flex lg:h-[calc(100svh-75px)] lg:w-[260px] lg:flex-col lg:self-start lg:overflow-y-auto">
       <p className="mb-3 px-1.5 text-[11px] font-bold tracking-[1.1px] uppercase">
         Trang của bạn
       </p>
@@ -43,7 +58,7 @@ function AccountSidebarNav({ pathname }: { pathname: string }) {
             Icon: ContractIcon,
           },
           {
-            href: "/account/notifications",
+            href: notificationsHref,
             label: "Thông báo",
             Icon: BellIcon,
           },

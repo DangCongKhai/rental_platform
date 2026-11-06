@@ -30,7 +30,12 @@ export function AdminSidebar({ userName }: { userName: string }) {
   const initial = userName.trim().charAt(0).toUpperCase() || "A";
 
   return (
-    <aside className="flex min-h-[calc(100svh-3.5rem)] w-[272px] shrink-0 flex-col bg-[#1b2635] px-4 py-5 text-white">
+    <aside
+      className={[
+        "flex h-full min-h-0 w-[272px] shrink-0 flex-col",
+        "overflow-y-auto bg-[#1b2635] px-4 py-5 text-white",
+      ].join(" ")}
+    >
       <Link
         href="/admin"
         className="mb-4 flex items-center gap-3 border-b border-white/10 px-3 pb-5"
@@ -114,7 +119,10 @@ export function AdminSidebarFallback({ userName }: { userName: string }) {
   return (
     <aside
       aria-hidden="true"
-      className="flex min-h-[calc(100svh-3.5rem)] w-[272px] shrink-0 flex-col bg-[#1b2635] px-4 py-5 text-white"
+      className={[
+        "flex h-full min-h-0 w-[272px] shrink-0 flex-col",
+        "overflow-y-auto bg-[#1b2635] px-4 py-5 text-white",
+      ].join(" ")}
     >
       <div className="mb-4 flex items-center gap-3 border-b border-white/10 px-3 pb-5">
         <span className="grid size-10 place-items-center rounded-xl bg-[#f5a400] text-xl font-bold text-[#172331]">

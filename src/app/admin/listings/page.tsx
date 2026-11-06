@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { buttonClass } from "@/components/ui/button";
+import { formatVietnamDate } from "@/lib/vietnam-date";
 import { getAdminListings } from "@/server/admin/listings";
 import { ListingSuspensionControls } from "./listing-suspension-controls";
 
@@ -129,27 +130,26 @@ export default async function AdminListingsPage({
                   {item.suspensionReason ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-xs">
-                  {item.updatedAt.toLocaleDateString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
+                  {formatVietnamDate(item.updatedAt)}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-start gap-3">
-                    {!item.archivedAt && (
-                      <>
-                        <Link
-                          href={`/admin/reviews/${item.id}`}
-                          className="shrink-0 pt-2 text-sm font-semibold text-[#1c4d78] hover:underline"
-                        >
-                          Chi tiết
-                        </Link>
-                        <ListingSuspensionControls
-                          listingId={item.id}
-                          suspended={Boolean(item.adminSuspendedAt)}
-                        />
-                      </>
-                    )}
-                  </div>
+                  {!item.archivedAt && (
+                    <div className="flex items-center gap-4">
+                      <Link
+                        href={`/admin/reviews/${item.id}`}
+                        className={[
+                          "shrink-0 text-sm font-semibold",
+                          "text-[#1c4d78] hover:underline",
+                        ].join(" ")}
+                      >
+                        Chi tiết
+                      </Link>
+                      <ListingSuspensionControls
+                        listingId={item.id}
+                        suspended={Boolean(item.adminSuspendedAt)}
+                      />
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

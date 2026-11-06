@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { formatVietnamDate } from "@/lib/vietnam-date";
 import type { getMyReports } from "@/server/reports/report-listing";
 const reasons: Record<string, string> = {
   FRAUD: "Gian lận hoặc lừa đảo",
@@ -71,9 +72,7 @@ export function ReportHistory({
                 </td>
                 <td className="px-4 py-5">{badge(report.status)}</td>
                 <td className="whitespace-nowrap px-4 py-5">
-                  {new Date(report.createdAt).toLocaleDateString("en-GB", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
+                  {formatVietnamDate(report.createdAt)}
                 </td>
               </tr>
             ))}

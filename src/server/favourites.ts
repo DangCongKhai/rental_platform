@@ -89,6 +89,7 @@ async function publicCards(propertyIds: string[]) {
         ? publicMediaUrl(cover.storagePath)
         : (photos[0] ?? null),
       image_urls: photos,
+      verified: true,
       property: {
         name: listing.property.name,
         property_type: listing.property.propertyType,

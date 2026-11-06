@@ -1,359 +1,226 @@
+"use client";
+
 import Link from "next/link";
-import { PageLinks } from "@/components/page-links";
-import { buttonClass } from "@/components/ui/button";
-import { getMyProperties } from "@/server/properties";
+import { useEffect, useState } from "react";
+import { Pagination } from "@/components/pagination";
+import { ListingStatusFilter } from "@/app/owner/listing-status-filter";
+import { listingStatusClass } from "@/app/owner/listing-status";
+import { actionMessage } from "@/lib/action-error";
+import type {
+  OwnerListingStatusFilter,
+  OwnerPropertyPage,
+  OwnerPropertySummary,
+} from "@/lib/owner-types";
+import { formatVietnamDate } from "@/lib/vietnam-date";
+import { getOwnerProperties } from "@/server/owner/actions";
+import { LoadingScreen } from "@/components/loading-screen";
 
-export const instant = false;
+function statusLabel(listing: OwnerPropertySummary["listing"]) {
+  if (!listing) return "Chưa có tin";
+  if (listing.admin_suspended_at) return "Tạm ẩn bởi quản trị viên";
+  if (listing.publication_status === "PUBLISHED") return "Đang hiển thị";
+  if (listing.publication_status === "HIDDEN") return "Đã ẩn";
+  if (listing.moderation_status === "PENDING") return "Đang chờ duyệt";
+  if (listing.moderation_status === "APPROVED") return "Đã duyệt · Chưa đăng";
+  if (listing.moderation_status === "REJECTED") return "Cần chỉnh sửa";
+  return "Bản nháp";
+}
 
-const moderationStatuses = [
-  "DRAFT",
-  "PENDING",
-  "APPROVED",
-  "REJECTED",
-] as const;
+export default function OwnerListingsPage() {
+  const [result, setResult] = useState<OwnerPropertyPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+  const [page, setPage] = useState(1);
+  const [listingStatuses, setListingStatuses] = useState<
+    OwnerListingStatusFilter[]
+  >([]);
 
-const publicationStatuses = ["DRAFT", "PUBLISHED", "HIDDEN"] as const;
-
-const moderationLabels: Record<string, string> = {
-  DRAFT: "Bản nháp",
-  PENDING: "Đang duyệt",
-  APPROVED: "Đã duyệt",
-  REJECTED: "Bị từ chối",
-};
-
-const publicationLabels: Record<string, string> = {
-  DRAFT: "Chưa đăng",
-  PUBLISHED: "Đang công khai",
-  HIDDEN: "Đã ẩn",
-};
-
-export default async function OwnerListingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-    moderationStatus?: string;
-    publicationStatus?: string;
-    suspended?: string;
-  }>;
-}) {
-  const {
-    page: pageValue,
-    moderationStatus: moderationStatusValue,
-    publicationStatus: publicationStatusValue,
-    suspended: suspendedValue,
-  } = await searchParams;
-
-  const parsed = Number(pageValue);
-  const page =
-    Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
-
-  const moderationStatus = moderationStatuses.find(
-    (status) => status === moderationStatusValue,
-  );
-
-  const publicationStatus = publicationStatuses.find(
-    (status) => status === publicationStatusValue,
-  );
-
-  const suspended = suspendedValue === "1" ? true : undefined;
-
-  const filters = {
-    moderationStatus,
-    publicationStatus,
-    suspended,
-  };
-
-  const result = await getMyProperties(false, page, filters);
-  const properties = result.properties;
-
-  function filterUrl(overrides: {
-    moderationStatus?: (typeof moderationStatuses)[number] | null;
-    publicationStatus?: (typeof publicationStatuses)[number] | null;
-    suspended?: boolean | null;
-  }) {
-    const params = new URLSearchParams();
-
-    const nextModeration =
-      overrides.moderationStatus !== undefined
-        ? overrides.moderationStatus
-        : moderationStatus;
-
-    const nextPublication =
-      overrides.publicationStatus !== undefined
-        ? overrides.publicationStatus
-        : publicationStatus;
-
-    const nextSuspended =
-      overrides.suspended !== undefined ? overrides.suspended : suspended;
-
-    if (nextModeration !== undefined && nextModeration !== null) {
-      params.set("moderationStatus", nextModeration);
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const next = await getOwnerProperties({
+          page,
+          listingStatuses,
+        });
+        if (ignore) return;
+        setResult(next);
+      } catch (caught) {
+        if (ignore) return;
+        setError(
+          actionMessage(
+            caught,
+            "Không thể tải danh sách bất động sản. Vui lòng thử lại.",
+          ),
+        );
+      } finally {
+        if (!ignore) setLoading(false);
+      }
     }
+    void load();
+    return () => {
+      ignore = true;
+    };
+  }, [listingStatuses, page, retry]);
 
-    if (nextPublication !== undefined && nextPublication !== null) {
-      params.set("publicationStatus", nextPublication);
-    }
+  const rows = result?.data ?? [];
+  const firstWithoutListing = rows.find((item) => !item.listing)?.id;
 
-    if (nextSuspended === true) {
-      params.set("suspended", "1");
-    }
-
-    const query = params.toString();
-
-    return query ? `/owner/listings?${query}` : "/owner/listings";
-  }
+  const filtersActive = listingStatuses.length > 0;
 
   return (
-    <section className="space-y-5">
-      <header>
-        <h1 className="text-[28px] font-bold tracking-tight text-ink">
-          Tin đăng
-        </h1>
-
-        <p className="mt-1 text-sm text-subtle">
-          Soạn tin, gửi xét duyệt và quản lý trạng thái công khai.
-        </p>
-      </header>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-4">
-        <span className="mr-1 text-sm font-medium text-ink">Kiểm duyệt:</span>
-
-        <Link
-          href={filterUrl({ moderationStatus: null })}
-          className={buttonClass({
-            variant: moderationStatus ? "secondary" : "primary",
-            size: "md",
-          })}
-        >
-          Tất cả
-        </Link>
-
-        {moderationStatuses.map((status) => (
-          <Link
-            key={status}
-            href={filterUrl({ moderationStatus: status })}
-            className={buttonClass({
-              variant: moderationStatus === status ? "primary" : "secondary",
-              size: "md",
-            })}
-          >
-            {moderationLabels[status]}
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-4">
-        <span className="mr-1 text-sm font-medium text-ink">Công khai:</span>
-
-        <Link
-          href={filterUrl({ publicationStatus: null })}
-          className={buttonClass({
-            variant: publicationStatus ? "secondary" : "primary",
-            size: "md",
-          })}
-        >
-          Tất cả
-        </Link>
-
-        {publicationStatuses.map((status) => (
-          <Link
-            key={status}
-            href={filterUrl({ publicationStatus: status })}
-            className={buttonClass({
-              variant: publicationStatus === status ? "primary" : "secondary",
-              size: "md",
-            })}
-          >
-            {publicationLabels[status]}
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-4">
-        <span className="mr-1 text-sm font-medium text-ink">Đình chỉ:</span>
-
-        <Link
-          href={filterUrl({ suspended: null })}
-          className={buttonClass({
-            variant: suspended ? "secondary" : "primary",
-            size: "md",
-          })}
-        >
-          Tất cả
-        </Link>
-
-        <Link
-          href={filterUrl({ suspended: true })}
-          className={buttonClass({
-            variant: suspended ? "primary" : "secondary",
-            size: "md",
-          })}
-        >
-          Bị đình chỉ
-        </Link>
-      </div>
-
-      {properties.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line bg-white p-8 text-center">
-          <h2 className="text-lg font-semibold text-ink">
-            {moderationStatus || publicationStatus || suspended
-              ? "Không tìm thấy tin đăng phù hợp"
-              : "Chưa có bất động sản để đăng tin"}
-          </h2>
-
-          <p className="mt-2 text-sm text-subtle">
-            {moderationStatus || publicationStatus || suspended
-              ? "Thử thay đổi hoặc xóa bộ lọc để xem thêm kết quả."
-              : "Tạo bất động sản trước, sau đó chuẩn bị tin đăng tại đây."}
+    <section className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col px-1 py-4 sm:px-2 sm:py-6">
+      <header className="mb-6 flex shrink-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            CỔNG CHỦ NHÀ
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Tin đăng
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Soạn nội dung riêng cho tin đăng. Gửi duyệt và công khai là hai
+            bước độc lập với việc quản lý bất động sản.
           </p>
-
-          {moderationStatus || publicationStatus || suspended ? (
-            <Link
-              href="/owner/listings"
-              className={`${buttonClass({ variant: "secondary" })} mt-4`}
-            >
-              Xóa bộ lọc
-            </Link>
-          ) : (
-            <Link
-              href="/owner/properties/new"
-              className={`${buttonClass()} mt-4`}
-            >
-              Tạo bất động sản
-            </Link>
-          )}
+        </div>
+        {firstWithoutListing && (
+          <Link
+            href={`/owner/listings/new?propertyId=${firstWithoutListing}`}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-[#3368a0] px-5 text-sm font-semibold text-white"
+          >
+            Tạo bài đăng
+          </Link>
+        )}
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col gap-5">
+      {result &&
+      result.meta.total === 0 &&
+      !filtersActive &&
+      !loading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Cần có bất động sản trước
+          </h2>
+          <Link
+            href="/owner/properties"
+            className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#3368a0] px-5 text-sm font-semibold text-white"
+          >
+            Quản lý bất động sản
+          </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-[15px] border border-line bg-white">
-          <table className="w-full min-w-[860px] border-collapse text-left">
-            <thead>
-              <tr className="bg-[#f7f9fb] text-[13px] font-semibold text-subtle">
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Bất động sản
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Kiểm duyệt
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Công khai
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Ghi chú
-                </th>
-                <th scope="col" className="px-4 py-4">
-                  <span className="sr-only">Thao tác</span>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {properties.map((property) => {
-                const listing = property.listings[0];
-
-                const place =
-                  [property.ward, property.city].filter(Boolean).join(", ") ||
-                  property.addressLine ||
-                  "Chưa thêm địa chỉ";
-
-                const note = listing?.adminSuspendedAt
-                  ? listing.suspensionReason
-                  : listing?.moderationStatus === "REJECTED"
-                    ? listing.reviewReason
-                    : null;
-
-                return (
-                  <tr
-                    key={property.id}
-                    className="border-t border-line-soft align-middle"
-                  >
-                    <td className="px-4 py-3.5">
-                      <p className="text-[15px] font-semibold leading-snug text-ink-2">
-                        {property.name}
-                      </p>
-
-                      <p className="mt-0.5 max-w-[240px] text-[13px] leading-5 text-subtle">
-                        {place}
-                      </p>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[15px] text-ink">
-                      {listing
-                        ? (moderationLabels[listing.moderationStatus] ??
-                          listing.moderationStatus)
-                        : "Chưa có tin"}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[15px] text-ink">
-                      {listing ? (
-                        <span>
-                          {publicationLabels[listing.publicationStatus] ??
-                            listing.publicationStatus}
-                          {listing.adminSuspendedAt ? " · Bị đình chỉ" : ""}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[13px] text-danger-ink">
-                      {note ?? <span className="text-subtle">—</span>}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right">
-                      {listing ? (
-                        <Link
-                          href={`/owner/listings/${listing.id}`}
-                          className={buttonClass({ variant: "secondary" })}
-                        >
-                          Quản lý tin đăng
-                        </Link>
-                      ) : (
-                        <Link
-                          href={`/owner/listings/new?propertyId=${property.id}`}
-                          className={buttonClass()}
-                        >
-                          Tạo tin đăng
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="flex min-h-0 flex-1 flex-col gap-5">
+          <div className="flex shrink-0 flex-wrap items-end gap-3">
+            <ListingStatusFilter
+              value={listingStatuses}
+              onChange={(next) => {
+                setListingStatuses(next);
+                setPage(1);
+              }}
+            />
+            {filtersActive ? (
+              <button
+                type="button"
+                className={[
+                  "h-10 rounded-xl px-3 text-sm font-semibold",
+                  "text-[#3368a0] hover:bg-slate-100",
+                ].join(" ")}
+                onClick={() => {
+                  setListingStatuses([]);
+                  setPage(1);
+                }}
+              >
+                Xóa bộ lọc
+              </button>
+            ) : null}
+          </div>
+          {loading ? (
+            <LoadingScreen className="h-full" message="Đang tải tin đăng..." />
+          ) : error ? (
+            <div className="rounded-2xl border border-rose-200 bg-white p-6 text-center">
+              <p className="text-sm text-rose-700">{error}</p>
+              <button
+                type="button"
+                onClick={() => setRetry((current) => current + 1)}
+                className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : (
+          <div className="flex min-h-0 flex-1 flex-col gap-5">
+          <div className="min-h-0 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {rows.length ? (
+                <table className="w-full min-w-[860px] text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500">
+                    <tr>
+                      <th className="px-4 py-4">Tiêu đề</th>
+                      <th className="px-4 py-4">Bất động sản</th>
+                      <th className="px-4 py-4">Trạng thái</th>
+                      <th className="px-4 py-4">Căn đủ điều kiện hôm nay</th>
+                      <th className="px-4 py-4">Cập nhật</th>
+                      <th className="px-4 py-4">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {rows.map((item) => {
+                      const href = item.listing
+                        ? `/owner/listings/${item.listing.id}`
+                        : `/owner/listings/new?propertyId=${item.id}`;
+                      return (
+                        <tr key={item.id}>
+                          <td className="px-4 py-4 font-semibold text-slate-900">
+                            {item.listing?.title || "Chưa có bản nháp"}
+                          </td>
+                          <td className="px-4 py-4 text-slate-700">
+                            {item.name}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={listingStatusClass(item.listing)}>
+                              {statusLabel(item.listing)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-slate-700">
+                            {item.eligible_unit_count} / {item.unit_count}
+                          </td>
+                          <td className="px-4 py-4 text-slate-600">
+                            {formatVietnamDate(item.updated_at)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <Link
+                              href={href}
+                              className="font-semibold whitespace-nowrap text-[#3368a0] hover:underline"
+                            >
+                              {item.listing ? "Chỉnh sửa" : "Tạo bản nháp"}
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-600">
+              Không có tin phù hợp bộ lọc.
+            </div>
+          )}
+          </div>
+          {result && result.meta.last_page > 1 && (
+            <div className="flex shrink-0 justify-end">
+              <Pagination
+                current={result.meta.current_page}
+                lastPage={result.meta.last_page}
+                onSelect={setPage}
+              />
+            </div>
+          )}
+        </div>
+          )}
         </div>
       )}
-
-      <div className="flex justify-end">
-        <PageLinks
-          page={page}
-          total={result.total}
-          pageSize={result.pageSize}
-          href={(nextPage) => {
-            const params = new URLSearchParams();
-
-            if (moderationStatus) {
-              params.set("moderationStatus", moderationStatus);
-            }
-
-            if (publicationStatus) {
-              params.set("publicationStatus", publicationStatus);
-            }
-
-            if (suspended) {
-              params.set("suspended", "1");
-            }
-
-            if (nextPage > 1) {
-              params.set("page", String(nextPage));
-            }
-
-            const query = params.toString();
-
-            return query ? `/owner/listings?${query}` : "/owner/listings";
-          }}
-        />
       </div>
     </section>
   );

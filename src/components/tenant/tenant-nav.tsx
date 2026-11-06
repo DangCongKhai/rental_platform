@@ -13,7 +13,7 @@ export function TenantNav() {
   return (
     <>
       <div className="hidden lg:block">
-        <AccountSidebar />
+        <AccountSidebar notificationsHref="/tenant/notifications" />
       </div>
       <nav
         aria-label="Điều hướng người thuê"
@@ -28,7 +28,7 @@ export function TenantNav() {
           },
           { href: "/tenant/tenancies", label: "Hợp đồng", Icon: ContractIcon },
           {
-            href: "/account/notifications",
+            href: "/tenant/notifications",
             label: "Thông báo",
             Icon: BellIcon,
           },

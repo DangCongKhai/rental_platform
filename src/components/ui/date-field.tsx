@@ -203,7 +203,6 @@ function DatePicker({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         onClick={() => setOpen((value) => !value)}
         className="min-h-12 w-full rounded-xl border border-[#c9d3e0] bg-white px-3.5 text-left text-base font-normal"

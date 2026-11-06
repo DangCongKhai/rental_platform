@@ -1,723 +1,718 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { buttonClass } from "@/components/ui/button";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { ListingDetailView } from "@/components/listings/listing-detail";
+import type {
+  ListingDetail,
+  PublicAmenity,
+} from "@/features/discovery/listings-api";
+import { actionMessage } from "@/lib/action-error";
+import type {
+  AmenityCatalogEntry,
+  OwnerListing,
+  OwnerPropertyDetail,
+  OwnerPropertyMedia,
+  OwnerUnit,
+} from "@/lib/owner-types";
 import {
-  checkListingCompleteness,
-  type ListingCompletenessIssue,
-} from "@/domain/listings/completeness";
-import {
-  archiveListing,
-  hideListing,
-  publishListing,
-  saveListing,
-  saveListingCover,
-  submitListing,
-  withdrawListing,
-} from "@/server/listings/owner-listing-actions";
+  archiveOwnerListing,
+  createOwnerListing,
+  getAmenityCatalog,
+  getOwnerListing,
+  getOwnerListingById,
+  getOwnerProperty,
+  getOwnerPropertyMedia,
+  hideOwnerListing,
+  publishOwnerListing,
+  submitOwnerListing,
+  updateOwnerListing,
+  updateOwnerUnit,
+} from "@/server/owner/actions";
 
-type EditorData = {
-  property: {
-    id: string;
-    rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
-    name: string;
-    addressLine: string | null;
-    ward: string | null;
-    city: string | null;
-    description: string | null;
-    contentRevision: number;
-  };
-  units: Array<{
-    id: string;
-    label: string;
-    isMarketed: boolean;
-    description: string | null;
-    areaM2: number | null;
-    advertisedMonthlyRent: number | null;
-    deposit: number | null;
-    minimumRentalMonths: number;
-    maxOccupants: number | null;
-    hasSelectedPhoto: boolean;
-  }>;
-  photos: Array<{
-    id: string;
-    caption: string | null;
-    signedUrl: string | null;
-  }>;
-  listing: null | {
-    id: string;
-    title: string;
-    description: string;
-    coverMediaId: string | null;
-    moderationStatus: string;
-    publicationStatus: string;
-    submittedContentRevision: number | null;
-    reviewReason: string | null;
-    adminSuspendedAt: Date | null;
-    suspensionReason: string | null;
-  };
-  issues: ListingCompletenessIssue[];
-};
+type FieldErrors = Record<string, string[]>;
+type Action = "save" | "submit" | "publish" | "hide" | "archive" | null;
 
-const moderationLabels: Record<string, string> = {
-  DRAFT: "Bản nháp",
-  PENDING: "Đang duyệt",
-  APPROVED: "Đã duyệt",
-  REJECTED: "Bị từ chối",
-};
-const publicationLabels: Record<string, string> = {
-  DRAFT: "Chưa đăng",
-  PUBLISHED: "Đang công khai",
-  HIDDEN: "Đã ẩn",
-};
-type PendingAction =
-  "cover" | "submit" | "publish" | "save" | "hide" | "withdraw" | "archive";
+const inputClass =
+  "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
+
+function statusLabel(listing: OwnerListing): string {
+  if (listing.admin_suspended_at) return "Tạm ẩn bởi quản trị viên";
+  if (listing.archived_at) return "Đã lưu trữ";
+  if (listing.publication_status === "PUBLISHED") return "Đang hiển thị";
+  if (listing.publication_status === "HIDDEN") return "Đã ẩn";
+  if (listing.moderation_status === "PENDING") return "Đang chờ duyệt";
+  if (listing.moderation_status === "APPROVED") return "Đã duyệt · Chưa đăng";
+  if (listing.moderation_status === "REJECTED") return "Cần chỉnh sửa";
+  return "Bản nháp";
+}
+
+function missingListingFields(unit: OwnerUnit): string[] {
+  const missing: string[] = [];
+  if (!unit.description?.trim()) missing.push("mô tả");
+  if (unit.area_m2 === null) missing.push("diện tích");
+  if (unit.advertised_monthly_rent === null) missing.push("giá thuê");
+  if (unit.deposit === null) missing.push("tiền cọc");
+  if (unit.max_occupants === null) missing.push("số người");
+  return missing;
+}
+
+function unitReady(unit: OwnerUnit): boolean {
+  return (
+    unit.operational_status === "READY" && missingListingFields(unit).length === 0
+  );
+}
+
+function amenityList(
+  document: OwnerPropertyDetail["shared_amenities"],
+  labels: Map<string, string>,
+): PublicAmenity[] {
+  return Object.entries(document.standard).flatMap(([key, value]) => {
+    const label = labels.get(key);
+    if (!value.enabled || !label) return [];
+    return [{ key, label_vi: label, details: value.details ?? null }];
+  });
+}
+
+function previewListing(
+  property: OwnerPropertyDetail,
+  media: OwnerPropertyMedia[],
+  title: string,
+  description: string,
+  listingId: string,
+  labels: Map<string, string>,
+): ListingDetail {
+  const units = property.units.filter(
+    (unit) => !unit.archived_at && unit.is_marketed,
+  );
+  const photo = (item: OwnerPropertyMedia) => ({
+    id: item.id,
+    caption: item.caption,
+    sort_order: item.sort_order,
+    url: item.preview_url ?? "",
+  });
+  return {
+    id: listingId,
+    property_id: property.id,
+    title: title || "Tiêu đề tin đăng",
+    description,
+    availability_label: "Bản xem trước",
+    available_unit_count: units.length,
+    gallery: media
+      .filter(
+        (item) =>
+          item.unit_id === null &&
+          item.is_selected_for_listing &&
+          item.preview_url,
+      )
+      .map(photo),
+    property: {
+      name: property.name,
+      property_type: property.property_type,
+      rental_arrangement:
+        property.rental_arrangement === "SEPARATE_UNITS"
+          ? "SEPARATE_UNITS"
+          : "WHOLE_SPACE",
+      address_line: property.address_line ?? "",
+      ward: property.ward,
+      city: property.city ?? "",
+      description: property.description ?? "",
+      shared_rules: property.policies.shared_rules,
+      shared_amenities: amenityList(property.shared_amenities, labels),
+      custom_amenities: property.shared_amenities.custom,
+      area: null,
+    },
+    owner: { name: "" },
+    units: units.map((unit) => ({
+      id: unit.id,
+      label: unit.label,
+      unit_kind: unit.unit_kind,
+      description: unit.description,
+      area_m2: String(unit.area_m2 ?? ""),
+      bedrooms: unit.bedrooms,
+      bathrooms: String(unit.bathrooms),
+      advertised_monthly_rent: String(unit.advertised_monthly_rent ?? ""),
+      deposit: String(unit.deposit ?? ""),
+      minimum_rental_months: unit.minimum_rental_months,
+      max_occupants: unit.max_occupants ?? 1,
+      availability_label: "Bản xem trước",
+      available_from: null,
+      available_until: null,
+      held_start: null,
+      held_end: null,
+      pets: unit.policy_overrides.pets ?? property.policies.pets,
+      smoking: unit.policy_overrides.smoking ?? property.policies.smoking,
+      rules: unit.policy_overrides.additional_rules ?? [],
+      amenities: amenityList(unit.amenities, labels),
+      custom_amenities: unit.amenities.custom,
+      photos: media
+        .filter(
+          (item) =>
+            item.preview_url &&
+            item.is_selected_for_listing &&
+            (item.unit_id === unit.id ||
+              (item.unit_id === null &&
+                (item.assigned_unit_ids ?? []).includes(unit.id))),
+        )
+        .map(photo),
+    })),
+  };
+}
 
 export function ListingEditor({
-  initialData,
-  returnTo,
+  listingId,
+  propertyId,
 }: {
-  initialData: EditorData;
-  returnTo?: string;
+  listingId?: string;
+  propertyId?: string;
 }) {
   const router = useRouter();
-  const [listingId, setListingId] = useState(initialData.listing?.id ?? null);
-  const [revision, setRevision] = useState(
-    initialData.property.contentRevision,
+  const [property, setProperty] = useState<OwnerPropertyDetail | null>(null);
+  const [listing, setListing] = useState<OwnerListing | null>(null);
+  const [media, setMedia] = useState<OwnerPropertyMedia[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<Action>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [success, setSuccess] = useState<string | null>(null);
+  const [editorView, setEditorView] = useState<"content" | "preview">(
+    "content",
   );
-  const [title, setTitle] = useState(initialData.listing?.title ?? "");
-  const [description, setDescription] = useState(
-    initialData.listing?.description ?? "",
-  );
-  const [coverMediaId, setCoverMediaId] = useState(
-    initialData.listing?.coverMediaId ?? null,
-  );
-  const [marketedUnitIds, setMarketedUnitIds] = useState(() =>
-    initialData.property.rentalArrangement === "WHOLE_SPACE"
-      ? initialData.units.map((unit) => unit.id)
-      : initialData.units
-          .filter((unit) => unit.isMarketed)
-          .map((unit) => unit.id),
-  );
-  const [serverIssues, setServerIssues] = useState(initialData.issues);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
-    null,
-  );
-  const isBusy = pendingAction !== null;
-  const listing = initialData.listing;
-  const suspended = Boolean(listing?.adminSuspendedAt);
-  const issues = useMemo(
-    () =>
-      checkListingCompleteness({
-        rentalArrangement: initialData.property.rentalArrangement,
-        title,
-        description,
-        addressLine: initialData.property.addressLine,
-        city: initialData.property.city,
-        propertyDescription: initialData.property.description,
-        hasSelectedSharedPhoto: initialData.photos.length > 0,
-        hasSelectedCover: Boolean(
-          coverMediaId &&
-          initialData.photos.some((photo) => photo.id === coverMediaId),
-        ),
-        policiesValid: !serverIssues.some(
-          (issue) => issue.field === "policies",
-        ),
-        units: initialData.units.map((unit) => ({
-          ...unit,
-          isMarketed: marketedUnitIds.includes(unit.id),
-        })),
-      }),
-    [
-      initialData,
-      title,
-      description,
-      coverMediaId,
-      marketedUnitIds,
-      serverIssues,
-    ],
+  const [amenityLabels, setAmenityLabels] = useState<Map<string, string>>(
+    () => new Map(),
   );
 
-  function actionForIssue(
-    issue: ListingCompletenessIssue,
-  ): { href: string; label: string } | null {
-    const unit = issue.unitLabel
-      ? initialData.units.find(
-          (candidate) => candidate.label === issue.unitLabel,
-        )
-      : null;
-    if (issue.field === "cover")
-      return { href: "#listing-cover", label: "Chọn ảnh bìa" };
-    if (issue.field === "sharedPhotos")
-      return {
-        href: `/owner/properties/${initialData.property.id}/media`,
-        label: "Quản lý ảnh",
-      };
-    if (issue.field === "title" || issue.field === "description")
-      return { href: "#listing-content", label: "Chỉnh sửa nội dung" };
-    if (issue.field.startsWith("unit.") && unit) {
-      return {
-        href: `/owner/properties/${initialData.property.id}/units/${unit.id}`,
-        label:
-          issue.field === "unit.photos"
-            ? "Mở căn/phòng"
-            : "Chỉnh sửa căn/phòng",
-      };
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const owned = listingId ? await getOwnerListingById(listingId) : null;
+        const id = owned?.property_id ?? propertyId;
+        if (!id) throw new Error("Không tìm thấy tin đăng.");
+        const [propertyResult, listingResult, mediaResult, catalog] =
+          await Promise.all([
+            getOwnerProperty(id),
+            owned ? Promise.resolve(owned) : getOwnerListing(id),
+            getOwnerPropertyMedia(id),
+            getAmenityCatalog().catch(() => [] as AmenityCatalogEntry[]),
+          ]);
+        if (ignore) return;
+        if (!listingId && listingResult) {
+          router.replace(`/owner/listings/${listingResult.id}`);
+          return;
+        }
+        let nextProperty = propertyResult;
+        const activeUnits = nextProperty.units.filter((unit) => !unit.archived_at);
+        if (activeUnits.length === 1) {
+          const unit = activeUnits[0];
+          const description = unit.description?.trim()
+            ? unit.description
+            : nextProperty.description?.trim() || null;
+          const canMarket =
+            unit.operational_status === "READY" &&
+            Boolean(description) &&
+            unit.area_m2 !== null &&
+            unit.advertised_monthly_rent !== null &&
+            unit.deposit !== null &&
+            unit.max_occupants !== null;
+          if (canMarket && (!unit.is_marketed || !unit.description?.trim())) {
+            await updateOwnerUnit(nextProperty.id, unit.id, {
+              expected_content_revision: nextProperty.content_revision,
+              ...(unit.description?.trim() ? {} : { description }),
+              is_marketed: true,
+            });
+            if (ignore) return;
+            nextProperty = await getOwnerProperty(nextProperty.id);
+          }
+        }
+        if (ignore) return;
+        setProperty(nextProperty);
+        setListing(listingResult);
+        setMedia(mediaResult);
+        setAmenityLabels(
+          new Map(
+            catalog.map((item) => [item.key, item.label_vi || item.label]),
+          ),
+        );
+        setTitle(listingResult?.title ?? "");
+        setDescription(listingResult?.description ?? "");
+      } catch (caught) {
+        if (ignore) return;
+        setError(actionMessage(caught, "Không thể tải tin đăng."));
+      } finally {
+        if (!ignore) setLoading(false);
+      }
     }
-    if (issue.field === "units")
-      return {
-        href: `/owner/properties/${initialData.property.id}/units`,
-        label: "Quản lý căn/phòng",
-      };
-    if (
-      issue.field === "address" ||
-      issue.field === "property.description" ||
-      issue.field === "policies"
-    ) {
-      return {
-        href: `/owner/properties/${initialData.property.id}`,
-        label: "Chỉnh sửa bất động sản",
-      };
-    }
-    return null;
+    void load();
+    return () => {
+      ignore = true;
+    };
+  }, [listingId, propertyId, router]);
+
+  const sharedPhotos = useMemo(
+    () =>
+      media.filter(
+        (item) => item.unit_id === null && item.is_selected_for_listing,
+      ),
+    [media],
+  );
+  const coverId = sharedPhotos[0]?.id ?? null;
+
+  async function reload(id: string) {
+    const [propertyResult, listingResult, mediaResult] = await Promise.all([
+      getOwnerProperty(id),
+      getOwnerListing(id),
+      getOwnerPropertyMedia(id),
+    ]);
+    setProperty(propertyResult);
+    setListing(listingResult);
+    setMedia(mediaResult);
+    return propertyResult;
   }
 
-  function persist(then?: "submit" | "publish") {
-    if (isBusy) return;
-    const action: PendingAction = then ?? "save";
-    setMessage(null);
-    setPendingAction(action);
-    void (async () => {
-      try {
-        const saved = await saveListing(initialData.property.id, {
-          listingId,
-          expectedRevision: revision,
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!property) return;
+    setSaving("save");
+    setError(null);
+    setSuccess(null);
+    setFieldErrors({});
+    try {
+      if (listing) {
+        const updated = await updateOwnerListing(property.id, {
+          expected_content_revision: property.content_revision,
           title,
           description,
-          coverMediaId,
-          marketedUnitIds,
+          cover_media_id: coverId,
         });
-        if (!saved.ok || !saved.data) {
-          setMessage(
-            saved.ok ? "Không nhận được dữ liệu tin đăng đã lưu." : saved.error,
-          );
-          return;
-        }
-        setListingId(saved.data.id);
-        setRevision(saved.data.contentRevision);
-        setServerIssues(saved.data.issues);
-        if (!listingId && !returnTo)
-          router.replace(`/owner/listings/${saved.data.id}`);
-
-        if (then === "submit") {
-          if (saved.data.issues.length > 0) {
-            setMessage(
-              `Chưa thể gửi duyệt. ${saved.data.issues.map((issue) => issue.message).join(" ")}`,
-            );
-            return;
-          }
-          const submitted = await submitListing(saved.data.id);
-          if (!submitted.ok) {
-            setMessage(submitted.error);
-            return;
-          }
-          setMessage("Đã gửi tin đăng đến quản trị viên để xét duyệt.");
-          router.refresh();
-          return;
-        }
-
-        if (then === "publish") {
-          const published = await publishListing(saved.data.id);
-          if (!published.ok) {
-            setMessage(published.error);
-            return;
-          }
-          setMessage("Tin đăng đã được công khai.");
-          router.refresh();
-          return;
-        }
-        setMessage("Đã lưu bản nháp tin đăng.");
-        if (returnTo) router.push(returnTo);
-      } catch {
-        setMessage("Không thể lưu tin đăng. Hãy thử lại.");
-      } finally {
-        setPendingAction(null);
+        setListing(updated);
+        setProperty((current) =>
+          current
+            ? {
+                ...current,
+                content_revision: updated.property_content_revision,
+              }
+            : current,
+        );
+        setSuccess("Đã lưu tin đăng.");
+      } else {
+        const created = await createOwnerListing(property.id, {
+          client_operation_id: crypto.randomUUID(),
+          title,
+          description,
+          cover_media_id: coverId,
+        });
+        router.replace(`/owner/listings/${created.id}`);
       }
-    })();
+    } catch (caught) {
+      setFieldErrors({});
+      setError(
+        actionMessage(caught, "Không thể lưu tin đăng. Vui lòng thử lại."),
+      );
+    } finally {
+      setSaving(null);
+    }
   }
 
-  function chooseCover(nextCoverMediaId: string) {
-    if (isBusy) return;
-    const previousCoverMediaId = coverMediaId;
-    setCoverMediaId(nextCoverMediaId);
-    setMessage(null);
-    setPendingAction("cover");
-    void (async () => {
-      try {
-        const result = await saveListingCover(initialData.property.id, {
-          listingId,
-          expectedRevision: revision,
-          coverMediaId: nextCoverMediaId,
-        });
-        if (!result.ok || !result.data) {
-          setCoverMediaId(previousCoverMediaId);
-          setMessage(
-            result.ok
-              ? "Không nhận được thông tin ảnh bìa đã lưu."
-              : result.error,
-          );
-          return;
-        }
-        setListingId(result.data.id);
-        setRevision(result.data.contentRevision);
-        setMessage("Ảnh bìa đã được lưu.");
-        if (!listingId) {
-          const returnQuery = returnTo
-            ? `?returnTo=${encodeURIComponent(returnTo)}`
-            : "";
-          router.replace(`/owner/listings/${result.data.id}${returnQuery}`);
-        }
-      } catch {
-        setCoverMediaId(previousCoverMediaId);
-        setMessage("Không thể lưu ảnh bìa. Hãy thử lại.");
-      } finally {
-        setPendingAction(null);
-      }
-    })();
-  }
-
-  function runStateChange(
-    action: (id: string) => Promise<{ ok: boolean; error?: string }>,
-    successMessage: string,
-    archive = false,
-  ) {
-    if (!listingId || isBusy) return;
+  async function runAction(action: Exclude<Action, "save" | null>) {
+    if (!property || !listing) return;
     if (
-      archive &&
+      action === "archive" &&
       !window.confirm(
-        "Lưu trữ tin đăng này? Yêu cầu thuê và lịch sử kỳ thuê vẫn được giữ lại.",
+        "Lưu trữ tin đăng này? Tin đăng sẽ không còn là tin hiện tại của bất động sản.",
       )
     )
       return;
-    setMessage(null);
-    setPendingAction(archive ? "archive" : "hide");
-    void (async () => {
-      try {
-        const result = await action(listingId);
-        if (!result.ok) {
-          setMessage(result.error ?? "Không thể cập nhật trạng thái tin đăng.");
-          return;
-        }
-        if (archive) router.push("/owner/listings");
-        else {
-          setMessage(successMessage);
-          router.refresh();
-        }
-      } catch {
-        setMessage("Không thể cập nhật trạng thái tin đăng. Hãy thử lại.");
-      } finally {
-        setPendingAction(null);
+    setSaving(action);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updated =
+        action === "submit"
+          ? await submitOwnerListing(property.id)
+          : action === "publish"
+            ? await publishOwnerListing(property.id)
+            : action === "hide"
+              ? await hideOwnerListing(property.id)
+              : await archiveOwnerListing(property.id);
+      if (action === "archive") {
+        router.push("/owner/listings");
+        return;
       }
-    })();
+      setListing(updated);
+      setSuccess(
+        action === "submit"
+          ? "Đã gửi hồ sơ để quản trị viên duyệt."
+          : action === "publish"
+            ? "Tin đăng đã được hiển thị."
+            : "Tin đăng đã được ẩn.",
+      );
+    } catch (caught) {
+      setFieldErrors({});
+      setError(
+        actionMessage(
+          caught,
+          "Không thể cập nhật trạng thái tin đăng. Vui lòng thử lại.",
+        ),
+      );
+    } finally {
+      setSaving(null);
+    }
   }
 
-  function withdrawReviewRequest() {
-    if (
-      !listingId ||
-      isBusy ||
-      !window.confirm(
-        "Rút tin đăng khỏi hàng chờ xét duyệt? Tin sẽ trở về bản nháp và có thể gửi lại.",
-      )
-    )
+  async function toggleMarketed(unit: OwnerUnit) {
+    if (!property) return;
+    if (!unit.is_marketed && !unitReady(unit)) {
+      setError(
+        `Hoàn thiện mô tả, diện tích, giá thuê, tiền cọc và số người cho ${unit.label} trước khi đưa căn này lên tin.`,
+      );
       return;
-    setMessage(null);
-    setPendingAction("withdraw");
-    void (async () => {
-      try {
-        const result = await withdrawListing(listingId);
-        if (!result.ok) {
-          setMessage(result.error ?? "Không thể rút yêu cầu xét duyệt.");
-          return;
-        }
-        setMessage("Đã rút yêu cầu xét duyệt. Tin đăng đã trở về bản nháp.");
-        router.refresh();
-      } catch {
-        setMessage("Không thể rút yêu cầu xét duyệt. Hãy thử lại.");
-      } finally {
-        setPendingAction(null);
-      }
-    })();
+    }
+    setSaving("save");
+    setError(null);
+    try {
+      await updateOwnerUnit(property.id, unit.id, {
+        expected_content_revision: property.content_revision,
+        is_marketed: !unit.is_marketed,
+      });
+      await reload(property.id);
+      setSuccess(
+        unit.is_marketed
+          ? `Đã bỏ ${unit.label} khỏi tin.`
+          : `Đã chọn ${unit.label} để đăng.`,
+      );
+    } catch (caught) {
+      setError(actionMessage(caught, "Không thể cập nhật căn được đăng."));
+    } finally {
+      setSaving(null);
+    }
   }
+
+  const units = property?.units.filter((unit) => !unit.archived_at) ?? [];
+  const marketedUnits = units.filter((unit) => unit.is_marketed);
+  const unitsReadyForListing =
+    marketedUnits.length > 0 && marketedUnits.every(unitReady);
+  const canEdit = !listing || listing.moderation_status !== "PENDING";
+
+  if (loading)
+    return (
+      <div className="animate-pulse space-y-4" aria-busy="true">
+        <div className="h-24 rounded-2xl border border-slate-200 bg-white" />
+        <div className="h-80 rounded-2xl border border-slate-200 bg-white" />
+      </div>
+    );
+  if (!property)
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-white p-6 text-sm text-rose-700">
+        {error ?? "Không tìm thấy tin đăng."}
+      </div>
+    );
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-5">
-      <header className="space-y-2">
-        <nav aria-label="Đường dẫn" className="text-sm text-subtle">
-          <Link href="/owner/listings" className="hover:text-brand">
-            Tin đăng
-          </Link>
-          <span aria-hidden="true"> / </span>
-          <span>{initialData.property.name}</span>
-        </nav>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">
-          {listing ? "Chỉnh sửa tin đăng" : "Tạo tin đăng mới"}
-        </h1>
-        <p className="text-sm text-subtle">
-          Thông tin căn/phòng, tiện ích và nội quy được lấy từ bất động sản hiện
-          có.
-        </p>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-deep">
-            {moderationLabels[listing?.moderationStatus ?? "DRAFT"]}
-          </span>
-          <span className="rounded-full bg-surface px-3 py-1 text-sm font-semibold text-ink-2">
-            {publicationLabels[listing?.publicationStatus ?? "DRAFT"]}
-          </span>
-          {suspended && (
-            <span className="rounded-full bg-[#fdf2f1] px-3 py-1 text-sm font-semibold text-danger-ink">
-              Bị đình chỉ bởi quản trị viên
-            </span>
-          )}
-        </div>
-        {listing?.reviewReason && listing.moderationStatus === "REJECTED" && (
-          <p className="rounded-xl border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">
-            Lý do từ chối: {listing.reviewReason}
-          </p>
-        )}
-        {listing?.moderationStatus === "PENDING" &&
-          listing.submittedContentRevision !== revision && (
-            <p
-              role="status"
-              className="rounded-xl border border-[#ead9a1] bg-[#fff9e9] p-3 text-sm text-ink-2"
-            >
-              Nội dung đã thay đổi sau khi gửi duyệt. Quản trị viên đã được
-              thông báo để xem lại phiên bản mới nhất.
-            </p>
-          )}
-        {suspended && listing?.suspensionReason && (
-          <p className="rounded-xl border border-danger/30 bg-[#fff8f7] p-3 text-sm text-danger-ink">
-            Lý do đình chỉ: {listing.suspensionReason}
-          </p>
-        )}
-      </header>
-
-      <section
-        id="listing-content"
-        className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-7"
+    <div className="space-y-5">
+      <Link
+        href="/owner/listings"
+        className="text-sm font-semibold text-[#3368a0] hover:underline mb-3"
       >
-        <h2 className="text-lg font-semibold text-ink">Nội dung tin đăng</h2>
-        <div className="rounded-xl bg-surface p-4 text-sm text-ink-2">
-          <p className="font-semibold">{initialData.property.name}</p>
-          <p className="mt-1">
-            {[
-              initialData.property.addressLine,
-              initialData.property.ward,
-              initialData.property.city,
-            ]
-              .filter(Boolean)
-              .join(", ") || "Chưa có địa chỉ"}
-          </p>
-          {initialData.property.description && (
-            <p className="mt-2 line-clamp-3">
-              {initialData.property.description}
-            </p>
-          )}
+        ← Danh sách tin đăng
+      </Link>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p className="text-sm font-semibold text-slate-900">{property.name}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+          <span>{units.length} phòng</span>
+          <span>Phiên bản nội dung {property.content_revision}</span>
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-semibold text-slate-700">
+            {listing ? statusLabel(listing) : "Chưa có tin đăng"}
+          </span>
         </div>
-        <label className="block space-y-1.5 text-sm font-semibold text-ink-3">
-          Tiêu đề tin đăng
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={160}
-            className="min-h-11 w-full rounded-xl border border-line-strong bg-white px-3 font-normal text-ink"
-            placeholder="Ví dụ: Studio đầy đủ tiện nghi gần biển Mỹ Khê"
-          />
-        </label>
-        <label className="block space-y-1.5 text-sm font-semibold text-ink-3">
-          Mô tả tin đăng
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            maxLength={4000}
-            rows={5}
-            className="w-full rounded-xl border border-line-strong bg-white px-3 py-2 font-normal text-ink"
-            placeholder="Mô tả điểm nổi bật, vị trí và trải nghiệm thuê…"
-          />
-        </label>
-      </section>
-
-      <section className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-7">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">
-            {initialData.property.rentalArrangement === "WHOLE_SPACE"
-              ? "Cho thuê toàn bộ bất động sản"
-              : "Căn/phòng quảng bá"}
-          </h2>
-          <p className="mt-1 text-sm text-subtle">
-            {initialData.property.rentalArrangement === "WHOLE_SPACE"
-              ? "Tin đăng bao gồm toàn bộ bất động sản. Ảnh đã chọn trong thư viện bất động sản sẽ dùng cho tin đăng và căn đại diện."
-              : "Chọn căn/phòng muốn xuất hiện trên tin. Có thể chỉnh giá và tình trạng trong phần quản lý căn/phòng."}
-          </p>
+      </div>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+        >
+          {error}
         </div>
-        {initialData.units.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-line-strong bg-surface p-5 text-sm text-subtle">
-            Bất động sản chưa có căn/phòng.
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {initialData.units.map((unit) => {
-              const checked = marketedUnitIds.includes(unit.id);
-              return (
-                <li key={unit.id} className="rounded-xl border border-line p-4">
+      )}
+      {success && (
+        <div
+          role="status"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
+          {success}
+        </div>
+      )}
+      {listing?.review_reason && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>Phản hồi quản trị viên:</strong> {listing.review_reason}
+        </div>
+      )}
+      <nav
+        aria-label="Chế độ chỉnh sửa tin đăng"
+        className="flex gap-5 border-b border-slate-200"
+      >
+        <button
+          type="button"
+          onClick={() => setEditorView("content")}
+          className={`border-b-2 px-3 py-3 text-sm font-semibold ${editorView === "content" ? "border-[#3368a0] text-[#285584]" : "border-transparent text-slate-600"}`}
+        >
+          Nội dung
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditorView("preview")}
+          className={`border-b-2 px-3 py-3 text-sm font-semibold ${editorView === "preview" ? "border-[#3368a0] text-[#285584]" : "border-transparent text-slate-600"}`}
+        >
+          Xem trước
+        </button>
+      </nav>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        {editorView === "content" ? (
+          <form id="listing-form" onSubmit={handleSave} className="space-y-5">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {listing ? "Nội dung tin đăng" : "Tạo bản nháp"}
+              </h2>
+              {!canEdit && (
+                <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                  Đang chờ duyệt. Nếu cần sửa, hãy lưu thay đổi để mở lại hồ sơ
+                  thành bản nháp.
+                </p>
+              )}
+              <div className="mt-4 space-y-4">
+                <div>
                   <label
-                    className={`flex items-start gap-3 ${initialData.property.rentalArrangement === "SEPARATE_UNITS" ? "cursor-pointer" : ""}`}
+                    htmlFor="listing-title"
+                    className="block text-sm font-semibold text-slate-800"
                   >
-                    {initialData.property.rentalArrangement ===
-                      "SEPARATE_UNITS" && (
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(event) =>
-                          setMarketedUnitIds((current) =>
-                            event.target.checked
-                              ? [...current, unit.id]
-                              : current.filter((id) => id !== unit.id),
-                          )
-                        }
-                        className="mt-1 size-4 accent-brand"
-                      />
-                    )}
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-ink">
-                        {initialData.property.rentalArrangement ===
-                        "WHOLE_SPACE"
-                          ? "Toàn bộ nhà/căn hộ"
-                          : unit.label}
-                      </span>
-                      <span className="mt-1 block text-sm text-subtle">
-                        {unit.areaM2 ? `${unit.areaM2} m²` : "Thiếu diện tích"}{" "}
-                        ·{" "}
-                        {unit.advertisedMonthlyRent
-                          ? `${new Intl.NumberFormat("vi-VN").format(unit.advertisedMonthlyRent)} ₫/tháng`
-                          : "Thiếu giá thuê"}{" "}
-                        · tối thiểu {unit.minimumRentalMonths} tháng
-                      </span>
-                      {initialData.property.rentalArrangement ===
-                        "SEPARATE_UNITS" &&
-                        !unit.hasSelectedPhoto && (
-                          <span className="mt-1 block text-sm text-danger-ink">
-                            Chưa chọn ảnh cho căn/phòng
-                          </span>
-                        )}
-                    </span>
+                    Tiêu đề
                   </label>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section
-        id="listing-cover"
-        className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-7"
-      >
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Ảnh bìa</h2>
-          <p className="mt-1 text-sm text-subtle">
-            Chọn một ảnh dùng chung đã được bật hiển thị trên tin.
-          </p>
-        </div>
-        {initialData.photos.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-line-strong bg-surface p-5 text-sm text-subtle">
-            Chưa có ảnh dùng chung được chọn.{" "}
-            <Link
-              href={`/owner/properties/${initialData.property.id}/media`}
-              className="font-semibold text-brand-deep underline"
-            >
-              Quản lý hình ảnh
-            </Link>
-          </p>
+                  <input
+                    id="listing-title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    required
+                    minLength={5}
+                    maxLength={160}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="listing-description"
+                    className="block text-sm font-semibold text-slate-800"
+                  >
+                    Mô tả tin đăng
+                  </label>
+                  <textarea
+                    id="listing-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    required
+                    minLength={20}
+                    maxLength={10000}
+                    rows={6}
+                    className={inputClass}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  {coverId
+                    ? "Ảnh đầu tiên trong thư viện dùng chung sẽ mở đầu thư viện ảnh."
+                    : "Chưa có ảnh dùng chung được chọn. Thêm ảnh trong trang bất động sản."}
+                </p>
+              </div>
+              {Object.keys(fieldErrors).length > 0 && (
+                <ul className="mt-4 list-disc pl-5 text-sm text-rose-800">
+                  {Object.entries(fieldErrors).map(([field, messages]) => (
+                    <li key={field}>{messages[0]}</li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={saving !== null}
+                  className="inline-flex min-h-11 items-center rounded-xl bg-[#3368a0] px-5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {saving === "save"
+                    ? "Đang lưu…"
+                    : listing
+                      ? "Lưu nội dung"
+                      : "Lưu bản nháp"}
+                </button>
+                {listing && (
+                  <button
+                    type="button"
+                    onClick={() => void runAction("archive")}
+                    className="text-sm font-semibold text-rose-700"
+                  >
+                    Lưu trữ
+                  </button>
+                )}
+              </div>
+            </section>
+            {units.length === 1 ? (
+              !unitReady(units[0]) && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                >
+                  Còn thiếu {missingListingFields(units[0]).join(", ")}. Bổ sung
+                  trong trang bất động sản trước khi gửi duyệt.
+                </p>
+              )
+            ) : (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Căn đưa lên tin
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Bật những căn sẽ xuất hiện trong tin đăng này.
+              </p>
+              <ul className="mt-4 divide-y divide-slate-100">
+                {units.map((unit) => (
+                  <li
+                    key={unit.id}
+                    className="flex items-center justify-between gap-3 py-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {unit.label}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {unitReady(unit)
+                          ? "Đủ thông tin để đăng"
+                          : `Còn thiếu ${missingListingFields(unit).join(", ")}`}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={unit.is_marketed}
+                      disabled={saving !== null}
+                      onClick={() => void toggleMarketed(unit)}
+                      className={`h-6 w-11 rounded-full p-1 ${unit.is_marketed ? "bg-[#3368a0]" : "bg-slate-300"}`}
+                    >
+                      <span
+                        className={`block size-4 rounded-full bg-white transition ${unit.is_marketed ? "translate-x-5" : ""}`}
+                      />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            )}
+          </form>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {initialData.photos.map((photo) => (
-              <li key={photo.id}>
+          <div className="min-w-0 overflow-hidden rounded-2xl bg-[#f4f6f8] p-4 sm:p-6">
+            <ListingDetailView
+              listing={previewListing(
+                property,
+                media,
+                title,
+                description,
+                listing?.id ?? "draft",
+                amenityLabels,
+              )}
+              isSignedIn={false}
+              preview
+            />
+          </div>
+        )}
+        <div className="space-y-4">
+          <aside className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 sm:p-5">
+            <h3 className="font-semibold text-slate-900">
+              Điều kiện gửi duyệt
+            </h3>
+            <ul className="mt-3 space-y-3">
+              <li className="flex gap-2">
+                <span
+                  className={
+                    property.address_line && property.city
+                      ? "text-emerald-700"
+                      : "text-rose-700"
+                  }
+                >
+                  {property.address_line && property.city ? "✓" : "×"}
+                </span>
+                Địa chỉ đầy đủ
+              </li>
+              <li className="flex gap-2">
+                <span
+                  className={
+                    sharedPhotos.length ? "text-emerald-700" : "text-rose-700"
+                  }
+                >
+                  {sharedPhotos.length ? "✓" : "×"}
+                </span>
+                Có ảnh dùng chung được chọn
+              </li>
+              <li className="flex gap-2">
+                <span
+                  className={
+                    unitsReadyForListing ? "text-emerald-700" : "text-rose-700"
+                  }
+                >
+                  {unitsReadyForListing ? "✓" : "×"}
+                </span>
+                Căn được chọn đã đủ điều kiện đăng
+              </li>
+            </ul>
+            <Link
+              href={`/owner/properties/${property.id}/edit`}
+              className="mt-4 inline-flex font-semibold text-[#3368a0] hover:underline"
+            >
+              Quản lý bất động sản, căn và ảnh →
+            </Link>
+          </aside>
+          <aside className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+            <h3 className="font-semibold text-slate-900">
+              Gửi duyệt và đăng bài
+            </h3>
+            <div className="mt-4 grid gap-2">
+              {listing &&
+                ["DRAFT", "REJECTED"].includes(listing.moderation_status) && (
+                  <button
+                    type="button"
+                    onClick={() => void runAction("submit")}
+                    disabled={saving !== null}
+                    className="min-h-11 rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Gửi duyệt
+                  </button>
+                )}
+              {listing?.moderation_status === "APPROVED" &&
+                listing.publication_status !== "PUBLISHED" && (
+                  <button
+                    type="button"
+                    onClick={() => void runAction("publish")}
+                    disabled={
+                      saving !== null || Boolean(listing.admin_suspended_at)
+                    }
+                    className="min-h-11 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Đăng công khai
+                  </button>
+                )}
+              {listing?.publication_status === "PUBLISHED" && (
                 <button
                   type="button"
-                  disabled={isBusy}
-                  aria-pressed={coverMediaId === photo.id}
-                  onClick={() => chooseCover(photo.id)}
-                  className={`w-full overflow-hidden rounded-xl border text-left disabled:cursor-wait disabled:opacity-70 ${coverMediaId === photo.id ? "border-brand ring-2 ring-brand/30" : "border-line"}`}
+                  onClick={() => void runAction("hide")}
+                  disabled={saving !== null}
+                  className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700"
                 >
-                  <div className="relative aspect-[4/3] bg-surface">
-                    {photo.signedUrl ? (
-                      <Image
-                        src={photo.signedUrl}
-                        alt={photo.caption || "Ảnh bất động sản"}
-                        fill
-                        unoptimized
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full items-center justify-center text-sm text-subtle">
-                        Không tải được ảnh
-                      </span>
-                    )}
-                  </div>
-                  <span className="flex min-h-10 items-center justify-between gap-2 px-3 text-sm">
-                    <span className="truncate">
-                      {photo.caption || "Ảnh bất động sản"}
-                    </span>
-                    <span className="font-semibold text-brand-deep">
-                      {coverMediaId === photo.id ? "Ảnh bìa ✓" : "Chọn làm bìa"}
-                    </span>
-                  </span>
+                  Ẩn tin đăng
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-7">
-        <h2 className="text-lg font-semibold text-ink">
-          Kiểm tra trước khi gửi duyệt
-        </h2>
-        {issues.length === 0 ? (
-          <p className="rounded-xl bg-success-soft p-4 text-sm font-medium text-success">
-            Thông tin đã đầy đủ để gửi duyệt.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm text-subtle">
-              Hoàn tất từng mục bên dưới trước khi gửi duyệt.
-            </p>
-            <ul className="space-y-3 text-sm text-danger-ink">
-              {issues.map((issue, index) => {
-                const action = actionForIssue(issue);
-                return (
-                  <li
-                    key={`${issue.field}-${issue.unitLabel ?? ""}-${index}`}
-                    className="flex flex-wrap items-center justify-between gap-3"
-                  >
-                    <span>• {issue.message}</span>
-                    {action && (
-                      <Link
-                        href={action.href}
-                        className="inline-flex min-h-9 shrink-0 items-center rounded-lg border border-line-strong px-3 font-semibold text-brand-deep hover:bg-brand-soft"
-                      >
-                        {action.label} →
-                      </Link>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        )}
-      </section>
-
-      {message && (
-        <p
-          role="status"
-          className="rounded-xl border border-line bg-white p-4 text-sm text-ink-2"
-        >
-          {message}
-        </p>
-      )}
-
-      <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white p-4">
-        <Link
-          href="/owner/listings"
-          className={buttonClass({ variant: "secondary" })}
-        >
-          Quay lại danh sách
-        </Link>
-        <div className="flex flex-wrap gap-2">
-          {listingId && listing?.publicationStatus === "PUBLISHED" && (
-            <button
-              type="button"
-              disabled={isBusy}
-              onClick={() =>
-                runStateChange(hideListing, "Tin đăng đã được ẩn.")
-              }
-              className={buttonClass({ variant: "secondary" })}
-            >
-              {pendingAction === "hide" ? "Đang ẩn…" : "Ẩn tin"}
-            </button>
-          )}
-          {listingId &&
-            listing?.moderationStatus === "APPROVED" &&
-            listing?.publicationStatus !== "PUBLISHED" &&
-            !suspended && (
-              <button
-                type="button"
-                disabled={isBusy || issues.length > 0}
-                onClick={() => persist("publish")}
-                className={buttonClass()}
-              >
-                {pendingAction === "publish" ? "Đang đăng…" : "Đăng tin"}
-              </button>
-            )}
-          {listingId && listing?.moderationStatus === "PENDING" && (
-            <button
-              type="button"
-              disabled={isBusy}
-              onClick={withdrawReviewRequest}
-              className={buttonClass({ variant: "secondary" })}
-            >
-              {pendingAction === "withdraw"
-                ? "Đang xử lý…"
-                : "Rút yêu cầu duyệt"}
-            </button>
-          )}
-          {listingId &&
-            (listing?.moderationStatus === "DRAFT" ||
-              listing?.moderationStatus === "REJECTED") && (
-              <button
-                type="button"
-                disabled={isBusy || issues.length > 0}
-                title={
-                  issues.length > 0
-                    ? "Hoàn tất kiểm tra trước khi gửi duyệt."
-                    : undefined
-                }
-                onClick={() => persist("submit")}
-                className={buttonClass({
-                  variant: issues.length > 0 || isBusy ? "disabled" : "primary",
-                })}
-              >
-                {pendingAction === "submit" ? "Đang gửi…" : "Gửi duyệt"}
-              </button>
-            )}
-          <button
-            type="button"
-            disabled={isBusy}
-            onClick={() => persist()}
-            className={buttonClass({ variant: "secondary" })}
-          >
-            {pendingAction === "save"
-              ? "Đang lưu…"
-              : listing
-                ? "Lưu thay đổi"
-                : "Lưu bản nháp"}
-          </button>
-          {listingId && (
-            <button
-              type="button"
-              disabled={isBusy}
-              onClick={() => runStateChange(archiveListing, "", true)}
-              className="min-h-11 rounded-xl px-4 text-sm font-semibold text-danger-ink hover:bg-[#fff8f7] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {pendingAction === "archive" ? "Đang lưu trữ…" : "Lưu trữ"}
-            </button>
-          )}
+              )}
+            </div>
+          </aside>
         </div>
-      </footer>
-    </section>
+      </div>
+    </div>
   );
 }

@@ -40,6 +40,7 @@ export type ListingCardData = {
   rentMin: string;
   rentMax: string;
   minimumRentalMonths: number;
+  verified: boolean;
   coverUrl: string | null;
   imageUrls: string[];
   property: {
@@ -350,6 +351,8 @@ export async function searchListings(
           title: true,
           propertyId: true,
           coverMediaId: true,
+          moderationStatus: true,
+          adminSuspendedAt: true,
           property: {
             select: {
               name: true,
@@ -445,6 +448,9 @@ export async function searchListings(
         minimumRentalMonths: Math.min(
           ...group.units.map((unit) => unit.minimumRentalMonths),
         ),
+        verified:
+          listing.moderationStatus === "APPROVED" &&
+          listing.adminSuspendedAt == null,
         coverUrl,
         imageUrls,
         property: {

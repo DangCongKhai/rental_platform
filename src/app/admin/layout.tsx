@@ -19,8 +19,18 @@ export default async function AdminLayout({
   if (!user.isAdmin) notFound();
 
   return (
-    <div className="flex min-h-svh flex-col bg-[#eef2f6] text-[#172331]">
-      <header className="flex min-h-14 items-center gap-5 border-b-2 border-[#f5a400] bg-[#071116] px-5 text-white">
+    <div
+      className={[
+        "flex h-svh min-h-0 flex-col overflow-hidden",
+        "bg-[#eef2f6] text-[#172331]",
+      ].join(" ")}
+    >
+      <header
+        className={[
+          "flex min-h-14 shrink-0 items-center gap-5",
+          "border-b-2 border-[#f5a400] bg-[#071116] px-5 text-white",
+        ].join(" ")}
+      >
         <Logo />
         <span className="rounded-full bg-[#f5a400] px-3 py-1 text-[10px] font-bold tracking-wider text-[#172331]">
           ADMIN CONSOLE
@@ -40,11 +50,13 @@ export default async function AdminLayout({
           Thoát chế độ Admin
         </Link>
       </header>
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <Suspense fallback={<AdminSidebarFallback userName={user.fullName} />}>
           <AdminSidebar userName={user.fullName} />
         </Suspense>
-        <main className="min-w-0 flex-1 p-6 lg:p-8">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6 lg:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

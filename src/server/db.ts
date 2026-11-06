@@ -10,7 +10,13 @@ function createPrismaClient() {
   }
 
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg({
+      connectionString,
+      // A transaction holds one connection. Prisma sends the next
+      // statement before the previous one returns, which pg 8.16
+      // rejects unless the connection is in pipeline mode.
+      pipeline: true,
+    }),
   });
 }
 

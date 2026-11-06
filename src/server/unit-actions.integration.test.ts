@@ -46,8 +46,13 @@ vi.mock("next/navigation", () => ({
   unstable_rethrow: vi.fn(),
 }));
 
-import { createProperty as createPropertyAction } from "../app/owner/properties/actions";
-import { createUnits, updateUnit } from "../app/owner/properties/unit-actions";
+import {
+  createProperty as createPropertyAction,
+} from "../app/owner/properties/actions/actions";
+import {
+  createUnits,
+  updateUnit,
+} from "../app/owner/properties/actions/unit-actions";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;

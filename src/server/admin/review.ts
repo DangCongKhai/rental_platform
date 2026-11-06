@@ -10,13 +10,24 @@ export const ADMIN_REVIEW_PAGE_SIZE = 10;
 export async function getAdminDashboard() {
   await requireAdmin();
   const [
+    users,
+    publishedListings,
     pendingListings,
     openReports,
     suspendedListings,
-    activeAccounts,
     oldest,
     recent,
   ] = await Promise.all([
+    prisma.userProfile.count({
+      where: { accountStatus: "ACTIVE" },
+    }),
+    prisma.listing.count({
+      where: {
+        publicationStatus: "PUBLISHED",
+        adminSuspendedAt: null,
+        archivedAt: null,
+      },
+    }),
     prisma.listing.count({
       where: { moderationStatus: "PENDING", archivedAt: null },
     }),
@@ -26,7 +37,6 @@ export async function getAdminDashboard() {
     prisma.listing.count({
       where: { adminSuspendedAt: { not: null }, archivedAt: null },
     }),
-    prisma.userProfile.count({ where: { accountStatus: "ACTIVE" } }),
     prisma.listing.findMany({
       where: { moderationStatus: "PENDING", archivedAt: null },
       orderBy: [{ submittedAt: "asc" }, { id: "asc" }],
@@ -54,7 +64,13 @@ export async function getAdminDashboard() {
     }),
   ]);
   return {
-    counts: { pendingListings, openReports, suspendedListings, activeAccounts },
+    counts: {
+      users,
+      publishedListings,
+      pendingListings,
+      openReports,
+      suspendedListings,
+    },
     oldest,
     recent,
   };

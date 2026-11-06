@@ -4,11 +4,11 @@ import { FavouriteButton } from "./favourite-button";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, use, useState } from "react";
-import { LoadingScreen } from "@/components/loading-screen";
+import { useState } from "react";
 import type {
   ListingDetail,
   PublicAmenity,
+  PublicUnit,
 } from "@/features/discovery/listings-api";
 import { AvailableUnits } from "./available-units";
 import { amenityIcon, ListingIcon } from "./listing-icon";
@@ -20,11 +20,11 @@ import {
   extraAmenities,
   minimumMonths,
   petCopy,
+  photoSlides,
   placeLine,
   propertyBadge,
   rentBounds,
   ruleTitle,
-  type Slide,
   uniqueUnitAmenities,
   unitKindLabel,
 } from "./listing-format";
@@ -34,10 +34,6 @@ import { ListingRequestAside } from "./listing-request-aside";
 import { RentalRequestDialog } from "./rental-request-dialog";
 
 import type { RequestProfile } from "./rental-request-form";
-
-function ListingPhotos({ slides }: { slides: Promise<Slide[]> }) {
-  return <ListingPhotoGrid slides={use(slides)} />;
-}
 
 const ListingAreaMap = dynamic(
   () => import("./listing-area-map").then((mod) => mod.ListingAreaMap),
@@ -51,14 +47,14 @@ const ListingAreaMap = dynamic(
 
 export function ListingDetailView({
   listing,
-  photos,
   isSignedIn,
   profile,
+  preview = false,
 }: {
   listing: ListingDetail;
-  photos: Promise<Slide[]>;
   isSignedIn: boolean;
   profile?: RequestProfile;
+  preview?: boolean;
 }) {
   const searchParams = useSearchParams();
   const [requestOpen, setRequestOpen] = useState(false);
@@ -73,38 +69,48 @@ export function ListingDetailView({
   const query = searchParams.toString();
   const listingsHref = query ? `/listings?${query}` : "/listings";
   const extras = extraAmenities(listing);
+  const wholeSpace = listing.property.rental_arrangement === "WHOLE_SPACE";
+  const wholeUnit = wholeSpace ? listing.units[0] : undefined;
+  const sharedAmenityKeys = new Set(
+    listing.property.shared_amenities.map((amenity) => amenity.key),
+  );
+  const unitAmenities = uniqueUnitAmenities(listing.units).filter((amenity) =>
+    wholeSpace ? !sharedAmenityKeys.has(amenity.key) : true,
+  );
 
   function chooseUnit(unitId: string) {
     setPreferredUnitId(unitId);
     setOpenUnitId(unitId);
   }
 
+
   return (
-    <div className="flex-1 bg-[#f4f6f8] px-4 py-6 sm:px-8">
-      <div className="mx-auto grid w-full max-w-[1200px] gap-8">
-        <Link
-          href={listingsHref}
-          className="w-fit text-sm font-semibold text-[#3368a0]"
-        >
-          ← Quay lại kết quả tìm kiếm
-        </Link>
-        <div className="relative">
-          <Suspense
-            fallback={
-              <LoadingScreen
-                message="Đang tải ảnh"
-                className="h-[240px] rounded-2xl sm:h-[320px] lg:h-[460px]"
-              />
-            }
+     <div className={preview ? "min-w-0" : "flex-1 bg-[#f4f6f8] px-4 py-6 sm:px-8"}>
+     <div className={preview ? "grid min-w-0 gap-8" : "mx-auto grid w-full max-w-[1200px] gap-8"}>
+        {!preview && (
+          <Link
+            href={listingsHref}
+            className="w-fit text-sm font-semibold text-[#3368a0]"
           >
-            <ListingPhotos slides={photos} />
-          </Suspense>
-          <FavouriteButton
-            propertyId={listing.property_id}
-            className="absolute top-3 right-3 z-10"
-          />
+            ← Quay lại kết quả tìm kiếm
+          </Link>
+        )}
+        <div className="relative">
+          <ListingPhotoGrid slides={photoSlides(listing)} />
+          {!preview && (
+            <FavouriteButton
+              propertyId={listing.property_id}
+              className="absolute top-3 right-3 z-10"
+            />
+          )}
         </div>
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(260px,3fr)]">
+        <div
+          className={
+            preview
+              ? "grid min-w-0 items-start gap-8"
+              : "grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(260px,3fr)]"
+          }
+        >
           <article className="order-2 grid min-w-0 gap-10 lg:order-none">
             <header className="grid gap-3">
               <div className="flex flex-wrap gap-2">
@@ -146,20 +152,25 @@ export function ListingDetailView({
               ) : null}
             </header>
 
-            <AvailableUnits
-              units={listing.units}
-              selectedUnitId={preferredUnitId}
-              openUnitId={openUnitId}
-              onChoose={chooseUnit}
-              onClose={() => setOpenUnitId(null)}
-            />
+
+            {wholeSpace && wholeUnit ? (
+              <WholeSpaceFacts unit={wholeUnit} />
+            ) : (
+              <AvailableUnits
+                units={listing.units}
+                selectedUnitId={preferredUnitId}
+                openUnitId={openUnitId}
+                onChoose={chooseUnit}
+                onClose={() => setOpenUnitId(null)}
+              />
+            )}
 
             <section className="grid gap-4" aria-label="Tiện ích nổi bật">
               <h2 className="text-2xl font-bold text-[#091216]">
                 Tiện ích nổi bật
               </h2>
               <section aria-label="Tiện ích chung">
-                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
                   {listing.property.shared_amenities.map((amenity) => (
                     <AmenityCard
                       key={amenity.key}
@@ -169,9 +180,9 @@ export function ListingDetailView({
                   ))}
                 </ul>
               </section>
-              {uniqueUnitAmenities(listing.units).length > 0 ? (
-                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {uniqueUnitAmenities(listing.units).map((amenity) => (
+              {unitAmenities.length > 0 ? (
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
+                  {unitAmenities.map((amenity) => (
                     <AmenityCard
                       key={amenity.key}
                       amenity={amenity}
@@ -188,20 +199,20 @@ export function ListingDetailView({
               ) : null}
             </section>
             {listing.property.area ? (
-              <section className="grid gap-3" aria-label="Vị trí gần đúng">
-                <h2 className="text-2xl font-bold text-[#091216]">
-                  Vị trí gần đúng
-                </h2>
-                <p className="text-sm text-[#454e5c]">
-                  Ghim nằm trong khu vực lân cận, không phải địa chỉ cửa nhà.
-                  Địa chỉ chính xác được trao đổi sau khi bạn gửi yêu cầu thuê.
-                </p>
-                <ListingAreaMap
-                  latitude={listing.property.area.latitude}
-                  longitude={listing.property.area.longitude}
-                />
-              </section>
-            ) : null}
+            <section className="grid gap-3" aria-label="Vị trí gần đúng">
+              <h2 className="text-2xl font-bold text-[#091216]">
+                Vị trí gần đúng
+              </h2>
+              <p className="text-sm text-[#454e5c]">
+                Ghim nằm trong khu vực lân cận, không phải địa chỉ cửa nhà.
+                Địa chỉ chính xác được trao đổi sau khi bạn gửi yêu cầu thuê.
+              </p>
+              <ListingAreaMap
+                latitude={listing.property.area.latitude}
+                longitude={listing.property.area.longitude}
+              />
+            </section>
+          ) : null}
             <section
               aria-label="Nội quy đang quảng cáo"
               className="grid gap-4 rounded-2xl border border-[#d5dee7] bg-white p-6"
@@ -254,7 +265,7 @@ export function ListingDetailView({
                   {listing.property.description}
                 </p>
               ) : null}
-              {isSignedIn ? (
+              {!preview && (isSignedIn ? (
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 text-sm leading-5 text-[#5b6676]"
@@ -283,19 +294,21 @@ export function ListingDetailView({
                   />
                   Đăng nhập để báo cáo tin đăng này
                 </Link>
-              )}
+              ))}
             </section>
           </article>
 
-          <div className="order-1 lg:order-none lg:sticky lg:top-[91px] lg:self-start">
-            <ListingRequestAside
-              ownerName={listing.owner?.name ?? ""}
-              onRequest={() => setRequestOpen(true)}
-            />
-          </div>
+          {!preview && (
+            <div className="order-1 lg:order-none lg:sticky lg:top-[91px] lg:self-start">
+              <ListingRequestAside
+                ownerName={listing.owner?.name ?? ""}
+                onRequest={() => setRequestOpen(true)}
+              />
+            </div>
+          )}
         </div>
       </div>
-      {reportOpen ? (
+      {!preview && reportOpen ? (
         <ListingReportDialog
           listingId={listing.id}
           isSignedIn={isSignedIn}
@@ -303,7 +316,7 @@ export function ListingDetailView({
           onClose={() => setReportOpen(false)}
         />
       ) : null}
-      {requestOpen ? (
+      {!preview && requestOpen ? (
         <RentalRequestDialog
           profile={profile}
           listing={listing}
@@ -314,6 +327,32 @@ export function ListingDetailView({
         />
       ) : null}
     </div>
+  );
+}
+
+function WholeSpaceFacts({ unit }: { unit: PublicUnit }) {
+  return (
+    <section className="grid gap-4" aria-label="Thông tin cho thuê">
+      <h2 className="text-2xl font-bold text-[#091216]">Thông tin cho thuê</h2>
+      <div className="grid gap-3 rounded-2xl border border-[#d5dee7] bg-white p-6 sm:grid-cols-2">
+        <Fact
+          value={
+            unit.bedrooms > 0
+              ? `${unit.bedrooms} phòng ngủ`
+              : "Không tách phòng ngủ"
+          }
+          caption="Phòng ngủ"
+        />
+        <Fact value={bathLabel([unit])} caption="Phòng tắm" />
+        <Fact value={areaLabel([unit])} caption="Diện tích" />
+        <Fact
+          value={dong(Number(unit.advertised_monthly_rent))}
+          caption="Giá thuê mỗi tháng"
+        />
+        <Fact value={dong(Number(unit.deposit))} caption="Tiền đặt cọc" />
+        <Fact value={`${unit.max_occupants} người`} caption="Số người tối đa" />
+      </div>
+    </section>
   );
 }
 
@@ -334,9 +373,11 @@ function AmenityCard({
   scope: string;
 }) {
   return (
-    <li className="grid gap-1 rounded-xl bg-[#eaf1f7] p-4">
+    <li className="grid min-w-0 gap-1 overflow-hidden rounded-xl bg-[#eaf1f7] p-4">
       <ListingIcon name={amenityIcon(amenity.key)} size={22} />
-      <p className="font-bold text-[#091216]">{amenity.label_vi}</p>
+      <p className="break-words font-bold text-[#091216]">
+        {amenity.label_vi}
+      </p>
       <p className="text-[13px] text-[#5b6676]">
         {amenity.details ? `${scope} · ${amenity.details}` : scope}
       </p>

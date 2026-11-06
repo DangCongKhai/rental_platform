@@ -38,6 +38,7 @@ function cardJson(card: ListingCardData) {
     rent_min: card.rentMin,
     rent_max: card.rentMax,
     minimum_rental_months: card.minimumRentalMonths,
+    verified: card.verified,
     cover_url: card.coverUrl,
     image_urls: card.imageUrls,
     property: {
@@ -98,6 +99,7 @@ function detailJson(listing: PublicListing) {
     property: {
       name: listing.property.name,
       property_type: listing.property.propertyType,
+      rental_arrangement: listing.property.rentalArrangement,
       address_line: listing.property.addressLine,
       ward: listing.property.ward,
       city: listing.property.city ?? "",

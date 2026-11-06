@@ -1,9 +1,62 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/button";
+import {
+  AlertIcon,
+  BanIcon,
+  ClockIcon,
+  EyeIcon,
+  UserIcon,
+} from "@/components/ui/icons";
 import { getAdminDashboard } from "@/server/admin/review";
 
 export const instant = false;
+
+function StatCard({
+  label,
+  count,
+  hint,
+  href,
+  icon,
+  tone,
+}: {
+  label: string;
+  count: number;
+  hint: string;
+  href?: string;
+  icon: ReactNode;
+  tone: string;
+}) {
+  const body = (
+    <>
+      <span
+        className={[
+          "grid size-10 shrink-0 place-items-center rounded-xl",
+          tone,
+        ].join(" ")}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <p className="text-sm leading-snug text-[#627184]">{label}</p>
+        <p className="mt-1 text-2xl font-bold leading-none">{count}</p>
+        <p className="mt-2 text-xs text-[#718096]">{hint}</p>
+      </span>
+    </>
+  );
+  const className = [
+    "flex min-w-0 items-start gap-3 rounded-xl border",
+    "border-[#dce3eb] bg-white p-4 shadow-sm",
+    href ? "hover:border-[#8ba8c7]" : "",
+  ].join(" ");
+  if (!href) return <div className={className}>{body}</div>;
+  return (
+    <Link href={href} className={className}>
+      {body}
+    </Link>
+  );
+}
 
 function ageLabel(date: Date | null) {
   if (!date) return "Chưa rõ thời gian";
@@ -29,44 +82,47 @@ export default async function AdminDashboardPage() {
       </header>
       <section
         aria-label="Số liệu tổng quan"
-        className="grid gap-4 md:grid-cols-4"
+        className="grid grid-cols-5 gap-3"
       >
-        {[
-          [
-            "Bài đăng chờ duyệt lần đầu",
-            counts.pendingListings,
-            "/admin/reviews",
-            "Chờ lâu nhất",
-          ],
-          [
-            "Báo cáo đang mở",
-            counts.openReports,
-            "/admin/reports",
-            "Cần được xem xét",
-          ],
-          [
-            "Bài đăng đang bị đình chỉ",
-            counts.suspendedListings,
-            "/admin/listings",
-            "Trên toàn hệ thống",
-          ],
-        ].map(([label, count, href, hint]) => (
-          <Link
-            key={label}
-            href={String(href)}
-            className="rounded-xl border border-[#dce3eb] bg-white p-5 shadow-sm hover:border-[#8ba8c7]"
-          >
-            <p className="text-sm text-[#627184]">{label}</p>
-            <p className="mt-1 text-3xl font-bold">{count}</p>
-            <p className="mt-2 text-xs text-[#718096]">{hint}</p>
-          </Link>
-        ))}
-
-        <div className="rounded-xl border border-[#dce3eb] bg-white p-5 shadow-sm">
-          <p className="text-sm text-[#627184]">Tài khoản đang hoạt động</p>
-          <p className="mt-1 text-3xl font-bold">{counts.activeAccounts}</p>
-          <p className="mt-2 text-xs text-[#718096]">Trạng thái ACTIVE</p>
-        </div>
+        <StatCard
+          label="Người dùng"
+          count={counts.users}
+          hint="Đang hoạt động"
+          icon={<UserIcon className="size-5" />}
+          tone="text-[#1c4d78]"
+        />
+        <StatCard
+          label="Tin đang công khai"
+          count={counts.publishedListings}
+          hint="Đang hiển thị"
+          href="/admin/listings?status=PUBLISHED"
+          icon={<EyeIcon className="size-5" />}
+          tone=" text-[#146c43]"
+        />
+        <StatCard
+          label="Bài đăng chờ duyệt lần đầu"
+          count={counts.pendingListings}
+          hint="Chờ lâu nhất"
+          href="/admin/reviews"
+          icon={<ClockIcon className="size-5" />}
+          tone="text-[#825500]"
+        />
+        <StatCard
+          label="Báo cáo đang mở"
+          count={counts.openReports}
+          hint="Cần được xem xét"
+          href="/admin/reports"
+          icon={<AlertIcon className="size-5" />}
+          tone="text-[#9a4b12]"
+        />
+        <StatCard
+          label="Bài đăng đang bị đình chỉ"
+          count={counts.suspendedListings}
+          hint="Trên toàn hệ thống"
+          href="/admin/listings?status=SUSPENDED"
+          icon={<BanIcon className="size-5" />}
+          tone="text-[#9b2c2c]"
+        />
       </section>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]">
         <section className="overflow-hidden rounded-xl border border-[#dce3eb] bg-white">

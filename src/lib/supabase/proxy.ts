@@ -3,6 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 
 export async function updateSession(request: NextRequest) {
+  // Cloning the request in the proxy drops a multipart body, so the
+  // upload route then sees no file and rejects it.
+  const contentType =
+    request.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -63,6 +71,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/listings/") ||
     pathname.startsWith("/api/listings") ||
     pathname.startsWith("/api/amenities") ||
+    pathname.startsWith("/api/locations") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth");
 

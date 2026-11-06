@@ -27,19 +27,24 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       // Browser extensions (e.g. one sec) add attributes to <html> before hydration.
       suppressHydrationWarning
     >
-      <body className="relative flex min-h-svh flex-col">
+      <body className="relative flex h-svh flex-col overflow-hidden">
         <Suspense fallback={null}>
           <NavbarVisibility>
             <Navbar />
           </NavbarVisibility>
         </Suspense>
-        <Suspense
-          fallback={
-            <FavouriteBoundaryFallback>{children}</FavouriteBoundaryFallback>
-          }
+        <div
+          data-scroll-root
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
-          <FavouriteBoundary>{children}</FavouriteBoundary>
-        </Suspense>
+          <Suspense
+            fallback={
+              <FavouriteBoundaryFallback>{children}</FavouriteBoundaryFallback>
+            }
+          >
+            <FavouriteBoundary>{children}</FavouriteBoundary>
+          </Suspense>
+        </div>
       </body>
     </html>
   );

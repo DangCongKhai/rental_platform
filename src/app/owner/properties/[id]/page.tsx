@@ -1,75 +1,49 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { validateAmenities } from "@/domain/amenities";
-import { validatePropertyPolicies } from "@/domain/policies";
-import { getMyProperty } from "@/server/properties";
-import { PropertyWizard, type Draft } from "../new/property-wizard";
+import { LoadingScreen } from "@/components/loading-screen";
+import { getAmenityCatalog } from "@/domain/amenities";
+import { getMyProperty, getPropertyRental } from "@/server/properties";
+import { toOwnerPropertyDetail } from "@/server/owner-api/shared";
+import { PropertyRental } from "./property-rental";
 
-export const instant = false;
-
-type PropertyType = NonNullable<Draft["propertyType"]>;
-type RentalArrangement = NonNullable<Draft["rentalArrangement"]>;
-
-function asPropertyType(value: string): PropertyType | null {
-  if (
-    value === "HOUSE" ||
-    value === "APARTMENT" ||
-    value === "APARTMENT_BUILDING"
-  ) {
-    return value;
-  }
-  return null;
-}
-
-function asRentalArrangement(value: string): RentalArrangement | null {
-  if (value === "WHOLE_SPACE" || value === "SEPARATE_UNITS") {
-    return value;
-  }
-  return null;
-}
-
-export default async function EditPropertyPage({
+export default function OwnerPropertyPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const property = await getMyProperty(id);
-
-  if (!property) notFound();
-
-  const propertyType = asPropertyType(property.propertyType);
-  const rentalArrangement = asRentalArrangement(property.rentalArrangement);
-  const amenities = validateAmenities(property.sharedAmenities, "PROPERTY");
-  const policies = validatePropertyPolicies(property.policies);
-
-  if (
-    !propertyType ||
-    !rentalArrangement ||
-    !amenities.success ||
-    !policies.success
-  ) {
-    throw new Error("Saved property data is invalid.");
-  }
-
-  const draft: Draft = {
-    name: property.name,
-    description: property.description ?? "",
-    propertyType,
-    rentalArrangement,
-    addressLine: property.addressLine ?? "",
-    ward: property.ward ?? "",
-    city: property.city ?? "",
-    sharedAmenities: amenities.data,
-    policies: policies.data,
-  };
-
   return (
-    <PropertyWizard
-      initial={{
-        propertyId: property.id,
-        revision: property.contentRevision,
-        draft,
-      }}
+    <Suspense
+      fallback={
+        <LoadingScreen
+          message="Đang tải bất động sản..."
+          className="min-h-80 w-full"
+        />
+      }
+    >
+      <OwnerPropertyDetail params={params} />
+    </Suspense>
+  );
+}
+
+async function OwnerPropertyDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const id = (await params).id;
+  const [property, record] = await Promise.all([
+    getPropertyRental(id),
+    getMyProperty(id),
+  ]);
+  if (!property || !record) notFound();
+  const amenityLabels = Object.fromEntries(
+    getAmenityCatalog().map((item) => [item.key, item.label]),
+  );
+  return (
+    <PropertyRental
+      property={property}
+      detail={toOwnerPropertyDetail(record)}
+      amenityLabels={amenityLabels}
     />
   );
 }

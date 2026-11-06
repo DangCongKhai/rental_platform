@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import type { RequestProfile } from "@/components/listings/rental-request-form";
 import { LoadingScreen } from "@/components/loading-screen";
 import { ListingDetailView } from "@/components/listings/listing-detail";
-import { photoSlides } from "@/components/listings/listing-format";
 import {
   fetchListing,
   ListingUnavailableError,
@@ -55,7 +54,6 @@ export function ListingDetailScreen({
     <ListingDetailView
       profile={profile}
       listing={listing}
-      photos={Promise.resolve(photoSlides(listing))}
       isSignedIn={isSignedIn}
     />
   );

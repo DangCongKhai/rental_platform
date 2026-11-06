@@ -5,7 +5,7 @@ import { getMyNotifications } from "@/server/notifications/inbox-read";
 
 export default function NotificationsPage() {
   return (
-    <section className="max-w-[1100px]">
+    <section className="mx-auto w-full max-w-[1100px] px-4 py-7 sm:px-10">
       <h1 className="mb-5 text-[28px] leading-9 font-bold tracking-[-0.56px]">
         Thông báo
       </h1>
