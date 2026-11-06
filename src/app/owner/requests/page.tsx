@@ -15,12 +15,41 @@ const tabs: { id: OwnerRequestTab; label: string }[] = [
   { id: "withdrawn", label: "Đã rút lại" },
 ];
 
-const statusLabels: Record<string, string> = {
-  PENDING: "Đang chờ xử lý",
-  ACCEPTED: "Đã chấp nhận",
-  REJECTED: "Đã từ chối",
-  WITHDRAWN: "Đã rút lại",
+const requestStatus: Record<
+  string,
+  { label: string; tone: "neutral" | "success" | "warning" | "danger" }
+> = {
+  PENDING: { label: "Đang chờ xử lý", tone: "warning" },
+  ACCEPTED: { label: "Đã chấp nhận", tone: "success" },
+  REJECTED: { label: "Đã từ chối", tone: "danger" },
+  WITHDRAWN: { label: "Đã rút lại", tone: "neutral" },
+  EXPIRED: { label: "Đã hết hạn", tone: "danger" },
+  CANCELLED: { label: "Đã hủy", tone: "neutral" },
+  AWAITING_REVISION: { label: "Cần bổ sung thông tin", tone: "warning" },
 };
+
+function Badge({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "success" | "warning" | "danger";
+}) {
+  const colors = {
+    neutral: "bg-slate-100 text-slate-700",
+    success: "bg-emerald-100 text-emerald-800",
+    warning: "bg-amber-100 text-amber-900",
+    danger: "bg-red-100 text-red-800",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${colors[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
 
 function pageNumber(value: string | undefined) {
   const parsed = Number(value);
@@ -198,7 +227,11 @@ async function Content({
                       {daysWaiting(request.createdAt)} ngày
                     </td>
                     <td className="px-4 py-4">
-                      <p>{statusLabels[request.status] ?? request.status}</p>
+                      <Badge
+                        tone={requestStatus[request.status]?.tone ?? "neutral"}
+                      >
+                        {requestStatus[request.status]?.label ?? "Khác"}
+                      </Badge>
                       {moveInPassed && (
                         <p className="mt-1 text-danger-ink">
                           Ngày dọn vào mong muốn đã qua
