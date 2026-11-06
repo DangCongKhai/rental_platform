@@ -58,10 +58,18 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="font-semibold">
               {r.status === "PENDING"
-                ? "Chủ nhà sẽ liên lạc cho bạn. Chưa có căn nào được giữ chỗ."
-                : r.outcomeReason === "NO_AVAILABLE_UNIT"
-                  ? "Yêu cầu đã tự đóng vì không còn căn phù hợp trong khoảng thời gian bạn chọn."
-                  : (r.outcomeReason ?? "Theo dõi trạng thái yêu cầu của bạn.")}
+                ? "Chủ nhà sẽ liên lạc với bạn. Hiện chưa có căn nào được giữ chỗ."
+                : r.status === "WITHDRAWN"
+                  ? "Bạn đã rút yêu cầu thuê này. Chủ nhà sẽ không tiếp tục xử lý yêu cầu."
+                  : r.status === "REJECTED" && r.outcomeReason === "NO_AVAILABLE_UNIT"
+                    ? "Yêu cầu đã tự động đóng vì không còn căn phù hợp trong khoảng thời gian bạn chọn."
+                    : r.status === "REJECTED"
+                      ? `Chủ nhà đã từ chối yêu cầu thuê này${r.outcomeReason ? `: ${r.outcomeReason}` : "."}`
+                      : r.status === "EXPIRED"
+                        ? "Yêu cầu đã hết hạn và không còn được tiếp tục xử lý."
+                        : r.status === "CANCELLED"
+                          ? "Yêu cầu thuê này đã bị hủy."
+                          : "Yêu cầu đã được chấp nhận. Chủ nhà sẽ gửi đề xuất hợp đồng cho bạn."}
             </p>
             {deadline && (
               <>
@@ -101,7 +109,12 @@ async function RequestContent({ params }: { params: Promise<{ id: string }> }) {
                   "Ngày thuê",
                   `${requestDate(r.desiredMoveInDate)} – ${requestDate(r.desiredEndDate)}`,
                 ],
-                ["Căn ưu tiên", r.preferredUnit?.label ?? "Không ưu tiên"],
+                [
+                  "Căn ưu tiên",
+                  r.preferredUnit?.label === "Entire property"
+                    ? "Toàn bộ nhà"
+                    : r.preferredUnit?.label ?? "Không ưu tiên",
+                ],
                 ["Lời nhắn", r.message],
               ].map(([label, value]) => (
                 <div key={label} className="contents">
