@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cancelTenancy, endTenancy } from "@/server/tenancies/actions";
+import { parseVietnamDateInput } from "@/lib/vietnam-date";
 
 export function EndCancelControls({
   id,
@@ -27,12 +28,32 @@ export function EndCancelControls({
     event.preventDefault();
     setError("");
 
+    const parsedDate =
+      open === "end" ? parseVietnamDateInput(actualEndedAt) : null;
+    if (open === "end" && !parsedDate) {
+      setError("Nhập ngày theo định dạng dd/mm/yyyy hợp lệ.");
+      return;
+    }
+    if (
+      open === "end" &&
+      parsedDate &&
+      ((startDate && parsedDate < startDate) ||
+        parsedDate > new Date().toISOString().slice(0, 10))
+    ) {
+      setError("Ngày kết thúc phải nằm trong thời hạn thuê đến hôm nay.");
+      return;
+    }
+    if (!reason.trim()) {
+      setError("Vui lòng nhập lý do.");
+      return;
+    }
+
     startTransition(async () => {
       const result =
         open === "cancel"
           ? await cancelTenancy(id, reason)
           : await endTenancy(id, {
-              actual_ended_at: actualEndedAt,
+              actual_ended_at: parsedDate!,
               reason,
             });
 
@@ -101,20 +122,28 @@ export function EndCancelControls({
               <label className="grid gap-2 text-sm">
                 Ngày kết thúc thực tế
                 <input
-                  type="date"
-                  required
-                  min={startDate ?? undefined}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="dd/mm/yyyy"
+                  maxLength={10}
                   value={actualEndedAt}
                   onChange={(event) => setActualEndedAt(event.target.value)}
+                  aria-describedby={`tenancy-end-date-help-${id}`}
                   className="min-h-11 rounded-xl border border-line px-3"
                 />
+                <span
+                  id={`tenancy-end-date-help-${id}`}
+                  className="text-xs text-muted"
+                >
+                  Nhập ngày theo định dạng dd/mm/yyyy.
+                  {startDate && ` Không trước ${formatDate(startDate)}.`}
+                </span>
               </label>
             )}
 
             <label className="grid gap-2 text-sm">
               Lý do
               <textarea
-                required
                 maxLength={1000}
                 rows={4}
                 value={reason}
@@ -140,11 +169,7 @@ export function EndCancelControls({
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  pending ||
-                  !reason.trim() ||
-                  (open === "end" && !actualEndedAt)
-                }
+                disabled={pending}
               >
                 {pending
                   ? "Đang lưu…"
@@ -158,4 +183,9 @@ export function EndCancelControls({
       )}
     </div>
   );
+}
+
+function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }

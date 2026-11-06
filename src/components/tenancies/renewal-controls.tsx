@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonClass } from "@/components/ui/button";
@@ -8,6 +8,10 @@ import {
   rejectRenewal,
   withdrawRenewal,
 } from "@/server/tenancies/renewal-actions";
+import {
+  formatVietnamDateInput,
+  parseVietnamDateInput,
+} from "@/lib/vietnam-date";
 
 type Renewal = {
   id: string;
@@ -21,12 +25,6 @@ type Renewal = {
 const money = (value: string) => `${Number(value).toLocaleString("vi-VN")} ₫`;
 const dateLabel = (value: Date | string) =>
   new Date(value).toLocaleDateString("vi-VN", { timeZone: "UTC" });
-const nextDate = (value: string | null) => {
-  if (!value) return undefined;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
-};
 
 export function TenantRenewalControls({
   tenancyId,
@@ -42,17 +40,27 @@ export function TenantRenewalControls({
   renewals: Renewal[];
 }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const [requestedEndDate, setRequestedEndDate] = useState("");
   const [busy, start] = useTransition();
   const pending = renewals.find((item) => item.status === "PENDING");
   const eligible = ["CONFIRMED", "ACTIVE"].includes(status) && !pending;
+  function closeRequestForm() {
+    setOpen(false);
+    setError("");
+    setRequestedEndDate("");
+    formRef.current?.reset();
+  }
   return (
     <section className="space-y-4 rounded-2xl border border-line bg-white p-6">
       <div>
         <h2 className="text-lg font-bold">Gia hạn kỳ thuê</h2>
         <p className="mt-1 text-sm text-muted">
-          Ngày kết thúc hiện tại: {confirmedEndDate ?? "Chưa xác nhận"}
+          Ngày kết thúc hiện tại: {confirmedEndDate
+            ? formatVietnamDateInput(confirmedEndDate)
+            : "Chưa xác nhận"}
         </p>
       </div>
       {renewals.map((item) => (
@@ -105,20 +113,26 @@ export function TenantRenewalControls({
       )}
       {open && (
         <form
+          ref={formRef}
           className="grid gap-3"
           onSubmit={(event) => {
             event.preventDefault();
             const data = new FormData(event.currentTarget);
             setError("");
+            const parsedEndDate = parseVietnamDateInput(requestedEndDate);
+            if (!parsedEndDate) {
+              setError("Nhập ngày kết thúc theo định dạng dd/mm/yyyy hợp lệ.");
+              return;
+            }
             start(async () => {
               const result = await requestRenewal(tenancyId, {
-                requestedEndDate: String(data.get("requestedEndDate") ?? ""),
+                requestedEndDate: parsedEndDate,
                 proposedMonthlyRent: data.get("proposedMonthlyRent"),
                 message: String(data.get("message") ?? ""),
               });
               if (!result.ok) setError(result.error);
               else {
-                setOpen(false);
+                closeRequestForm();
                 router.refresh();
               }
             });
@@ -127,12 +141,24 @@ export function TenantRenewalControls({
           <label className="grid gap-1 text-sm">
             Ngày kết thúc đề nghị
             <input
-              required
               name="requestedEndDate"
-              type="date"
-              min={nextDate(confirmedEndDate)}
+              type="text"
+              inputMode="numeric"
+              placeholder="dd/mm/yyyy"
+              maxLength={10}
+              value={requestedEndDate}
+              onChange={(event) => setRequestedEndDate(event.target.value)}
+              aria-describedby={`renewal-date-help-${tenancyId}`}
               className="rounded-xl border border-line p-3"
             />
+            <span
+              id={`renewal-date-help-${tenancyId}`}
+              className="text-xs text-muted"
+            >
+              Định dạng dd/mm/yyyy. Ngày phải sau kỳ thuê hiện tại
+              {confirmedEndDate &&
+                ` (${formatVietnamDateInput(confirmedEndDate)}).`}
+            </span>
           </label>
           <label className="grid gap-1 text-sm">
             Giá thuê đề nghị / tháng
@@ -165,7 +191,7 @@ export function TenantRenewalControls({
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setOpen(false)}
+              onClick={closeRequestForm}
             >
               Hủy
             </Button>
@@ -223,7 +249,7 @@ export function OwnerRenewalRequests({
             </Button>
           </div>
           {target === item.id && (
-            <form
+        <form
               className="space-y-2"
               onSubmit={(event) => {
                 event.preventDefault();

@@ -33,6 +33,19 @@ function Badge({
   );
 }
 
+const requestStatus: Record<
+  string,
+  { label: string; tone: "neutral" | "success" | "warning" | "danger" }
+> = {
+  PENDING: { label: "Đang chờ xử lý", tone: "warning" },
+  ACCEPTED: { label: "Đã chấp nhận", tone: "success" },
+  REJECTED: { label: "Đã từ chối", tone: "danger" },
+  WITHDRAWN: { label: "Đã rút lại", tone: "neutral" },
+  EXPIRED: { label: "Đã hết hạn", tone: "danger" },
+  CANCELLED: { label: "Đã hủy", tone: "neutral" },
+  AWAITING_REVISION: { label: "Cần bổ sung thông tin", tone: "warning" },
+};
+
 export default function OwnerOverviewPage() {
   return (
     <Suspense
@@ -259,17 +272,9 @@ async function Overview() {
                         </td>
                         <td className="px-4 py-4">
                           <Badge
-                            tone={
-                              request.status === "PENDING"
-                                ? "warning"
-                                : "success"
-                            }
+                            tone={requestStatus[request.status]?.tone ?? "neutral"}
                           >
-                            {request.status === "PENDING"
-                              ? "Đang chờ xử lý"
-                              : request.status === "ACCEPTED"
-                                ? "Đã chấp nhận"
-                                : request.status}
+                            {requestStatus[request.status]?.label ?? "Khác"}
                           </Badge>
                         </td>
                         <td className="px-4 py-4 text-right">

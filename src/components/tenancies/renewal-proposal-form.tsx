@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { proposeRenewal } from "@/server/tenancies/renewal-actions";
 import { Button } from "@/components/ui/button";
+import { formatVietnamDateInput } from "@/lib/vietnam-date";
 
 export function RenewalProposalForm({
   tenancyId,
@@ -60,7 +61,7 @@ export function RenewalProposalForm({
         Ngày kết thúc
         <input
           readOnly
-          value={requestedEndDate}
+          value={formatVietnamDateInput(requestedEndDate)}
           className="rounded-xl border border-line bg-slate-50 p-3"
         />
       </label>
