@@ -5,6 +5,7 @@ import {
   insertAccountProfile,
 } from "../account-test-fixtures";
 import {
+  blockUnit,
   cleanupPublicListings,
   publishedListing,
 } from "../listings/public-listing-fixture";
@@ -152,5 +153,57 @@ describe.skipIf(!process.env.DATABASE_URL)("owner rejects a request", () => {
         },
       }),
     ).toBe(1);
+  });
+
+  it("advances past a full batch of due requests that still have an available unit", async () => {
+    const listing = await publishedListing();
+    await blockUnit(
+      listing.unitIds[0],
+      "2090-03-01",
+      "2090-04-01",
+    );
+    const tenants = [];
+    for (let index = 0; index < 3; index += 1) {
+      const tenant = await insertAccountProfile();
+      tenants.push(tenant);
+      users.push(tenant.userId);
+    }
+
+    const firstCreatedAt = new Date(Date.now() - 16 * 24 * 60 * 60 * 1000);
+    await prisma.rentalRequest.createMany({
+      data: tenants.map((tenant, index) => ({
+        listingId: listing.listingId,
+        tenantId: tenant.id,
+        contactName: `Tenant ${index}`,
+        contactPhone: "0901000001",
+        desiredMoveInDate: new Date(
+          index === 2 ? "2090-03-01" : "2090-01-01",
+        ),
+        desiredEndDate: new Date(
+          index === 2 ? "2090-04-01" : "2090-02-01",
+        ),
+        message: index === 2 ? "No available unit" : "Available unit",
+        createdAt: new Date(firstCreatedAt.getTime() + index),
+      })),
+    });
+    const laterRequest = await prisma.rentalRequest.findFirstOrThrow({
+      where: { tenantId: tenants[2].id, listingId: listing.listingId },
+    });
+
+    await evaluateDueRentalRequests({ ownerId: listing.owner.profileId }, 2);
+    expect(
+      (
+        await prisma.rentalRequest.findUniqueOrThrow({
+          where: { id: laterRequest.id },
+        })
+      ).status,
+    ).toBe("PENDING");
+
+    await evaluateDueRentalRequests({ ownerId: listing.owner.profileId }, 2);
+    const saved = await prisma.rentalRequest.findUniqueOrThrow({
+      where: { id: laterRequest.id },
+    });
+    expect(saved.status).toBe("REJECTED");
+    expect(saved.outcomeReason).toBe("NO_AVAILABLE_UNIT");
   });
 });

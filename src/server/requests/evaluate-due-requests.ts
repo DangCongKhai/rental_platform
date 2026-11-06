@@ -10,7 +10,7 @@ import {
 export async function evaluateDueRentalRequests(scope: {
   tenantId?: string;
   ownerId?: string;
-}) {
+}, batchLimit = 50) {
   const cutoff = new Date(Date.now() - REQUEST_AUTO_REJECT_AFTER_MS);
   const candidates = await prisma.rentalRequest.findMany({
     where: {
@@ -22,8 +22,15 @@ export async function evaluateDueRentalRequests(scope: {
         : {}),
     },
     select: { id: true, listing: { select: { propertyId: true } } },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    take: 50,
+    // Recheck previously available requests in check order. Updating their
+    // timestamp moves them behind untouched requests, so a full batch cannot
+    // permanently starve later due requests.
+    orderBy: [
+      { availabilityCheckedAt: { sort: "asc", nulls: "first" } },
+      { createdAt: "asc" },
+      { id: "asc" },
+    ],
+    take: batchLimit,
   });
 
   const byProperty = new Map<string, string[]>();
@@ -35,78 +42,80 @@ export async function evaluateDueRentalRequests(scope: {
     ]);
   }
 
+  const transactionBatchSize = 5;
   for (const [propertyId, requestIds] of byProperty) {
-    await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM properties WHERE id = ${propertyId}::uuid FOR UPDATE`;
-      const units = await tx.unit.findMany({
-        where: {
-          propertyId,
-        },
-        select: { id: true },
-        orderBy: { id: "asc" },
-      });
-      for (const unit of units) {
-        await tx.$queryRaw`SELECT id FROM units WHERE id = ${unit.id}::uuid FOR UPDATE`;
-      }
-      await releaseExpiredHolds(
-        tx,
-        units.map((unit) => unit.id),
-        new Date(),
-      );
-      for (const id of requestIds) {
-        // Lock/re-read after inventory locks so a concurrent proposal or withdrawal wins cleanly.
-        await tx.$queryRaw`SELECT id FROM rental_requests WHERE id = ${id}::uuid FOR UPDATE`;
-        const current = await tx.rentalRequest.findUnique({ where: { id } });
-        if (
-          !current ||
-          current.status !== "PENDING" ||
-          !requestIsDue(current.createdAt, new Date())
-        )
-          continue;
-        const now = new Date();
-        const eligible = await tx.unit.findMany({
-          where: {
-            id: { in: units.map((unit) => unit.id) },
-            archivedAt: null,
-            operationalStatus: "READY",
-            isMarketed: true,
-            property: { archivedAt: null },
-            tenancies: {
-              none: {
-                blockedStartDate: { lte: current.desiredEndDate },
-                blockedEndDate: { gte: current.desiredMoveInDate },
-                status: { notIn: ["CANCELLED", "ENDED", "EXPIRED"] },
+    for (let offset = 0; offset < requestIds.length; offset += transactionBatchSize) {
+      const batch = requestIds.slice(offset, offset + transactionBatchSize);
+      await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM properties WHERE id = ${propertyId}::uuid FOR UPDATE`;
+        const units = await tx.unit.findMany({
+          where: { propertyId },
+          select: { id: true },
+          orderBy: { id: "asc" },
+        });
+        for (const unit of units) {
+          await tx.$queryRaw`SELECT id FROM units WHERE id = ${unit.id}::uuid FOR UPDATE`;
+        }
+        await releaseExpiredHolds(
+          tx,
+          units.map((unit) => unit.id),
+          new Date(),
+        );
+        for (const id of batch) {
+          // Lock/re-read after inventory locks so a concurrent proposal or withdrawal wins cleanly.
+          await tx.$queryRaw`SELECT id FROM rental_requests WHERE id = ${id}::uuid FOR UPDATE`;
+          const current = await tx.rentalRequest.findUnique({ where: { id } });
+          if (
+            !current ||
+            current.status !== "PENDING" ||
+            !requestIsDue(current.createdAt, new Date())
+          )
+            continue;
+          const now = new Date();
+          const eligible = await tx.unit.findMany({
+            where: {
+              id: { in: units.map((unit) => unit.id) },
+              archivedAt: null,
+              operationalStatus: "READY",
+              isMarketed: true,
+              property: { archivedAt: null },
+              tenancies: {
+                none: {
+                  blockedStartDate: { lte: current.desiredEndDate },
+                  blockedEndDate: { gte: current.desiredMoveInDate },
+                  status: { notIn: ["CANCELLED", "ENDED", "EXPIRED"] },
+                },
               },
             },
-          },
-          select: { id: true },
-          take: 1,
-        });
-        if (eligible.length) {
+            select: { id: true },
+            take: 1,
+          });
+          if (eligible.length) {
+            await tx.rentalRequest.update({
+              where: { id },
+              data: { availabilityCheckedAt: now },
+            });
+            continue;
+          }
           await tx.rentalRequest.update({
             where: { id },
-            data: { availabilityCheckedAt: now },
+            data: {
+              status: "REJECTED",
+              outcomeReason: "NO_AVAILABLE_UNIT",
+              availabilityCheckedAt: now,
+              closedAt: now,
+            },
           });
-          continue;
+          await createNotification(tx, {
+            recipientId: current.tenantId,
+            audience: "TENANT",
+            eventKey: `rental_request.no_availability:${id}`,
+            title: "Yêu cầu thuê đã đóng",
+            body: "Không còn căn phù hợp trong khoảng thời gian bạn yêu cầu.",
+            link: { resourceType: "rental_request", resourceId: id },
+          });
         }
-        await tx.rentalRequest.update({
-          where: { id },
-          data: {
-            status: "REJECTED",
-            outcomeReason: "NO_AVAILABLE_UNIT",
-            availabilityCheckedAt: now,
-            closedAt: now,
-          },
-        });
-        await createNotification(tx, {
-          recipientId: current.tenantId,
-          audience: "TENANT",
-          eventKey: `rental_request.no_availability:${id}`,
-          title: "Yêu cầu thuê đã đóng",
-          body: "Không còn căn phù hợp trong khoảng thời gian bạn yêu cầu.",
-          link: { resourceType: "rental_request", resourceId: id },
-        });
-      }
-    });
+      }, { timeout: 15_000 });
+    }
   }
 }
