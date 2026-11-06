@@ -106,6 +106,15 @@ export function RequestIcon(props: IconProps) {
   );
 }
 
+export function BanIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z" />
+      <path d="M4.2 4.2l7.6 7.6" />
+    </Icon>
+  );
+}
+
 export function UserIcon(props: IconProps) {
   return (
     <Icon {...props}>

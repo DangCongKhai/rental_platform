@@ -133,22 +133,23 @@ export default async function AdminListingsPage({
                   {formatVietnamDate(item.updatedAt)}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-start gap-3">
-                    {!item.archivedAt && (
-                      <>
-                        <Link
-                          href={`/admin/reviews/${item.id}`}
-                          className="shrink-0 pt-2 text-sm font-semibold text-[#1c4d78] hover:underline"
-                        >
-                          Chi tiết
-                        </Link>
-                        <ListingSuspensionControls
-                          listingId={item.id}
-                          suspended={Boolean(item.adminSuspendedAt)}
-                        />
-                      </>
-                    )}
-                  </div>
+                  {!item.archivedAt && (
+                    <div className="flex items-center gap-4">
+                      <Link
+                        href={`/admin/reviews/${item.id}`}
+                        className={[
+                          "shrink-0 text-sm font-semibold",
+                          "text-[#1c4d78] hover:underline",
+                        ].join(" ")}
+                      >
+                        Chi tiết
+                      </Link>
+                      <ListingSuspensionControls
+                        listingId={item.id}
+                        suspended={Boolean(item.adminSuspendedAt)}
+                      />
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
