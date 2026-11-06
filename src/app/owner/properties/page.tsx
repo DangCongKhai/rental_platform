@@ -21,6 +21,7 @@ import type {
 import { getOwnerProperties } from "@/server/owner/actions";
 import { formatVietnamDate } from "@/lib/vietnam-date";
 import { StatusPill, textLinkClass } from "./components/status-pill";
+import { LoadingScreen } from "@/components/loading-screen";
 
 const buttonClass = [
   "inline-flex min-h-10 items-center justify-center",
@@ -203,12 +204,7 @@ export default function OwnerPropertiesPage() {
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
       {loading && (
-        <div
-          className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
-          aria-busy="true"
-        >
-          Đang tải bất động sản…
-        </div>
+        <LoadingScreen className="h-full" message="Đang tải bất động sản..." />
       )}
       {error && (
         <div

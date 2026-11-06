@@ -495,16 +495,9 @@ export function PropertyEditor({
         ← {property?.name ?? "Bất động sản"}
       </Link>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-        {property?.name ?? "Bất động sản"}
+        {property?.name ?? ""}
       </h1>
-      {loading && (
-        <div
-          className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
-          aria-busy="true"
-        >
-          Đang tải bất động sản…
-        </div>
-      )}
+    
       {error && (
         <div
           role="alert"
@@ -838,8 +831,8 @@ export function PropertyEditor({
       {property && activeTab === "overview" && (
         <div
           className={[
-            "flex w-full shrink-0 justify-end border-t",
-            "border-slate-200 bg-white px-1 py-3",
+            "flex w-full shrink-0 justify-end",
+            "px-1 py-3",
           ].join(" ")}
         >
           <button

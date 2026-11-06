@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   propertyTypeLabel,
   rentalArrangementLabel,
@@ -81,6 +82,12 @@ function unitEditHref(property: OwnerPropertyRental, unitId: string) {
   return `/owner/properties/${property.id}/units/${unitId}/edit`;
 }
 
+type PropertyTab = "overview" | "occupancy";
+
+function tabFrom(value: string | null): PropertyTab {
+  return value === "occupancy" ? "occupancy" : "overview";
+}
+
 function money(value: string | number | null | undefined) {
   if (value === null || value === undefined || value === "") return "—";
   const amount = Number(value);
@@ -97,7 +104,11 @@ export function PropertyRental({
   detail: OwnerPropertyDetail;
   amenityLabels: Record<string, string>;
 }) {
-  const [tab, setTab] = useState<"overview" | "occupancy">("overview");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<PropertyTab>(() =>
+    tabFrom(searchParams.get("tab")),
+  );
   const [query, setQuery] = useState("");
   const [rental, setRental] =
     useState<(typeof rentalFilters)[number]["value"]>("all");
@@ -113,10 +124,25 @@ export function PropertyRental({
     });
   }, [property.units, query, rental]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === tab) return;
+    params.set("tab", tab);
+    window.history.replaceState(
+      null,
+      "",
+      `${pathname}?${params.toString()}`,
+    );
+  }, [pathname, tab]);
+
+  function selectTab(next: PropertyTab) {
+    setTab(next);
+  }
+
   return (
     <section
       className={[
-        "mx-auto flex w-full max-w-6xl flex-col gap-5",
+        "mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5",
         "px-1 py-4 sm:px-2 sm:py-6",
       ].join(" ")}
     >
@@ -133,17 +159,19 @@ export function PropertyRental({
             "sm:items-start sm:justify-between",
           ].join(" ")}
         >
-          <div>
+          <div className="min-w-0">
             <h1
               className={[
-                "text-2xl font-bold tracking-tight",
+                "text-2xl font-bold tracking-tight break-words",
                 "text-slate-900 sm:text-3xl",
               ].join(" ")}
             >
               {property.name}
             </h1>
-            <p className="mt-2 text-sm text-slate-600">{property.address}</p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-2 text-sm break-words text-slate-600">
+              {property.address}
+            </p>
+            <p className="mt-1 text-sm break-words text-slate-500">
               {property.property_type_label}
               {" · "}
               {property.rental_arrangement_label}
@@ -171,7 +199,7 @@ export function PropertyRental({
             type="button"
             role="tab"
             aria-selected={tab === value}
-            onClick={() => setTab(value)}
+            onClick={() => selectTab(value)}
             className={[
               "rounded-full px-4 py-2 text-sm font-semibold",
               tab === value
@@ -409,11 +437,11 @@ function PropertyOverview({
   return (
     <div
       className={[
-        "grid gap-6 rounded-2xl border border-slate-200",
-        "bg-white p-4 sm:p-6",
+        "overflow-hidden rounded-2xl border border-slate-200",
+        "bg-white",
       ].join(" ")}
     >
-      <dl className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-x-6 gap-y-4 p-5 sm:grid-cols-3 sm:p-6">
         <Fact label="Tên bất động sản" value={detail.name} />
         <Fact
           label="Loại bất động sản"
@@ -423,44 +451,52 @@ function PropertyOverview({
           label="Cách cho thuê"
           value={rentalArrangementLabel(detail.rental_arrangement)}
         />
-        <Fact label="Địa chỉ" value={address} />
+        <Fact label="Địa chỉ" value={address} wide />
         <Fact
           label="Mô tả bất động sản"
           value={detail.description || "—"}
           wide
         />
-      </dl>
+      </section>
       {wholeSpace && unit ? (
-        <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Fact
-            label="Diện tích (m²)"
-            value={unit.area_m2 === null ? "—" : String(unit.area_m2)}
-          />
-          <Fact label="Phòng ngủ" value={String(unit.bedrooms)} />
-          <Fact label="Phòng tắm" value={String(unit.bathrooms)} />
-          <Fact
-            label="Thời hạn thuê tối thiểu (tháng)"
-            value={String(unit.minimum_rental_months)}
-          />
-          <Fact
-            label="Giá thuê tháng"
-            value={money(unit.advertised_monthly_rent)}
-          />
-          <Fact label="Tiền đặt cọc" value={money(unit.deposit)} />
-          <Fact
-            label="Số người tối đa"
-            value={
-              unit.max_occupants === null
-                ? "—"
-                : String(unit.max_occupants)
-            }
-          />
-          <Fact
-            label="Mô tả căn"
-            value={unit.description || "—"}
-            wide
-          />
-        </dl>
+        <section className="border-t border-slate-100 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Thông tin căn
+          </h2>
+          <dl
+            className={[
+              "mt-4 grid gap-x-6 gap-y-4",
+              "sm:grid-cols-2 xl:grid-cols-4",
+            ].join(" ")}
+          >
+            <Fact
+              label="Diện tích (m²)"
+              value={unit.area_m2 === null ? "—" : String(unit.area_m2)}
+            />
+            <Fact label="Phòng ngủ" value={String(unit.bedrooms)} />
+            <Fact label="Phòng tắm" value={String(unit.bathrooms)} />
+            <Fact
+              label="Thời hạn thuê tối thiểu"
+              value={`${unit.minimum_rental_months} tháng`}
+            />
+            <Fact
+              label="Giá thuê tháng"
+              value={money(unit.advertised_monthly_rent)}
+            />
+            <Fact label="Tiền đặt cọc" value={money(unit.deposit)} />
+            <Fact
+              label="Số người tối đa"
+              value={
+                unit.max_occupants === null
+                  ? "—"
+                  : String(unit.max_occupants)
+              }
+            />
+          </dl>
+          <div className="mt-4">
+            <Fact label="Mô tả căn" value={unit.description || "—"} wide />
+          </div>
+        </section>
       ) : null}
       <AmenityList
         title={wholeSpace ? "Tiện nghi" : "Tiện nghi dùng chung"}
@@ -482,9 +518,14 @@ function Fact({
   wide?: boolean;
 }) {
   return (
-    <div className={wide ? "sm:col-span-2 xl:col-span-4" : undefined}>
+    <div className={wide ? "min-w-0 sm:col-span-full" : "min-w-0"}>
       <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-1 text-sm whitespace-pre-wrap text-slate-900">
+      <dd
+        className={[
+          "mt-1 text-sm break-words whitespace-pre-wrap",
+          "text-slate-900",
+        ].join(" ")}
+      >
         {value}
       </dd>
     </div>
@@ -505,25 +546,23 @@ function AmenityList({
   );
   const custom = amenities.custom.filter(Boolean);
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+    <section className="space-y-3 border-t border-slate-100 p-5 sm:p-6">
+      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
       {enabled.length === 0 && custom.length === 0 ? (
         <p className="text-sm text-slate-600">Chưa chọn tiện nghi.</p>
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <ul className="flex flex-wrap gap-2">
           {enabled.map(([key, item]) => (
             <li
               key={key}
               className={[
-                "rounded-lg border border-slate-200",
-                "px-3 py-2 text-sm text-slate-700",
+                "max-w-full rounded-full bg-slate-100",
+                "px-3 py-1.5 text-sm break-words text-slate-800",
               ].join(" ")}
             >
               {labels[key] ?? key}
               {item.details ? (
-                <span className="mt-1 block text-xs text-slate-500">
-                  {item.details}
-                </span>
+                <span className="text-slate-500"> · {item.details}</span>
               ) : null}
             </li>
           ))}
@@ -531,8 +570,8 @@ function AmenityList({
             <li
               key={item}
               className={[
-                "rounded-lg border border-slate-200",
-                "px-3 py-2 text-sm text-slate-700",
+                "max-w-full rounded-full bg-slate-100",
+                "px-3 py-1.5 text-sm break-words text-slate-800",
               ].join(" ")}
             >
               {item}
@@ -546,11 +585,11 @@ function AmenityList({
 
 function HouseRules({ policies }: { policies: PropertyPolicies }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-slate-800">
+    <section className="space-y-3 border-t border-slate-100 p-5 sm:p-6">
+      <h2 className="text-sm font-semibold text-slate-900">
         Quy định dùng chung
       </h2>
-      <dl className="grid gap-4 sm:grid-cols-2">
+      <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <Fact
           label="Thú cưng"
           value={policyLabels[policies.pets] ?? policies.pets}

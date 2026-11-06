@@ -13,6 +13,7 @@ import type {
 } from "@/lib/owner-types";
 import { formatVietnamDate } from "@/lib/vietnam-date";
 import { getOwnerProperties } from "@/server/owner/actions";
+import { LoadingScreen } from "@/components/loading-screen";
 
 function statusLabel(listing: OwnerPropertySummary["listing"]) {
   if (!listing) return "Chưa có tin";
@@ -137,9 +138,7 @@ export default function OwnerListingsPage() {
             ) : null}
           </div>
           {loading ? (
-            <div className="animate-pulse space-y-4" aria-busy="true">
-              <div className="h-24 rounded-2xl border border-slate-200 bg-white" />
-            </div>
+            <LoadingScreen className="h-full" message="Đang tải tin đăng..." />
           ) : error ? (
             <div className="rounded-2xl border border-rose-200 bg-white p-6 text-center">
               <p className="text-sm text-rose-700">{error}</p>
