@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { MoneyField } from "@/components/ui/money-field";
 import { actionMessage } from "@/lib/action-error";
 import type {
   AmenityCatalogEntry,
@@ -367,20 +368,16 @@ export function UnitEditor({
           </label>
           <label className="text-sm font-medium text-slate-700">
             Giá thuê tháng (VND)
-            <input
+            <MoneyField
               name="advertised_monthly_rent"
-              type="number"
-              min="1"
               defaultValue={unit.advertised_monthly_rent ?? ""}
               className={fieldClass}
             />
           </label>
           <label className="text-sm font-medium text-slate-700">
             Tiền đặt cọc (VND)
-            <input
+            <MoneyField
               name="deposit"
-              type="number"
-              min="0"
               defaultValue={unit.deposit ?? ""}
               className={fieldClass}
             />

@@ -544,13 +544,14 @@ function FilterDialog({
             key={moveInKey}
             name="moveInDate"
             label="Ngày nhận phòng"
+            picker
             defaultValue={draft.moveInDate}
             onValueChange={(iso) =>
               setDraft((current) => ({ ...current, moveInDate: iso }))
             }
           />
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-semibold">Chính sách</legend>
+            <legend className="text-sm text-nowrap font-semibold">Chính sách</legend>
             <div className="flex flex-wrap gap-2">
               {petOptions.map((option) => (
                 <button
@@ -566,7 +567,7 @@ function FilterDialog({
             </div>
           </fieldset>
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-semibold">Tiện ích</legend>
+            <legend className="text-sm text-nowrap font-semibold">Tiện ích</legend>
             <div className="flex flex-wrap gap-2">
               {amenities.map((amenity) => {
                 const selected = draft.amenities.includes(amenity.key);

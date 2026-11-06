@@ -30,7 +30,7 @@ import {
   archiveProperty,
   createProperty,
   updateProperty,
-} from "../app/owner/properties/actions";
+} from "../app/owner/properties/actions/actions";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;

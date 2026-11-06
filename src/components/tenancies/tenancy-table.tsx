@@ -95,11 +95,6 @@ export function TenancyTable({
                 </td>
                 <td className="px-4 py-3.5 text-[15px] whitespace-nowrap text-ink">
                   <p>{term.start ? requestDate(term.start) : "—"}</p>
-                  {tenancy.movedInAt && (
-                    <p className="mt-1 text-[13px] text-subtle">
-                      Đã vào {requestDate(tenancy.movedInAt)}
-                    </p>
-                  )}
                   {term.proposed && term.start && (
                     <p className="mt-1 text-[13px] text-subtle">Theo đề xuất</p>
                   )}

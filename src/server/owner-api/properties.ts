@@ -3,11 +3,11 @@ import {
   archiveProperty,
   createProperty,
   updateProperty,
-} from "@/app/owner/properties/actions";
+} from "@/app/owner/properties/actions/actions";
 import {
   createUnits,
   updateUnit,
-} from "@/app/owner/properties/unit-actions";
+} from "@/app/owner/properties/actions/unit-actions";
 import { requireUser } from "@/server/auth";
 import { prisma } from "@/server/db";
 import {
@@ -120,6 +120,21 @@ function listingStatusFilter(
   return "all";
 }
 
+function listingStatusesFrom(
+  params: URLSearchParams,
+): OwnerListingStatusFilter[] {
+  const selected: OwnerListingStatusFilter[] = [];
+  for (const raw of params.getAll("listing_status")) {
+    for (const part of raw.split(",")) {
+      const status = listingStatusFilter(part.trim());
+      if (status !== "all" && !selected.includes(status)) {
+        selected.push(status);
+      }
+    }
+  }
+  return selected;
+}
+
 export async function listOwnerProperties(request: Request) {
   const url = new URL(request.url);
   const result = await getMyProperties(
@@ -127,7 +142,7 @@ export async function listOwnerProperties(request: Request) {
     listingFilter(url.searchParams.get("filter")),
     url.searchParams.has("include_archived"),
     occupancyFilter(url.searchParams.get("occupancy")),
-    listingStatusFilter(url.searchParams.get("listing_status")),
+    listingStatusesFrom(url.searchParams),
   );
   return Response.json({
     data: result.properties.map(toOwnerPropertySummary),

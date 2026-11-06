@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { proposeRenewal } from "@/server/tenancies/renewal-actions";
 import { Button } from "@/components/ui/button";
+import { MoneyField } from "@/components/ui/money-field";
 import { formatVietnamDateInput } from "@/lib/vietnam-date";
 
 export function RenewalProposalForm({
@@ -67,11 +68,9 @@ export function RenewalProposalForm({
       </label>
       <label className="grid gap-1 text-sm">
         Giá thuê hằng tháng (₫)
-        <input
+        <MoneyField
           required
           name="monthlyRent"
-          type="number"
-          min="1"
           defaultValue={requestedRent}
           className="rounded-xl border border-line p-3"
         />

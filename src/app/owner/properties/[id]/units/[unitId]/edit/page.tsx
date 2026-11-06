@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { UnitEditor } from "../../../../unit-editor";
+import { UnitEditor } from "../../../../components/unit-editor";
 import { ownerUnitArrangement } from "@/server/properties";
 
 export default function EditOwnerUnitPage({

@@ -78,7 +78,7 @@ export async function getOwnerProperties(
     filter?: OwnerListingFilter;
     includeArchived?: boolean;
     occupancy?: OwnerOccupancyFilter;
-    listingStatus?: OwnerListingStatusFilter;
+    listingStatuses?: OwnerListingStatusFilter[];
   } = {},
 ): Promise<OwnerPropertyPage> {
   const params = new URLSearchParams();
@@ -92,8 +92,8 @@ export async function getOwnerProperties(
   if (query.occupancy && query.occupancy !== "all") {
     params.set("occupancy", query.occupancy);
   }
-  if (query.listingStatus && query.listingStatus !== "all") {
-    params.set("listing_status", query.listingStatus);
+  for (const status of query.listingStatuses ?? []) {
+    if (status !== "all") params.append("listing_status", status);
   }
   const text = params.toString();
   return run(() =>

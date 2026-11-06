@@ -83,6 +83,7 @@ export function ListingDetailView({
     setOpenUnitId(unitId);
   }
 
+
   return (
      <div className={preview ? "min-w-0" : "flex-1 bg-[#f4f6f8] px-4 py-6 sm:px-8"}>
      <div className={preview ? "grid min-w-0 gap-8" : "mx-auto grid w-full max-w-[1200px] gap-8"}>

@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DateField } from "@/components/ui/date-field";
+import { MoneyField } from "@/components/ui/money-field";
 import { proposeTenancy, reviseContract } from "@/server/tenancies/actions";
 import type { AgreedRulesView } from "./agreed-rules";
 
@@ -151,28 +152,26 @@ export function ContractForm({
             />
             <label className="grid gap-1 text-sm font-semibold">
               Giá thuê hằng tháng (₫)
-              <input
+              <MoneyField
                 key={`rent-${selected}`}
-                className="min-h-12 rounded-xl border border-line px-3 font-normal"
+                className={[
+                  "min-h-12 rounded-xl border border-line",
+                  "px-3 font-normal",
+                ].join(" ")}
                 name="monthlyRent"
-                type="number"
-                min="1"
-                max="99999999999999"
-                step="1"
                 defaultValue={monthlyRent ?? unit?.monthlyRent}
                 required={showTerms}
               />
             </label>
             <label className="grid gap-1 text-sm font-semibold">
               Tiền cọc (₫)
-              <input
+              <MoneyField
                 key={`deposit-${selected}`}
-                className="min-h-12 rounded-xl border border-line px-3 font-normal"
+                className={[
+                  "min-h-12 rounded-xl border border-line",
+                  "px-3 font-normal",
+                ].join(" ")}
                 name="depositAmount"
-                type="number"
-                min="0"
-                max="99999999999999"
-                step="1"
                 defaultValue={depositAmount ?? unit?.depositAmount}
                 required={showTerms}
               />

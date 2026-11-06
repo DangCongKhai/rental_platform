@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Prisma } from "../../../../generated/prisma/client";
+import type { Prisma } from "../../../../../generated/prisma/client";
 import { validateAmenities } from "@/domain/amenities";
 import { validatePropertyPolicies } from "@/domain/policies";
 import { ActionError, runAction } from "@/server/action";
@@ -10,6 +10,7 @@ import { requireUser } from "@/server/auth";
 import { prisma } from "@/server/db";
 import type { ActionResult } from "@/server/validation";
 import { normalizeUnitLabel } from "@/domain/units";
+import { geocodeVietnamAddress } from "@/server/geocoding";
 
 const propertyTypeSchema = z.enum(["HOUSE", "APARTMENT", "APARTMENT_BUILDING"]);
 
@@ -143,6 +144,47 @@ function nullableText(value: string | null | undefined) {
   return value;
 }
 
+type StoredAddress = {
+  addressLine: string | null;
+  ward: string | null;
+  city: string | null;
+};
+
+function addressKey(address: StoredAddress) {
+  return [address.addressLine, address.ward, address.city].join("|");
+}
+
+async function storeCoordinates(id: string, address: StoredAddress) {
+  try {
+    await prisma.property.updateMany({
+      where: {
+        id,
+        addressLine: address.addressLine,
+        ward: address.ward,
+        city: address.city,
+      },
+      data: { latitude: null, longitude: null },
+    });
+    if (!address.addressLine && !address.ward && !address.city) return;
+    const point = await geocodeVietnamAddress(address);
+    if (!point) return;
+    await prisma.property.updateMany({
+      where: {
+        id,
+        addressLine: address.addressLine,
+        ward: address.ward,
+        city: address.city,
+      },
+      data: {
+        latitude: point.latitude,
+        longitude: point.longitude,
+      },
+    });
+  } catch (error) {
+    console.error("Geocoding failed", error);
+  }
+}
+
 export async function createProperty(
   input: unknown,
 ): Promise<ActionResult<CreatedProperty>> {
@@ -241,6 +283,11 @@ export async function createProperty(
 
     revalidatePath("/owner/properties");
     revalidatePath("/owner/listings");
+    await storeCoordinates(property.id, {
+      addressLine: nullableText(parsed.data.addressLine),
+      ward: nullableText(parsed.data.ward),
+      city: nullableText(parsed.data.city),
+    });
 
     return {
       id: property.id,
@@ -328,6 +375,11 @@ export async function updateProperty(
       wholeSpaceUnit: "Tiện ích của không gian không hợp lệ.",
     });
   }
+
+  const beforeAddress = await prisma.property.findFirst({
+    where: { id, ownerId: user.profileId, archivedAt: null },
+    select: { addressLine: true, ward: true, city: true },
+  });
 
   return runAction(async () => {
     const updated = await prisma.$transaction(async (tx) => {
@@ -466,6 +518,22 @@ export async function updateProperty(
       revalidatePath(`/owner/listings/${updated.listingId}`);
     }
     revalidatePath("/listings");
+    const addressChanged =
+      fields.addressLine !== undefined ||
+      fields.ward !== undefined ||
+      fields.city !== undefined;
+    if (addressChanged && beforeAddress) {
+      const afterAddress = await prisma.property.findFirst({
+        where: { id },
+        select: { addressLine: true, ward: true, city: true },
+      });
+      if (
+        afterAddress &&
+        addressKey(afterAddress) !== addressKey(beforeAddress)
+      ) {
+        await storeCoordinates(id, afterAddress);
+      }
+    }
 
     return { contentRevision: updated.contentRevision };
   });

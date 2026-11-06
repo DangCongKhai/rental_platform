@@ -198,3 +198,15 @@ export function listingStatusPropertyWhere(
     },
   });
 }
+
+export function listingStatusesPropertyWhere(
+  filters: OwnerListingStatusFilter[],
+): Prisma.PropertyWhereInput | undefined {
+  const clauses = filters.flatMap((filter) => {
+    const where = listingStatusPropertyWhere(filter);
+    return where ? [where] : [];
+  });
+  if (clauses.length === 0) return undefined;
+  if (clauses.length === 1) return clauses[0];
+  return { OR: clauses };
+}

@@ -3,20 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Pagination } from "@/components/pagination";
+import { ListingStatusFilter } from "@/app/owner/listing-status-filter";
 import { listingStatusClass } from "@/app/owner/listing-status";
 import { actionMessage } from "@/lib/action-error";
 import type {
-  OwnerListingFilter,
+  OwnerListingStatusFilter,
   OwnerPropertyPage,
   OwnerPropertySummary,
 } from "@/lib/owner-types";
+import { formatVietnamDate } from "@/lib/vietnam-date";
 import { getOwnerProperties } from "@/server/owner/actions";
-
-const filters = [
-  ["all", "Tất cả"],
-  ["published", "Đang đăng"],
-  ["draft", "Bản nháp"],
-] as const;
 
 function statusLabel(listing: OwnerPropertySummary["listing"]) {
   if (!listing) return "Chưa có tin";
@@ -35,7 +31,9 @@ export default function OwnerListingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState<OwnerListingFilter>("all");
+  const [listingStatuses, setListingStatuses] = useState<
+    OwnerListingStatusFilter[]
+  >([]);
 
   useEffect(() => {
     let ignore = false;
@@ -43,7 +41,10 @@ export default function OwnerListingsPage() {
       setLoading(true);
       setError(null);
       try {
-        const next = await getOwnerProperties({ page, filter });
+        const next = await getOwnerProperties({
+          page,
+          listingStatuses,
+        });
         if (ignore) return;
         setResult(next);
       } catch (caught) {
@@ -62,15 +63,12 @@ export default function OwnerListingsPage() {
     return () => {
       ignore = true;
     };
-  }, [filter, page, retry]);
+  }, [listingStatuses, page, retry]);
 
   const rows = result?.data ?? [];
   const firstWithoutListing = rows.find((item) => !item.listing)?.id;
 
-  function chooseFilter(next: OwnerListingFilter) {
-    setFilter(next);
-    setPage(1);
-  }
+  const filtersActive = listingStatuses.length > 0;
 
   return (
     <section className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col px-1 py-4 sm:px-2 sm:py-6">
@@ -97,7 +95,10 @@ export default function OwnerListingsPage() {
         )}
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-5">
-      {result && result.meta.total === 0 && filter === "all" && !loading ? (
+      {result &&
+      result.meta.total === 0 &&
+      !filtersActive &&
+      !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Cần có bất động sản trước
@@ -111,21 +112,29 @@ export default function OwnerListingsPage() {
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-5">
-          <div className="flex shrink-0 flex-wrap gap-2" role="tablist">
-            {filters.map(([value, label]) => (
+          <div className="flex shrink-0 flex-wrap items-end gap-3">
+            <ListingStatusFilter
+              value={listingStatuses}
+              onChange={(next) => {
+                setListingStatuses(next);
+                setPage(1);
+              }}
+            />
+            {filtersActive ? (
               <button
-                key={value}
                 type="button"
-                role="tab"
-                aria-selected={filter === value}
-                onClick={() => chooseFilter(value)}
-                className={`rounded-full border px-4 py-2 text-sm font-medium ${filter === value ? "border-[#3368a0] bg-[#3368a0] text-white" : "border-slate-200 bg-white text-slate-700"}`}
+                className={[
+                  "h-10 rounded-xl px-3 text-sm font-semibold",
+                  "text-[#3368a0] hover:bg-slate-100",
+                ].join(" ")}
+                onClick={() => {
+                  setListingStatuses([]);
+                  setPage(1);
+                }}
               >
-                {filter === value && result && !loading
-                  ? `${label} · ${result.meta.total}`
-                  : label}
+                Xóa bộ lọc
               </button>
-            ))}
+            ) : null}
           </div>
           {loading ? (
             <div className="animate-pulse space-y-4" aria-busy="true">
@@ -179,9 +188,7 @@ export default function OwnerListingsPage() {
                             {item.eligible_unit_count} / {item.unit_count}
                           </td>
                           <td className="px-4 py-4 text-slate-600">
-                            {new Date(item.updated_at).toLocaleDateString(
-                              "vi-VN",
-                            )}
+                            {formatVietnamDate(item.updated_at)}
                           </td>
                           <td className="px-4 py-4">
                             <Link
@@ -198,7 +205,7 @@ export default function OwnerListingsPage() {
                 </table>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-600">
-              Không có tin đăng trong nhóm này.
+              Không có tin phù hợp bộ lọc.
             </div>
           )}
           </div>

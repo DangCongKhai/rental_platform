@@ -24,7 +24,7 @@ import { requireUser } from "./auth";
 import { prisma } from "./db";
 import { createMediaSignedUrls } from "./media-storage";
 import {
-  listingStatusPropertyWhere,
+  listingStatusesPropertyWhere,
   occupancyPropertyWhere,
 } from "./owner-property-filters";
 import {
@@ -56,7 +56,7 @@ export async function getMyProperties(
   listingFilter: OwnerListingFilter = "all",
   includeArchived = false,
   occupancy: OwnerOccupancyFilter = "all",
-  listingStatus: OwnerListingStatusFilter = "all",
+  listingStatuses: OwnerListingStatusFilter[] = [],
 ) {
   await connection();
   const user = await requireUser();
@@ -106,7 +106,7 @@ export async function getMyProperties(
     AND: [
       listingGroup ?? {},
       occupancyPropertyWhere(occupancy, today, now) ?? {},
-      listingStatusPropertyWhere(listingStatus) ?? {},
+      listingStatusesPropertyWhere(listingStatuses) ?? {},
     ],
   };
 

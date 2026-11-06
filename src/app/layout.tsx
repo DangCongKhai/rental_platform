@@ -33,7 +33,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Navbar />
           </NavbarVisibility>
         </Suspense>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div
+          data-scroll-root
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+        >
           <Suspense
             fallback={
               <FavouriteBoundaryFallback>{children}</FavouriteBoundaryFallback>

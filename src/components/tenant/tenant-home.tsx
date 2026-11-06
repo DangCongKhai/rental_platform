@@ -126,7 +126,7 @@ export function TenantHome({
           icon={CalendarIcon}
         />
         <Stat
-          href="/account/notifications"
+          href="/tenant/notifications"
           label="Thông báo chưa đọc"
           value={String(unread)}
           hint="Xem thông báo →"

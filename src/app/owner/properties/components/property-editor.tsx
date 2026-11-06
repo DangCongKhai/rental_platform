@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import { toast } from "sonner";
+import { MoneyField } from "@/components/ui/money-field";
 import { actionMessage } from "@/lib/action-error";
 import type {
   AmenityCatalogEntry,
@@ -102,43 +103,94 @@ function AmenityFields({
 }) {
   const accepted = new Set(scopes ?? (scope ? [scope] : []));
   const entries = catalog.filter((item) =>
-    item.scopes.some((itemScope) => accepted.has(itemScope as "shared" | "unit")),
+    item.scopes.some((itemScope) =>
+      accepted.has(itemScope as "shared" | "unit"),
+    ),
   );
-  const selected = new Set(
-    Object.entries(value?.standard ?? {})
-      .filter(([, amenity]) => amenity.enabled)
-      .map(([key]) => key),
+  const [checked, setChecked] = useState(
+    () =>
+      new Set(
+        Object.entries(value?.standard ?? {})
+          .filter(([, amenity]) => amenity.enabled)
+          .map(([key]) => key),
+      ),
   );
+  const title =
+    scopes && scopes.length > 1
+      ? "Tiện nghi"
+      : `Tiện nghi ${scope === "unit" ? "trong phòng" : "dùng chung"}`;
+
+  function setAll(enabled: boolean) {
+    setChecked(
+      enabled ? new Set(entries.map((item) => item.key)) : new Set(),
+    );
+  }
+
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-semibold text-slate-800">
-        {scopes && scopes.length > 1
-          ? "Tiện nghi"
-          : `Tiện nghi ${scope === "unit" ? "trong phòng" : "dùng chung"}`}
-      </legend>
-      <div className="flex flex-wrap gap-2">
-        {entries.map((item) => (
-          <label
-            key={item.key}
-            className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700"
+    <fieldset className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <legend className="text-sm font-semibold text-slate-800">
+          {title}
+        </legend>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setAll(true)}
+            className="text-sm font-semibold text-[#3368a0] hover:underline"
           >
-            <input
-              type="checkbox"
-              name={`amenity:${item.key}`}
-              defaultChecked={selected.has(item.key)}
-              className="size-4 accent-[#3368a0]"
-            />
-            {item.label}
+            Chọn tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => setAll(false)}
+            className="text-sm font-semibold text-slate-600 hover:underline"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {entries.map((item) => (
+          <div
+            key={item.key}
+            className={[
+              "flex min-h-10 items-center gap-2 rounded-lg",
+              "border border-slate-200 px-3 py-2 text-sm text-slate-700",
+            ].join(" ")}
+          >
+            <label
+              className={[
+                "flex min-w-0 flex-1 cursor-pointer",
+                "items-center gap-2",
+              ].join(" ")}
+            >
+              <input
+                type="checkbox"
+                name={`amenity:${item.key}`}
+                checked={checked.has(item.key)}
+                onChange={(event) => {
+                  const next = new Set(checked);
+                  if (event.target.checked) next.add(item.key);
+                  else next.delete(item.key);
+                  setChecked(next);
+                }}
+                className="size-4 accent-[#3368a0]"
+              />
+              <span className="min-w-0 flex-1">{item.label}</span>
+            </label>
             <input
               type="text"
               name={`amenity_details:${item.key}`}
               defaultValue={value?.standard[item.key]?.details ?? ""}
               maxLength={160}
               aria-label={`Ghi chú ${item.label}`}
-              placeholder="Ghi chú tùy chọn"
-              className="ml-2 w-40 rounded-md border border-slate-200 px-2 py-1 text-xs"
+              placeholder="Ghi chú"
+              className={[
+                "w-24 rounded-md border border-slate-200",
+                "px-2 py-1 text-xs",
+              ].join(" ")}
             />
-          </label>
+          </div>
         ))}
       </div>
       <label className="block text-xs font-medium text-slate-600">
@@ -158,40 +210,92 @@ function AmenityFields({
 function WholeSpaceFields({ property }: { property: OwnerPropertyDetail }) {
   const unit = property.units.find((item) => !item.archived_at);
   return (
-    <>
-      <label className="text-sm font-medium text-slate-700">
-        Diện tích (m²)
-        <input name="area_m2" type="number" min="0.1" step="0.01" defaultValue={unit?.area_m2 ?? ""} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Phòng ngủ
-        <input name="bedrooms" type="number" min="0" required defaultValue={unit?.bedrooms ?? 0} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Phòng tắm
-        <input name="bathrooms" type="number" min="0" step="1" required defaultValue={unit?.bathrooms ?? 1} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Giá thuê tháng (VND)
-        <input name="advertised_monthly_rent" type="number" min="1" defaultValue={unit?.advertised_monthly_rent ?? ""} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Tiền đặt cọc (VND)
-        <input name="deposit" type="number" min="0" defaultValue={unit?.deposit ?? ""} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Thời hạn thuê tối thiểu (tháng)
-        <input name="minimum_rental_months" type="number" min="3" required defaultValue={unit?.minimum_rental_months ?? 3} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700">
-        Số người tối đa
-        <input name="max_occupants" type="number" min="1" defaultValue={unit?.max_occupants ?? ""} className={fieldClass} />
-      </label>
-      <label className="text-sm font-medium text-slate-700 md:col-span-2">
+    <div className="space-y-4 md:col-span-2">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <label className="text-sm font-medium text-slate-700">
+          Diện tích (m²)
+          <input
+            name="area_m2"
+            type="number"
+            min="0.1"
+            step="0.01"
+            defaultValue={unit?.area_m2 ?? ""}
+            className={fieldClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Phòng ngủ
+          <input
+            name="bedrooms"
+            type="number"
+            min="0"
+            required
+            defaultValue={unit?.bedrooms ?? 0}
+            className={fieldClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Phòng tắm
+          <input
+            name="bathrooms"
+            type="number"
+            min="0"
+            step="1"
+            required
+            defaultValue={unit?.bathrooms ?? 1}
+            className={fieldClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Thời hạn thuê tối thiểu (tháng)
+          <input
+            name="minimum_rental_months"
+            type="number"
+            min="3"
+            required
+            defaultValue={unit?.minimum_rental_months ?? 3}
+            className={fieldClass}
+          />
+        </label>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <label className="text-sm font-medium text-slate-700">
+          Giá thuê tháng (VND)
+          <MoneyField
+            name="advertised_monthly_rent"
+            defaultValue={unit?.advertised_monthly_rent ?? ""}
+            className={fieldClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Tiền đặt cọc (VND)
+          <MoneyField
+            name="deposit"
+            defaultValue={unit?.deposit ?? ""}
+            className={fieldClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Số người tối đa
+          <input
+            name="max_occupants"
+            type="number"
+            min="1"
+            defaultValue={unit?.max_occupants ?? ""}
+            className={fieldClass}
+          />
+        </label>
+      </div>
+      <label className="block text-sm font-medium text-slate-700">
         Mô tả căn
-        <textarea name="unit_description" rows={3} defaultValue={unit?.description ?? ""} className={fieldClass} />
+        <textarea
+          name="unit_description"
+          rows={3}
+          defaultValue={unit?.description ?? ""}
+          className={fieldClass}
+        />
       </label>
-    </>
+    </div>
   );
 }
 
@@ -292,12 +396,12 @@ export function PropertyEditor({
     event.preventDefault();
     if (!property) return;
     const form = new FormData(event.currentTarget);
+    const wholeSpace = property.rental_arrangement === "WHOLE_SPACE";
     setBusy(true);
     setError(null);
     setNotice(null);
     setFieldErrors({});
     try {
-      const wholeSpace = property.rental_arrangement === "WHOLE_SPACE";
       const amenities = wholeSpace
         ? documentsFromCombinedForm(form, catalog)
         : { shared: amenitiesFromForm(form, catalog, "shared"), unit: null };
@@ -385,10 +489,10 @@ export function PropertyEditor({
     <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col px-1 py-4 sm:px-2 sm:py-6">
       <div className="shrink-0">
       <Link
-        href="/owner/properties"
+        href={`/owner/properties/${propertyId}`}
         className="mb-2 inline-flex text-sm font-semibold text-[#3368a0] hover:underline"
       >
-        ← Danh sách bất động sản
+        ← {property?.name ?? "Bất động sản"}
       </Link>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
         {property?.name ?? "Bất động sản"}
@@ -552,17 +656,26 @@ export function PropertyEditor({
               <WholeSpaceFields property={property} />
             )}
           </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="mt-6 space-y-6">
             <AmenityFields
               key={`shared-${property.content_revision}`}
               catalog={catalog}
-              scope={property.rental_arrangement === "WHOLE_SPACE" ? undefined : "shared"}
-              scopes={property.rental_arrangement === "WHOLE_SPACE" ? ["shared", "unit"] : undefined}
+              scope={
+                property.rental_arrangement === "WHOLE_SPACE"
+                  ? undefined
+                  : "shared"
+              }
+              scopes={
+                property.rental_arrangement === "WHOLE_SPACE"
+                  ? ["shared", "unit"]
+                  : undefined
+              }
               value={
                 property.rental_arrangement === "WHOLE_SPACE"
                   ? combinedAmenityValue(
                       property.shared_amenities,
-                      property.units.find((unit) => !unit.archived_at)?.amenities,
+                      property.units.find((unit) => !unit.archived_at)
+                        ?.amenities,
                     )
                   : property.shared_amenities
               }
@@ -571,30 +684,34 @@ export function PropertyEditor({
               <legend className="text-sm font-semibold text-slate-800">
                 Quy định dùng chung
               </legend>
-              <label className="block text-xs font-medium text-slate-600">
-                Thú cưng
-                <select
-                  name="pets"
-                  defaultValue={policy?.pets ?? "NOT_ALLOWED"}
-                  className={fieldClass}
-                >
-                  <option value="NOT_ALLOWED">Không cho phép</option>
-                  <option value="WITH_APPROVAL">Cần phê duyệt</option>
-                  <option value="ALLOWED">Được phép</option>
-                </select>
-              </label>
-              <label className="block text-xs font-medium text-slate-600">
-                Hút thuốc
-                <select
-                  name="smoking"
-                  defaultValue={policy?.smoking ?? "NOT_ALLOWED"}
-                  className={fieldClass}
-                >
-                  <option value="NOT_ALLOWED">Không cho phép</option>
-                  <option value="OUTDOOR_ONLY">Chỉ khu vực ngoài trời</option>
-                  <option value="ALLOWED">Được phép</option>
-                </select>
-              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-xs font-medium text-slate-600">
+                  Thú cưng
+                  <select
+                    name="pets"
+                    defaultValue={policy?.pets ?? "NOT_ALLOWED"}
+                    className={fieldClass}
+                  >
+                    <option value="NOT_ALLOWED">Không cho phép</option>
+                    <option value="WITH_APPROVAL">Cần phê duyệt</option>
+                    <option value="ALLOWED">Được phép</option>
+                  </select>
+                </label>
+                <label className="block text-xs font-medium text-slate-600">
+                  Hút thuốc
+                  <select
+                    name="smoking"
+                    defaultValue={policy?.smoking ?? "NOT_ALLOWED"}
+                    className={fieldClass}
+                  >
+                    <option value="NOT_ALLOWED">Không cho phép</option>
+                    <option value="OUTDOOR_ONLY">
+                      Chỉ khu vực ngoài trời
+                    </option>
+                    <option value="ALLOWED">Được phép</option>
+                  </select>
+                </label>
+              </div>
               <label className="block text-xs font-medium text-slate-600">
                 Quy định khác, mỗi dòng một mục
                 <textarea
@@ -718,6 +835,23 @@ export function PropertyEditor({
 
       </div>
       )}
+      {property && activeTab === "overview" && (
+        <div
+          className={[
+            "flex w-full shrink-0 justify-end border-t",
+            "border-slate-200 bg-white px-1 py-3",
+          ].join(" ")}
+        >
+          <button
+            type="submit"
+            form="property-overview"
+            disabled={busy}
+            className={buttonClass}
+          >
+            {busy ? "Đang lưu…" : "Lưu thông tin"}
+          </button>
+        </div>
+      )}
       {property && activeTab === "photos" && (
         <PropertyPhotos
           property={property}
@@ -728,18 +862,6 @@ export function PropertyEditor({
           onError={reportError}
           onNotice={setNotice}
         />
-      )}
-      {property && activeTab === "overview" && (
-        <div className="shrink-0 border-t border-slate-200 pt-4 flex justify-end">
-          <button
-            type="submit"
-            form="property-overview"
-            disabled={busy}
-            className={`${buttonClass} `}
-          >
-            {busy ? "Đang lưu…" : "Lưu thông tin"}
-          </button>
-        </div>
       )}
       </div>
     </section>

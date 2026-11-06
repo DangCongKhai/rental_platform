@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { PropertyEditor } from "../../property-editor";
+import { PropertyEditor } from "../../components/property-editor";
 
 export default function EditOwnerPropertyPage({
   params,

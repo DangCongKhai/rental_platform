@@ -35,7 +35,7 @@ const ITEMS = [
   },
   {
     href: "/owner/tenancies",
-    label: "Kỳ thuê và hợp đồng",
+    label: "Kỳ thuê",
     icon: ContractIcon,
     exact: false,
   },

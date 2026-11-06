@@ -3,7 +3,7 @@ import {
   setSharedPhotoForUnit,
   updateGallery,
   uploadPhoto,
-} from "@/app/owner/properties/media-actions";
+} from "@/app/owner/properties/actions/media-actions";
 import { getMyProperty } from "@/server/properties";
 import { getPropertyMedia } from "@/server/property-media";
 import {

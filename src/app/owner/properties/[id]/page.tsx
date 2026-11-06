@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { LoadingScreen } from "@/components/loading-screen";
-import { getPropertyRental } from "@/server/properties";
+import { getAmenityCatalog } from "@/domain/amenities";
+import { getMyProperty, getPropertyRental } from "@/server/properties";
+import { toOwnerPropertyDetail } from "@/server/owner-api/shared";
 import { PropertyRental } from "./property-rental";
 
 export default function OwnerPropertyPage({
@@ -28,7 +30,20 @@ async function OwnerPropertyDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const property = await getPropertyRental((await params).id);
-  if (!property) notFound();
-  return <PropertyRental property={property} />;
+  const id = (await params).id;
+  const [property, record] = await Promise.all([
+    getPropertyRental(id),
+    getMyProperty(id),
+  ]);
+  if (!property || !record) notFound();
+  const amenityLabels = Object.fromEntries(
+    getAmenityCatalog().map((item) => [item.key, item.label]),
+  );
+  return (
+    <PropertyRental
+      property={property}
+      detail={toOwnerPropertyDetail(record)}
+      amenityLabels={amenityLabels}
+    />
+  );
 }

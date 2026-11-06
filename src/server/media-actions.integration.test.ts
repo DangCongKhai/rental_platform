@@ -46,7 +46,7 @@ import {
   setSharedPhotoForUnit,
   updateGallery,
   uploadPhoto,
-} from "../app/owner/properties/media-actions";
+} from "../app/owner/properties/actions/media-actions";
 import { prisma } from "./db";
 
 const databaseUrl = process.env.DATABASE_URL;

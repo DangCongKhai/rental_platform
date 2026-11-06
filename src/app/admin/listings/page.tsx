@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { buttonClass } from "@/components/ui/button";
+import { formatVietnamDate } from "@/lib/vietnam-date";
 import { getAdminListings } from "@/server/admin/listings";
 import { ListingSuspensionControls } from "./listing-suspension-controls";
 
@@ -129,9 +130,7 @@ export default async function AdminListingsPage({
                   {item.suspensionReason ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-xs">
-                  {item.updatedAt.toLocaleDateString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
+                  {formatVietnamDate(item.updatedAt)}
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex items-start gap-3">

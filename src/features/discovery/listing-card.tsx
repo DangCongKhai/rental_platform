@@ -131,11 +131,43 @@ export function ListingCardView({
         <p className="font-semibold text-heading">
           {formatRent(listing.rent_min, listing.rent_max)}
         </p>
-        <p className="text-sm text-secondary">
-          {kindLabels[listing.property.property_type] ??
-            listing.property.property_type}
-          {" · "}Tối thiểu {listing.minimum_rental_months} tháng
-        </p>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span
+            className={[
+              "inline-flex h-[25px] items-center gap-1.5",
+              "rounded-full bg-[#e0eaf2] px-2",
+              "text-[13px] text-[#3368a0]",
+            ].join(" ")}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/listings/card-home.svg"
+              alt=""
+              width={13}
+              height={13}
+            />
+            {kindLabels[listing.property.property_type] ??
+              listing.property.property_type}
+          </span>
+          {listing.verified ? (
+            <span
+              className={[
+                "inline-flex h-[25px] items-center gap-1.5",
+                "rounded-full bg-[rgba(76,241,43,0.21)] px-2",
+                "text-[13px] text-[#535353]",
+              ].join(" ")}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/listings/card-verified.svg"
+                alt=""
+                width={13}
+                height={13}
+              />
+              Đã xác thực
+            </span>
+          ) : null}
+        </div>
         <h3 className="text-base font-medium text-primary">{listing.title}</h3>
         <p className="text-sm text-secondary">{place}</p>
       </Link>

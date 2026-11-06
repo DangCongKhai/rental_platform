@@ -8,7 +8,7 @@ BEGIN
       VALUES (
         'property-media',
         'property-media',
-        false,
+        true,
         10485760,
         ARRAY['image/jpeg', 'image/png', 'image/webp']::text[]
       )

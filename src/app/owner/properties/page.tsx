@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pagination } from "@/components/pagination";
+import { ListingStatusFilter } from "@/app/owner/listing-status-filter";
 import { listingStatusClass } from "@/app/owner/listing-status";
 import {
   propertyTypeLabel,
@@ -18,7 +19,8 @@ import type {
   OwnerPropertySummary,
 } from "@/lib/owner-types";
 import { getOwnerProperties } from "@/server/owner/actions";
-import { StatusPill, textLinkClass } from "./status-pill";
+import { formatVietnamDate } from "@/lib/vietnam-date";
+import { StatusPill, textLinkClass } from "./components/status-pill";
 
 const buttonClass = [
   "inline-flex min-h-10 items-center justify-center",
@@ -33,18 +35,6 @@ const occupancyOptions: Array<[OwnerOccupancyFilter, string]> = [
   ["MAINTENANCE", "Bảo trì"],
   ["PENDING_CONFIRMATION", "Đang chờ xác nhận"],
   ["AWAITING_MOVE_IN", "Chờ dọn vào"],
-];
-
-const listingOptions: Array<[OwnerListingStatusFilter, string]> = [
-  ["all", "Tất cả"],
-  ["published", "Đang hiển thị"],
-  ["pending", "Chờ duyệt"],
-  ["hidden", "Đã ẩn"],
-  ["none", "Chưa có tin"],
-  ["draft", "Bản nháp"],
-  ["rejected", "Cần chỉnh sửa"],
-  ["approved", "Đã duyệt"],
-  ["suspended", "Bị tạm ngưng"],
 ];
 
 function listingStatusLabel(listing: OwnerPropertySummary["listing"]) {
@@ -116,8 +106,9 @@ export default function OwnerPropertiesPage() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [occupancy, setOccupancy] =
     useState<OwnerOccupancyFilter>("all");
-  const [listingStatus, setListingStatus] =
-    useState<OwnerListingStatusFilter>("all");
+  const [listingStatuses, setListingStatuses] = useState<
+    OwnerListingStatusFilter[]
+  >([]);
   const [result, setResult] = useState<OwnerPropertyPage | null>(null);
 
   useEffect(() => {
@@ -130,7 +121,7 @@ export default function OwnerPropertiesPage() {
           page,
           includeArchived,
           occupancy,
-          listingStatus,
+          listingStatuses,
         });
         if (!active) return;
         setResult(next);
@@ -147,7 +138,7 @@ export default function OwnerPropertiesPage() {
     return () => {
       active = false;
     };
-  }, [includeArchived, listingStatus, occupancy, page, retry]);
+  }, [includeArchived, listingStatuses, occupancy, page, retry]);
 
   const rows = result?.data ?? [];
 
@@ -164,18 +155,6 @@ export default function OwnerPropertiesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={includeArchived}
-              onChange={(event) => {
-                setIncludeArchived(event.target.checked);
-                setPage(1);
-              }}
-              className="size-4 accent-[#3368a0]"
-            />
-            Hiện mục đã lưu trữ
-          </label>
           <Link
             href="/owner/properties/new"
             className={buttonClass}
@@ -198,16 +177,14 @@ export default function OwnerPropertiesPage() {
             setPage(1);
           }}
         />
-        <FilterField
-          label="Tin đăng"
-          value={listingStatus}
-          options={listingOptions}
-          onChange={(value) => {
-            setListingStatus(value as OwnerListingStatusFilter);
+        <ListingStatusFilter
+          value={listingStatuses}
+          onChange={(next) => {
+            setListingStatuses(next);
             setPage(1);
           }}
         />
-        {occupancy !== "all" || listingStatus !== "all" ? (
+        {occupancy !== "all" || listingStatuses.length > 0 ? (
           <button
             type="button"
             className={[
@@ -216,7 +193,7 @@ export default function OwnerPropertiesPage() {
             ].join(" ")}
             onClick={() => {
               setOccupancy("all");
-              setListingStatus("all");
+              setListingStatuses([]);
               setPage(1);
             }}
           >
@@ -307,7 +284,7 @@ export default function OwnerPropertiesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
-                      {new Date(item.updated_at).toLocaleDateString("vi-VN")}
+                      {formatVietnamDate(item.updated_at)}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-3">
@@ -347,7 +324,7 @@ export default function OwnerPropertiesPage() {
             "bg-white px-6 py-14 text-center",
           ].join(" ")}
         >
-          {occupancy === "all" && listingStatus === "all" ? (
+          {occupancy === "all" && listingStatuses.length === 0 ? (
             <>
               <p
                 className={[

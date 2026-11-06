@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { MoneyField } from "@/components/ui/money-field";
 import { actionMessage } from "@/lib/action-error";
 import type { OwnerPropertyDetail } from "@/lib/owner-types";
 import {
@@ -545,24 +546,18 @@ function AddUnitsPageContent() {
               </label>
               <label className="text-sm font-medium text-slate-700">
                 Giá thuê (₫/tháng)
-                <input
-                  type="number"
-                  min="0"
+                <MoneyField
                   value={room.rent}
-                  onChange={(event) =>
-                    updateRoom(index, { rent: event.target.value })
-                  }
+                  onValueChange={(rent) => updateRoom(index, { rent })}
                   className={fieldClass}
                 />
               </label>
               <label className="text-sm font-medium text-slate-700">
                 Tiền cọc (₫)
-                <input
-                  type="number"
-                  min="0"
+                <MoneyField
                   value={room.deposit}
-                  onChange={(event) =>
-                    updateRoom(index, { deposit: event.target.value })
+                  onValueChange={(deposit) =>
+                    updateRoom(index, { deposit })
                   }
                   className={fieldClass}
                 />

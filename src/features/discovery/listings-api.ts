@@ -30,6 +30,7 @@ export type ListingCard = {
   minimum_rental_months: number;
   cover_url: string | null;
   image_urls: string[];
+  verified: boolean;
   property: {
     name: string;
     property_type: string;

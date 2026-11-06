@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { buttonClass } from "@/components/ui/button";
 import { getReportReasonLabel } from "@/domain/reports/reasons";
+import { formatVietnamDate } from "@/lib/vietnam-date";
 import { getAdminReports } from "@/server/admin/reports";
 import { TemporaryNotice } from "./temporary-notice";
 
@@ -113,9 +114,7 @@ export default async function AdminReportsPage({
             {reports.rows.map((report) => (
               <tr key={report.id}>
                 <td className="whitespace-nowrap px-4 py-4 text-xs">
-                  {report.createdAt.toLocaleDateString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
+                  {formatVietnamDate(report.createdAt)}
                 </td>
                 <td className="break-words px-4 py-4">
                   <Link

@@ -1,3 +1,20 @@
+const vietnamDay = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+/** Calendar day in Vietnam, always padded as dd/mm/yyyy. */
+export function formatVietnamDate(
+  value: Date | string | null | undefined,
+) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return vietnamDay.format(date);
+}
+
 /** Format an ISO calendar date as the Vietnamese day/month/year input format. */
 export function formatVietnamDateInput(value: string | null | undefined) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";

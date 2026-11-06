@@ -11,6 +11,7 @@ vi.mock("./search", () => ({
         rentMin: "4500000",
         rentMax: "4500000",
         minimumRentalMonths: 3,
+        verified: true,
         coverUrl: "https://example.test/cover.webp",
         imageUrls: ["https://example.test/cover.webp"],
         property: {

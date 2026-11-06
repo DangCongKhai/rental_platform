@@ -37,6 +37,56 @@ const UNIT_AMENITIES = {
   standard: { air_conditioning: { enabled: true } },
   custom: [],
 };
+const SHARED_AMENITY_SETS: Array<
+  Record<string, { enabled: boolean }>
+> = [
+  {
+    wifi: { enabled: true },
+    parking: { enabled: true },
+    security: { enabled: true },
+  },
+  {
+    wifi: { enabled: true },
+    elevator: { enabled: true },
+    gym: { enabled: true },
+  },
+  {
+    wifi: { enabled: true },
+    pool: { enabled: true },
+    parking: { enabled: true },
+  },
+  {
+    wifi: { enabled: true },
+    shared_laundry: { enabled: true },
+    security: { enabled: true },
+  },
+];
+const UNIT_AMENITY_SETS: Array<
+  Record<string, { enabled: boolean }>
+> = [
+  {
+    air_conditioning: { enabled: true },
+    kitchen: { enabled: true },
+    refrigerator: { enabled: true },
+  },
+  {
+    air_conditioning: { enabled: true },
+    washing_machine: { enabled: true },
+    water_heater: { enabled: true },
+    furnished: { enabled: true },
+  },
+  {
+    air_conditioning: { enabled: true },
+    balcony: { enabled: true },
+    kitchen: { enabled: true },
+  },
+];
+
+function amenityDocument(
+  standard: Record<string, { enabled: boolean }>,
+) {
+  return { schema_version: 1, standard, custom: [] as string[] };
+}
 const S205_OVERRIDES = {
   schema_version: 1,
   overrides: { pets: "ASK_OWNER" },
@@ -245,7 +295,11 @@ async function insertInventory(tx: Tx) {
       JSON.stringify(
         index === 0
           ? SHARED_AMENITIES
-          : { schema_version: 1, standard: {}, custom: [] },
+          : amenityDocument(
+              SHARED_AMENITY_SETS[
+                (index - 1) % SHARED_AMENITY_SETS.length
+              ],
+            ),
       ),
     );
     properties.policies.push(
@@ -322,7 +376,11 @@ async function insertInventory(tx: Tx) {
         JSON.stringify(
           index === 0
             ? UNIT_AMENITIES
-            : { schema_version: 1, standard: {}, custom: [] },
+            : amenityDocument(
+                UNIT_AMENITY_SETS[
+                  (index - 1) % UNIT_AMENITY_SETS.length
+                ],
+              ),
         ),
       );
       units.rent.push(unit.rent);

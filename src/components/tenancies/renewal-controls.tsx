@@ -3,12 +3,14 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonClass } from "@/components/ui/button";
+import { MoneyField } from "@/components/ui/money-field";
 import {
   requestRenewal,
   rejectRenewal,
   withdrawRenewal,
 } from "@/server/tenancies/renewal-actions";
 import {
+  formatVietnamDate,
   formatVietnamDateInput,
   parseVietnamDateInput,
 } from "@/lib/vietnam-date";
@@ -23,8 +25,7 @@ type Renewal = {
   createdAt: Date | string;
 };
 const money = (value: string) => `${Number(value).toLocaleString("vi-VN")} ₫`;
-const dateLabel = (value: Date | string) =>
-  new Date(value).toLocaleDateString("vi-VN", { timeZone: "UTC" });
+const dateLabel = (value: Date | string) => formatVietnamDate(value);
 
 export function TenantRenewalControls({
   tenancyId,
@@ -162,11 +163,9 @@ export function TenantRenewalControls({
           </label>
           <label className="grid gap-1 text-sm">
             Giá thuê đề nghị / tháng
-            <input
+            <MoneyField
               required
-              min="1"
               name="proposedMonthlyRent"
-              type="number"
               defaultValue={currentRent ?? ""}
               className="rounded-xl border border-line p-3"
             />

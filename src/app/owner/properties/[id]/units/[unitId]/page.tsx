@@ -1,20 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
-import {
-  ContractIcon,
-  PencilIcon,
-  UserIcon,
-} from "@/components/ui/icons";
+import { ContractIcon, UserIcon } from "@/components/ui/icons";
 import { getMyUnitHistory } from "@/server/properties";
-import { formatMonthlyRent, formatRentalRange } from "../../../rental-format";
 import {
-  outlineButtonClass,
-  StatusPill,
-  textLinkClass,
-} from "../../../status-pill";
+  formatMonthlyRent,
+  formatRentalRange,
+} from "../../../components/rental-format";
+import { StatusPill, textLinkClass } from "../../../components/status-pill";
 
 export default function OwnerUnitHistoryPage({
   params,
@@ -43,11 +37,6 @@ async function UnitHistory({
   const { id, unitId } = await params;
   const history = await getMyUnitHistory(id, unitId);
   if (!history) notFound();
-  const editHref =
-    history.rental_arrangement === "WHOLE_SPACE"
-      ? `/owner/properties/${history.property_id}/edit`
-      : `/owner/properties/${history.property_id}` +
-        `/units/${history.unit_id}/edit`;
 
   return (
     <section
@@ -71,41 +60,11 @@ async function UnitHistory({
         <span className="text-slate-800">{history.label}</span>
       </nav>
 
-      <header
-        className={[
-          "flex flex-col gap-4 rounded-2xl border border-slate-200",
-          "bg-white p-4 sm:flex-row sm:items-center",
-          "sm:justify-between",
-        ].join(" ")}
-      >
-        <div className="flex items-center gap-4">
-          <div
-            className={[
-              "relative h-20 w-28 shrink-0 overflow-hidden",
-              "rounded-xl bg-slate-100",
-            ].join(" ")}
-          >
-            {history.photo_url ? (
-              <Image
-                src={history.photo_url}
-                alt=""
-                fill
-                sizes="112px"
-                className="object-cover"
-              />
-            ) : null}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Lịch sử thuê căn {history.label}
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">{history.facts}</p>
-          </div>
-        </div>
-        <Link href={editHref} className={`${outlineButtonClass} gap-2`}>
-          <PencilIcon className="size-4" />
-          Chỉnh sửa
-        </Link>
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          Lịch sử thuê căn {history.label}
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">{history.facts}</p>
       </header>
 
       {history.tenancies.length === 0 ? (

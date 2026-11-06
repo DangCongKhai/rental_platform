@@ -97,3 +97,13 @@ body:has(
   border-bottom: 1px solid rgb(255 255 255 / 0.14);
   background-color: transparent;
 }
+
+body:has(
+    [data-home]:not([hidden]):not([style*="display: none"]):not(
+        [style*="display:none"]
+      )
+  )
+  > header[data-scrolled] {
+  border-bottom-color: transparent;
+  background-color: var(--color-ink);
+}

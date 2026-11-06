@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import z from "zod";
-import type { Prisma } from "../../../../generated/prisma/client";
+import type { Prisma } from "../../../../../generated/prisma/client";
 import { normalizeUnitLabel } from "@/domain/units";
 import { validateAmenities } from "@/domain/amenities";
 import { validateUnitPolicyOverrides } from "@/domain/policies";
