@@ -6,6 +6,8 @@ import type {
   AmenityCatalogEntry,
   OwnerListing,
   OwnerListingFilter,
+  OwnerListingStatusFilter,
+  OwnerOccupancyFilter,
   OwnerPropertyDetail,
   OwnerPropertyMedia,
   OwnerPropertyPage,
@@ -75,6 +77,8 @@ export async function getOwnerProperties(
     page?: number;
     filter?: OwnerListingFilter;
     includeArchived?: boolean;
+    occupancy?: OwnerOccupancyFilter;
+    listingStatus?: OwnerListingStatusFilter;
   } = {},
 ): Promise<OwnerPropertyPage> {
   const params = new URLSearchParams();
@@ -85,6 +89,12 @@ export async function getOwnerProperties(
     params.set("filter", query.filter);
   }
   if (query.includeArchived) params.set("include_archived", "1");
+  if (query.occupancy && query.occupancy !== "all") {
+    params.set("occupancy", query.occupancy);
+  }
+  if (query.listingStatus && query.listingStatus !== "all") {
+    params.set("listing_status", query.listingStatus);
+  }
   const text = params.toString();
   return run(() =>
     read(

@@ -114,6 +114,37 @@ export function UserIcon(props: IconProps) {
   );
 }
 
+export function BedIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2.4 12.6V4.8M2.4 8.4h11.2M13.6 8.4v4.2" />
+      <path d="M2.4 12.6h11.2M4.2 8.4V6.4h3.4v2" />
+    </Icon>
+  );
+}
+
+export function WrenchIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path
+        d={[
+          "M10.4 3.1a2.1 2.1 0 01-2.2 3.1L3.4 11",
+          "a1.3 1.3 0 101.8 1.8l4.8-4.8",
+          "a2.1 2.1 0 013.1-2.2L10.6 8.3 8.3 6z",
+        ].join("")}
+      />
+    </Icon>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9.2 2.6l4.2 4.2L5.8 14.4 1.8 14.6l.2-4z" />
+    </Icon>
+  );
+}
+
 export function HelpIcon(props: IconProps) {
   return (
     <Icon {...props}>

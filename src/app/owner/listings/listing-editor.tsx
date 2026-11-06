@@ -664,7 +664,7 @@ export function ListingEditor({
               </li>
             </ul>
             <Link
-              href={`/owner/properties/${property.id}`}
+              href={`/owner/properties/${property.id}/edit`}
               className="mt-4 inline-flex font-semibold text-[#3368a0] hover:underline"
             >
               Quản lý bất động sản, căn và ảnh →

@@ -5,17 +5,49 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pagination } from "@/components/pagination";
 import { listingStatusClass } from "@/app/owner/listing-status";
+import {
+  propertyTypeLabel,
+  rentalArrangementLabel,
+} from "@/domain/properties/labels";
+import type { OccupancyBadge } from "@/domain/tenancies/occupancy";
 import { actionMessage } from "@/lib/action-error";
 import type {
+  OwnerListingStatusFilter,
+  OwnerOccupancyFilter,
   OwnerPropertyPage,
   OwnerPropertySummary,
 } from "@/lib/owner-types";
 import { getOwnerProperties } from "@/server/owner/actions";
+import { StatusPill, textLinkClass } from "./status-pill";
 
-const buttonClass =
-  "inline-flex min-h-10 items-center justify-center rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584]";
+const buttonClass = [
+  "inline-flex min-h-10 items-center justify-center",
+  "rounded-xl bg-[#3368a0] px-4 text-sm font-semibold",
+  "text-white hover:bg-[#285584]",
+].join(" ");
 
-function listingStatus(listing: OwnerPropertySummary["listing"]) {
+const occupancyOptions: Array<[OwnerOccupancyFilter, string]> = [
+  ["all", "Tất cả"],
+  ["OCCUPIED", "Đang thuê"],
+  ["VACANT", "Còn trống"],
+  ["MAINTENANCE", "Bảo trì"],
+  ["PENDING_CONFIRMATION", "Đang chờ xác nhận"],
+  ["AWAITING_MOVE_IN", "Chờ dọn vào"],
+];
+
+const listingOptions: Array<[OwnerListingStatusFilter, string]> = [
+  ["all", "Tất cả"],
+  ["published", "Đang hiển thị"],
+  ["pending", "Chờ duyệt"],
+  ["hidden", "Đã ẩn"],
+  ["none", "Chưa có tin"],
+  ["draft", "Bản nháp"],
+  ["rejected", "Cần chỉnh sửa"],
+  ["approved", "Đã duyệt"],
+  ["suspended", "Bị tạm ngưng"],
+];
+
+function listingStatusLabel(listing: OwnerPropertySummary["listing"]) {
   if (!listing) return "Chưa có tin";
   if (listing.admin_suspended_at) return "Bị tạm ngưng";
   if (listing.publication_status === "PUBLISHED") return "Đang hiển thị";
@@ -26,6 +58,55 @@ function listingStatus(listing: OwnerPropertySummary["listing"]) {
   return "Bản nháp";
 }
 
+function FilterField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<[string, string]>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-1 text-sm text-slate-700">
+      <span className="font-medium">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={[
+          "h-10 min-w-48 rounded-xl border border-slate-200",
+          "bg-white px-3 font-medium text-slate-900",
+        ].join(" ")}
+      >
+        {options.map(([option, text]) => (
+          <option key={option} value={option}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function OccupancyBadges({ occupancy }: { occupancy: OccupancyBadge }) {
+  if (occupancy.kind === "single") {
+    return (
+      <StatusPill tone={occupancy.status}>{occupancy.label}</StatusPill>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {occupancy.items.map((item) => (
+        <StatusPill key={item.status} tone={item.status}>
+          {item.label}
+        </StatusPill>
+      ))}
+    </div>
+  );
+}
+
 export default function OwnerPropertiesPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -33,6 +114,10 @@ export default function OwnerPropertiesPage() {
   const [retry, setRetry] = useState(0);
   const [page, setPage] = useState(1);
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [occupancy, setOccupancy] =
+    useState<OwnerOccupancyFilter>("all");
+  const [listingStatus, setListingStatus] =
+    useState<OwnerListingStatusFilter>("all");
   const [result, setResult] = useState<OwnerPropertyPage | null>(null);
 
   useEffect(() => {
@@ -44,6 +129,8 @@ export default function OwnerPropertiesPage() {
         const next = await getOwnerProperties({
           page,
           includeArchived,
+          occupancy,
+          listingStatus,
         });
         if (!active) return;
         setResult(next);
@@ -60,7 +147,7 @@ export default function OwnerPropertiesPage() {
     return () => {
       active = false;
     };
-  }, [includeArchived, page, retry]);
+  }, [includeArchived, listingStatus, occupancy, page, retry]);
 
   const rows = result?.data ?? [];
 
@@ -101,6 +188,42 @@ export default function OwnerPropertiesPage() {
           </Link>
         </div>
       </header>
+      <div className="mb-4 flex shrink-0 flex-wrap items-end gap-3">
+        <FilterField
+          label="Trạng thái thuê"
+          value={occupancy}
+          options={occupancyOptions}
+          onChange={(value) => {
+            setOccupancy(value as OwnerOccupancyFilter);
+            setPage(1);
+          }}
+        />
+        <FilterField
+          label="Tin đăng"
+          value={listingStatus}
+          options={listingOptions}
+          onChange={(value) => {
+            setListingStatus(value as OwnerListingStatusFilter);
+            setPage(1);
+          }}
+        />
+        {occupancy !== "all" || listingStatus !== "all" ? (
+          <button
+            type="button"
+            className={[
+              "h-10 rounded-xl px-3 text-sm font-semibold",
+              "text-[#3368a0] hover:bg-slate-100",
+            ].join(" ")}
+            onClick={() => {
+              setOccupancy("all");
+              setListingStatus("all");
+              setPage(1);
+            }}
+          >
+            Xóa bộ lọc
+          </button>
+        ) : null}
+      </div>
       <div className="flex min-h-0 flex-1 flex-col">
       {loading && (
         <div
@@ -127,13 +250,19 @@ export default function OwnerPropertiesPage() {
       )}
       {!loading && !error && rows.length > 0 && (
         <div className="min-h-0 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+            <table
+              className={[
+                "w-full min-w-[1100px] border-collapse",
+                "text-left text-sm",
+              ].join(" ")}
+            >
               <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500">
                 <tr>
                   <th className="px-4 py-4">Tên và địa chỉ</th>
                   <th className="px-4 py-4">Loại</th>
                   <th className="px-4 py-4">Hình thức cho thuê</th>
                   <th className="px-4 py-4">Số căn</th>
+                  <th className="px-4 py-4">Trạng thái thuê</th>
                   <th className="px-4 py-4">Tin đăng</th>
                   <th className="px-4 py-4">Cập nhật</th>
                   <th className="px-4 py-4">Thao tác</th>
@@ -153,33 +282,48 @@ export default function OwnerPropertiesPage() {
                       </p>
                     </td>
                     <td className="px-4 py-4 text-slate-700">
-                      {item.property_type}
+                      {propertyTypeLabel(item.property_type)}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium whitespace-nowrap text-slate-700">
-                        {item.rental_arrangement === "WHOLE_SPACE"
-                          ? "Toàn bộ không gian"
-                          : "Từng căn riêng lẻ"}
+                      <span
+                        className={[
+                          "rounded-full bg-slate-100 px-3 py-1",
+                          "text-xs font-medium whitespace-nowrap",
+                          "text-slate-700",
+                        ].join(" ")}
+                      >
+                        {rentalArrangementLabel(item.rental_arrangement)}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-slate-700">
                       {item.unit_count}
                     </td>
                     <td className="px-4 py-4">
+                      <OccupancyBadges occupancy={item.occupancy} />
+                    </td>
+                    <td className="px-4 py-4">
                       <span className={listingStatusClass(item.listing)}>
-                        {listingStatus(item.listing)}
+                        {listingStatusLabel(item.listing)}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {new Date(item.updated_at).toLocaleDateString("vi-VN")}
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/owner/properties/${item.id}`}
-                        className="font-semibold whitespace-nowrap text-[#3368a0] hover:underline"
-                      >
-                        Chỉnh sửa
-                      </Link>
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          href={`/owner/properties/${item.id}`}
+                          className={textLinkClass}
+                        >
+                          Chi tiết
+                        </Link>
+                        <Link
+                          href={`/owner/properties/${item.id}/edit`}
+                          className={textLinkClass}
+                        >
+                          Chỉnh sửa
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -197,26 +341,52 @@ export default function OwnerPropertiesPage() {
         </div>
       )}
       {!loading && !error && rows.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Trạng thái rỗng
-          </p>
-          <h2 className="mt-2 text-lg font-semibold text-slate-900">
-            Thêm bất động sản đầu tiên của bạn
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Bắt đầu với thông tin cơ bản và địa chỉ, bạn có thể hoàn thiện sau.
-          </p>
-          <Link
-            href="/owner/properties/new"
-            className={`${buttonClass} mt-5`}
-            onClick={(event) => {
-              event.preventDefault();
-              router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
-            }}
-          >
-            Thêm bất động sản
-          </Link>
+        <div
+          className={[
+            "rounded-2xl border border-dashed border-slate-300",
+            "bg-white px-6 py-14 text-center",
+          ].join(" ")}
+        >
+          {occupancy === "all" && listingStatus === "all" ? (
+            <>
+              <p
+                className={[
+                  "text-xs font-semibold uppercase",
+                  "tracking-wide text-slate-500",
+                ].join(" ")}
+              >
+                Trạng thái rỗng
+              </p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-900">
+                Thêm bất động sản đầu tiên của bạn
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Bắt đầu với thông tin cơ bản và địa chỉ, bạn có thể hoàn
+                thiện sau.
+              </p>
+              <Link
+                href="/owner/properties/new"
+                className={`${buttonClass} mt-5`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  router.push(
+                    `/owner/properties/new?fresh=${crypto.randomUUID()}`,
+                  );
+                }}
+              >
+                Thêm bất động sản
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Không có bất động sản phù hợp
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Thử trạng thái thuê hoặc tin đăng khác.
+              </p>
+            </>
+          )}
         </div>
       )}
       </div>

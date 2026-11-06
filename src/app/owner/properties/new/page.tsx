@@ -482,7 +482,7 @@ function NewOwnerPropertyWizard() {
         setSetupComplete(true);
       }
 
-      router.push(`/owner/properties/${property.id}`);
+      router.push(`/owner/properties/${property.id}/edit`);
     } catch (caught) {
       setFieldErrors({});
       setError(
@@ -650,7 +650,9 @@ function NewOwnerPropertyWizard() {
                     <button
                       type="button"
                       onClick={() =>
-                        router.push(`/owner/properties/${createdProperty.id}`)
+                        router.push(
+                          `/owner/properties/${createdProperty.id}/edit`,
+                        )
                       }
                       className="ml-2 font-semibold underline"
                     >
@@ -712,7 +714,9 @@ function NewOwnerPropertyWizard() {
                   <button
                     type="button"
                     onClick={() =>
-                      router.push(`/owner/properties/${createdProperty.id}`)
+                      router.push(
+                        `/owner/properties/${createdProperty.id}/edit`,
+                      )
                     }
                     className={primaryButton}
                   >

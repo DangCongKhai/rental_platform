@@ -460,6 +460,7 @@ export async function updateProperty(
 
     revalidatePath("/owner/properties");
     revalidatePath(`/owner/properties/${id}`);
+    revalidatePath(`/owner/properties/${id}/edit`);
     revalidatePath("/owner/listings");
     if (updated.listingId) {
       revalidatePath(`/owner/listings/${updated.listingId}`);
@@ -523,5 +524,6 @@ export async function archiveProperty(id: string): Promise<ActionResult<void>> {
 
     revalidatePath("/owner/properties");
     revalidatePath(`/owner/properties/${id}`);
+    revalidatePath(`/owner/properties/${id}/edit`);
   });
 }

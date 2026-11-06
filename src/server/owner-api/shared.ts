@@ -13,7 +13,13 @@ import type {
   OwnerUnit,
   PropertyPolicies,
 } from "@/lib/owner-types";
+import { todayInVietnam } from "@/domain/discovery/unit-availability";
+import {
+  classifyUnits,
+  listOccupancy,
+} from "@/domain/tenancies/occupancy";
 import type { ActionResult } from "@/server/validation";
+import { toHoldTenancy } from "@/server/tenancies/hold";
 
 export type JsonObject = Record<string, unknown>;
 
@@ -253,7 +259,11 @@ export function toOwnerProperty(property: Property): OwnerProperty {
 
 export function toOwnerPropertySummary(
   property: Property & {
-    units: Array<{ isMarketed: boolean; operationalStatus: string }>;
+    units: Array<{
+      isMarketed: boolean;
+      operationalStatus: string;
+      tenancies?: Parameters<typeof toHoldTenancy>[0][];
+    }>;
     listings: Array<{
       id: string;
       title: string;
@@ -264,6 +274,16 @@ export function toOwnerPropertySummary(
   },
 ): OwnerPropertySummary {
   const listing = property.listings[0] ?? null;
+  const occupancy = listOccupancy(
+    property.rentalArrangement,
+    classifyUnits(
+      property.units.map((unit) => ({
+        operationalStatus: unit.operationalStatus,
+        tenancies: (unit.tenancies ?? []).map(toHoldTenancy),
+      })),
+      todayInVietnam(),
+    ),
+  );
   return {
     ...toOwnerProperty(property),
     address_line: property.addressLine,
@@ -273,6 +293,7 @@ export function toOwnerPropertySummary(
       (unit) =>
         unit.isMarketed && unit.operationalStatus === "READY",
     ).length,
+    occupancy,
     listing: listing
       ? {
           id: listing.id,

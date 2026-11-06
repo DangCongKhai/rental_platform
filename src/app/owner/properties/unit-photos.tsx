@@ -158,7 +158,7 @@ export function UnitPhotoManager({
     setBusy(true);
     setError(null);
     try {
-      await removeOwnerMedia(property.id, photo.id, property.content_revision, photo.revision);
+      await removeOwnerMedia(property.id, photo.id);
       await load();
       toast.success("Ảnh đã được gỡ khỏi thư viện.");
     } catch (caught) {

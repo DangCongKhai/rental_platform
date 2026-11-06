@@ -284,11 +284,8 @@ export function PropertyEditor({
   }
 
   function openTab(next: WorkspaceTab) {
-    router.push(
-      next === "overview"
-        ? `/owner/properties/${propertyId}`
-        : `/owner/properties/${propertyId}?tab=${next}`,
-    );
+    const base = `/owner/properties/${propertyId}/edit`;
+    router.push(next === "overview" ? base : `${base}?tab=${next}`);
   }
 
   async function saveProperty(event: FormEvent<HTMLFormElement>) {
@@ -688,7 +685,12 @@ export function PropertyEditor({
                         </td>
                         <td className="px-4 py-3">
                           <Link
-                            href={`/owner/properties/${property.id}/units/${unit.id}`}
+                            href={
+                              property.rental_arrangement === "WHOLE_SPACE"
+                                ? `/owner/properties/${property.id}/edit`
+                                : `/owner/properties/${property.id}` +
+                                  `/units/${unit.id}/edit`
+                            }
                             className="font-semibold text-[#3368a0] hover:underline"
                           >
                             Sửa
@@ -728,12 +730,12 @@ export function PropertyEditor({
         />
       )}
       {property && activeTab === "overview" && (
-        <div className="shrink-0 border-t border-slate-200 pt-4">
+        <div className="shrink-0 border-t border-slate-200 pt-4 flex justify-end">
           <button
             type="submit"
             form="property-overview"
             disabled={busy}
-            className={buttonClass}
+            className={`${buttonClass} `}
           >
             {busy ? "Đang lưu…" : "Lưu thông tin"}
           </button>

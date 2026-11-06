@@ -283,7 +283,7 @@ function AddUnitsPageContent() {
         })),
       });
       toast.success(`Đã thêm ${rooms.length} phòng mới.`);
-      router.push(`/owner/properties/${propertyId}?tab=units`);
+      router.push(`/owner/properties/${propertyId}`);
     } catch (error) {
       const text = actionMessage(
         error,
@@ -318,7 +318,7 @@ function AddUnitsPageContent() {
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <Link
-          href={`/owner/properties/${propertyId}?tab=units`}
+          href={`/owner/properties/${propertyId}`}
           className="text-sm font-semibold text-[#3368a0] hover:underline"
         >
           ← Quay lại danh sách căn
@@ -611,7 +611,7 @@ function AddUnitsPageContent() {
           </p>
           <div className="flex gap-2">
             <Link
-              href={`/owner/properties/${propertyId}?tab=units`}
+              href={`/owner/properties/${propertyId}`}
               className={secondaryButtonClass}
             >
               Hủy

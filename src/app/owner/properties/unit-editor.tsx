@@ -131,7 +131,7 @@ export function UnitEditor({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [tab, setTab] = useState<"details" | "photos">("details");
-  const listHref = `/owner/properties/${propertyId}?tab=units`;
+  const listHref = `/owner/properties/${propertyId}`;
 
   useEffect(() => {
     function resetBusy() {
@@ -227,7 +227,7 @@ export function UnitEditor({
         href={listHref}
         className="mb-2 inline-flex text-sm font-semibold text-[#3368a0] hover:underline"
       >
-        ← Danh sách căn
+        ← Chi tiết bất động sản
       </Link>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
         {unit ? `Sửa ${unit.label}` : "Phòng"}

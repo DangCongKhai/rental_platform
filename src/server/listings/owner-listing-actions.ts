@@ -107,6 +107,7 @@ function revalidateListingPaths(propertyId: string, listingId?: string) {
   revalidatePath("/owner/listings");
   revalidatePath("/owner/properties");
   revalidatePath(`/owner/properties/${propertyId}`);
+  revalidatePath(`/owner/properties/${propertyId}/edit`);
   if (listingId) revalidatePath(`/owner/listings/${listingId}`);
   revalidatePath("/listings");
   if (listingId) revalidatePath(`/listings/${listingId}`);

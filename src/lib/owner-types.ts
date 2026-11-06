@@ -1,3 +1,5 @@
+import type { OccupancyBadge } from "@/domain/tenancies/occupancy";
+
 export type OwnerProperty = {
   id: string;
   owner_id: string;
@@ -18,6 +20,25 @@ export type OwnerListingFilter =
   | "published"
   | "draft";
 
+export type OwnerOccupancyFilter =
+  | "all"
+  | "OCCUPIED"
+  | "VACANT"
+  | "MAINTENANCE"
+  | "PENDING_CONFIRMATION"
+  | "AWAITING_MOVE_IN";
+
+export type OwnerListingStatusFilter =
+  | "all"
+  | "published"
+  | "pending"
+  | "hidden"
+  | "none"
+  | "draft"
+  | "rejected"
+  | "approved"
+  | "suspended";
+
 export type OwnerPropertyListingSummary = {
   id: string;
   title: string;
@@ -32,6 +53,56 @@ export type OwnerPropertySummary = OwnerProperty & {
   unit_count: number;
   eligible_unit_count: number;
   listing: OwnerPropertyListingSummary | null;
+  occupancy: OccupancyBadge;
+};
+
+export type OwnerUnitRental = {
+  id: string;
+  label: string;
+  operational: "READY" | "MAINTENANCE" | "RETIRED";
+  operational_label: string;
+  rental: "OCCUPIED" | "AWAITING_MOVE_IN" | "PENDING_CONFIRMATION" | "VACANT";
+  rental_label: string;
+  tenant_name: string | null;
+  start_date: string | null;
+  end_date: string | null;
+};
+
+export type OwnerPropertyRental = {
+  id: string;
+  name: string;
+  address: string;
+  property_type_label: string;
+  rental_arrangement: string;
+  rental_arrangement_label: string;
+  counts: {
+    total: number;
+    occupied: number;
+    vacant: number;
+    maintenance: number;
+  };
+  units: OwnerUnitRental[];
+};
+
+export type OwnerUnitHistoryEntry = {
+  id: string;
+  tenant_name: string;
+  start_date: string | null;
+  end_date: string | null;
+  monthly_rent: string | null;
+  status_label: string;
+  status_tone: "success" | "warning" | "neutral" | "info";
+};
+
+export type OwnerUnitHistory = {
+  property_id: string;
+  property_name: string;
+  unit_id: string;
+  label: string;
+  rental_arrangement: string;
+  facts: string;
+  photo_url: string | null;
+  tenancies: OwnerUnitHistoryEntry[];
 };
 
 export type OwnerPropertyPage = {

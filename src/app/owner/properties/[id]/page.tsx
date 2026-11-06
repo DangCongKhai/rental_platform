@@ -1,35 +1,34 @@
 import { Suspense } from "react";
-import { PropertyEditor } from "../property-editor";
+import { notFound } from "next/navigation";
+import { LoadingScreen } from "@/components/loading-screen";
+import { getPropertyRental } from "@/server/properties";
+import { PropertyRental } from "./property-rental";
 
 export default function OwnerPropertyPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
   return (
     <Suspense
       fallback={
-        <p className="px-1 py-6 text-sm text-slate-500">
-          Đang tải bất động sản…
-        </p>
+        <LoadingScreen
+          message="Đang tải bất động sản..."
+          className="min-h-80 w-full"
+        />
       }
     >
-      <OwnerPropertyLoader params={params} searchParams={searchParams} />
+      <OwnerPropertyDetail params={params} />
     </Suspense>
   );
 }
 
-async function OwnerPropertyLoader({
+async function OwnerPropertyDetail({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
-  const { id } = await params;
-  const { tab } = await searchParams;
-  const initialTab = tab === "units" || tab === "photos" ? tab : "overview";
-  return <PropertyEditor propertyId={id} tab={initialTab} />;
+  const property = await getPropertyRental((await params).id);
+  if (!property) notFound();
+  return <PropertyRental property={property} />;
 }

@@ -111,6 +111,7 @@ export async function setSharedPhotoForUnit(
     });
 
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     revalidatePath(`/owner/properties/${propertyId}/units`);
     revalidatePath("/owner/properties");
     return { included: result.included };
@@ -178,6 +179,7 @@ export async function setAllSharedPhotosForUnit(
     });
 
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     revalidatePath(`/owner/properties/${propertyId}/units`);
     revalidatePath("/owner/properties");
     return result;
@@ -254,6 +256,7 @@ export async function saveSharedPhotoSelection(
     });
 
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     revalidatePath(`/owner/properties/${propertyId}/units`);
     revalidatePath("/owner/properties");
     return result;
@@ -449,6 +452,7 @@ async function storePhoto(
     }
     const unitAssignments = await prisma.unitMedia.findMany({ where: { mediaId: media.id }, select: { unitId: true } });
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     return {
       id: media.id,
       unitId: media.unitId,
@@ -570,6 +574,7 @@ export async function updateGallery(propertyId: string, input: unknown, unitId?:
     });
 
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     revalidatePath("/owner/properties");
     return { contentRevision: revision };
   });
@@ -637,6 +642,7 @@ export async function removePhoto(
     });
 
     revalidatePath(`/owner/properties/${propertyId}`);
+    revalidatePath(`/owner/properties/${propertyId}/edit`);
     revalidatePath("/owner/properties");
     return { removed: true as const };
   });

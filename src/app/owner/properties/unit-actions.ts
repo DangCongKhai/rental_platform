@@ -173,6 +173,7 @@ export async function createUnits(propertyId: string, input: unknown): Promise<A
         });
 
         revalidatePath(`/owner/properties/${propertyId}`);
+        revalidatePath(`/owner/properties/${propertyId}/edit`);
         return { ids };
     })
 }
@@ -368,7 +369,15 @@ export async function updateUnit(unitId: string, input: unknown): Promise<Action
             });
 
             revalidatePath(`/owner/properties/${current.propertyId}`);
-            revalidatePath(`/owner/properties/${current.propertyId}/units/${unitId}`);
+            revalidatePath(
+              `/owner/properties/${current.propertyId}/edit`,
+            );
+            revalidatePath(
+              `/owner/properties/${current.propertyId}/units/${unitId}`,
+            );
+            revalidatePath(
+              `/owner/properties/${current.propertyId}/units/${unitId}/edit`,
+            );
             return { contentRevision };
         }
     );

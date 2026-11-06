@@ -15,6 +15,10 @@ import {
   getMyProperty,
   type OwnerListingFilter,
 } from "@/server/properties";
+import type {
+  OwnerListingStatusFilter,
+  OwnerOccupancyFilter,
+} from "@/lib/owner-types";
 import {
   OwnerApiError,
   actionData,
@@ -79,12 +83,51 @@ function listingFilter(value: string | null): OwnerListingFilter {
   return "all";
 }
 
+const occupancyFilters = [
+  "OCCUPIED",
+  "VACANT",
+  "MAINTENANCE",
+  "PENDING_CONFIRMATION",
+  "AWAITING_MOVE_IN",
+] as const;
+
+function occupancyFilter(value: string | null): OwnerOccupancyFilter {
+  if (
+    occupancyFilters.some((filter) => filter === value)
+  ) {
+    return value as OwnerOccupancyFilter;
+  }
+  return "all";
+}
+
+const listingStatusFilters = [
+  "published",
+  "pending",
+  "hidden",
+  "none",
+  "draft",
+  "rejected",
+  "approved",
+  "suspended",
+] as const;
+
+function listingStatusFilter(
+  value: string | null,
+): OwnerListingStatusFilter {
+  if (listingStatusFilters.some((filter) => filter === value)) {
+    return value as OwnerListingStatusFilter;
+  }
+  return "all";
+}
+
 export async function listOwnerProperties(request: Request) {
   const url = new URL(request.url);
   const result = await getMyProperties(
     pageNumber(url.searchParams.get("page")),
     listingFilter(url.searchParams.get("filter")),
     url.searchParams.has("include_archived"),
+    occupancyFilter(url.searchParams.get("occupancy")),
+    listingStatusFilter(url.searchParams.get("listing_status")),
   );
   return Response.json({
     data: result.properties.map(toOwnerPropertySummary),
@@ -278,6 +321,7 @@ export async function archiveOwnerUnitResponse(
     }),
   ]);
   revalidatePath(`/owner/properties/${propertyId}`);
+  revalidatePath(`/owner/properties/${propertyId}/edit`);
   revalidatePath("/owner/properties");
   revalidatePath("/owner/listings");
   revalidatePath("/listings");
