@@ -12,7 +12,11 @@ import {
 const { actor, storage, failures } = vi.hoisted(() => ({
   failures: { notification: false },
   actor: { profileId: "" },
-  storage: { sign: vi.fn(async () => "https://private.test/signed") },
+  storage: {
+    sign: vi.fn(async () => "https://private.test/signed"),
+    remove: vi.fn(async (_path: string) => undefined),
+    uploadedPath: "",
+  },
 }));
 vi.mock("../auth", () => ({
   requireUser: vi.fn(async () => ({ ...actor })),
@@ -27,10 +31,11 @@ vi.mock("../auth", () => ({
   }),
 }));
 vi.mock("../contracts/storage", () => ({
-  uploadContract: vi.fn(async () => ({
-    path: `tests/${randomUUID()}.pdf`,
-    sha256: "a".repeat(64),
-  })),
+  uploadContract: vi.fn(async () => {
+    storage.uploadedPath = `tests/${randomUUID()}.pdf`;
+    return { path: storage.uploadedPath, sha256: "a".repeat(64) };
+  }),
+  removeContract: storage.remove,
   signContractDownload: storage.sign,
 }));
 vi.mock("../notifications", async (importOriginal) => {
@@ -99,6 +104,8 @@ afterEach(async () => {
   for (const id of users.splice(0)) await deleteAccountProfile(id);
   tenantIds.splice(0);
   storage.sign.mockClear();
+  storage.remove.mockClear();
+  storage.uploadedPath = "";
   failures.notification = false;
 });
 async function setup() {
@@ -534,6 +541,44 @@ describe.skipIf(!process.env.DATABASE_URL)(
           },
         }),
       ).toBe(1);
+    });
+    it("removes the uploaded renewal PDF when the database transaction fails", async () => {
+      const { t, c, a, listing } = await proposal();
+      actor.profileId = a.id;
+      expect((await confirmContract(c.id, c.documentSha256)).ok).toBe(true);
+      expect(
+        (
+          await requestRenewal(t.id, {
+            requestedEndDate: "2091-06-01",
+            proposedMonthlyRent: 4_200_000,
+          })
+        ).ok,
+      ).toBe(true);
+      const renewal = await prisma.tenancyRenewalRequest.findFirstOrThrow({
+        where: { tenancyId: t.id, status: "PENDING" },
+      });
+      actor.profileId = listing.owner.profileId;
+      failures.notification = true;
+
+      await expect(
+        proposeRenewal(
+          t.id,
+          { renewalRequestId: renewal.id, monthlyRent: 4_000_000 },
+          pdf(),
+        ),
+      ).rejects.toThrow("injected notification failure");
+
+      expect(storage.remove).toHaveBeenCalledWith(storage.uploadedPath);
+      expect(
+        await prisma.tenancyContract.count({
+          where: { tenancyId: t.id, type: "RENEWAL" },
+        }),
+      ).toBe(0);
+      expect(
+        (
+          await prisma.tenancy.findUniqueOrThrow({ where: { id: t.id } })
+        ).pendingContractId,
+      ).toBeNull();
     });
     it("withdraws or rejects a renewal and restores the confirmed reservation envelope", async () => {
       const { t, c, a, listing } = await proposal();

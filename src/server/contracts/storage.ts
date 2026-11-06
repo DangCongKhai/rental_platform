@@ -39,6 +39,13 @@ export async function uploadContract(file: File, ownerId: string) {
   if (error) throw new Error("Contract upload failed", { cause: error });
   return { path, sha256 };
 }
+
+/** Removes an uploaded contract object when its database record cannot commit. */
+export async function removeContract(path: string) {
+  const { error } = await storage().from("contracts").remove([path]);
+  if (error) throw new Error("Contract cleanup failed", { cause: error });
+}
+
 export async function signContractDownload(path: string) {
   const service = storage();
   const { data: bucket, error: bucketError } =

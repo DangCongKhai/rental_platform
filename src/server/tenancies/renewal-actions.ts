@@ -4,7 +4,7 @@ import type { Prisma } from "../../../generated/prisma/client";
 import { requireUser } from "../auth";
 import { ActionError, runAction } from "../action";
 import { createNotification } from "../notifications";
-import { uploadContract } from "../contracts/storage";
+import { removeContract, uploadContract } from "../contracts/storage";
 import { prisma } from "../db";
 import { withTransaction } from "../transaction";
 import { releaseExpiredHolds } from "./expiry";
@@ -228,7 +228,8 @@ export async function proposeRenewal(
     });
     if (!auth) missing();
     const document = await uploadContract(file, user.profileId);
-    await withTransaction(async (tx) => {
+    try {
+      await withTransaction(async (tx) => {
       const t = await lockTenancyForRenewal(tx, tenancyId);
       if (t.ownerId !== user.profileId) missing();
       const data = parsed.data!;
@@ -305,6 +306,17 @@ export async function proposeRenewal(
         id: contract.id,
         tenancyId,
       });
-    });
+      });
+    } catch (error) {
+      try {
+        await removeContract(document.path);
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          "Renewal proposal failed and its uploaded document could not be removed.",
+        );
+      }
+      throw error;
+    }
   });
 }
