@@ -39,6 +39,7 @@ vi.mock("./public-listing", () => ({
           property: {
             name: "Nhà A",
             propertyType: "APARTMENT",
+            rentalArrangement: "SEPARATE_UNITS",
             addressLine: "Trần Phú",
             ward: "Hải Châu",
             city: "Đà Nẵng",

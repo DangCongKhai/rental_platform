@@ -63,6 +63,7 @@ export type PublicListing = {
   property: {
     name: string;
     propertyType: string;
+    rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
     addressLine: string;
     ward: string | null;
     city: string | null;
@@ -305,6 +306,10 @@ export async function getPublicListing(
     property: {
       name: property.name,
       propertyType: property.propertyType,
+      rentalArrangement:
+        property.rentalArrangement === "WHOLE_SPACE"
+          ? "WHOLE_SPACE"
+          : "SEPARATE_UNITS",
       addressLine: property.addressLine ?? "",
       ward: property.ward,
       city: property.city,

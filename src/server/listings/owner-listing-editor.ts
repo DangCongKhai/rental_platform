@@ -63,6 +63,8 @@ export async function getOwnerListingEditor(propertyId: string) {
     deposit: unit.deposit === null ? null : Number(unit.deposit),
     minimumRentalMonths: unit.minimumRentalMonths,
     maxOccupants: unit.maxOccupants,
+    bedrooms: unit.bedrooms,
+    bathrooms: Number(unit.bathrooms),
     hasSelectedPhoto: unit.media.length > 0 || unit.mediaAssignments.length > 0,
     policiesValid:
       validateAmenities(unit.amenities, "UNIT").success &&
@@ -118,6 +120,8 @@ export async function getOwnerListingEditor(propertyId: string) {
       deposit: unit.deposit,
       minimumRentalMonths: unit.minimumRentalMonths,
       maxOccupants: unit.maxOccupants,
+      bedrooms: unit.bedrooms,
+      bathrooms: Number(unit.bathrooms),
       hasSelectedPhoto: unit.hasSelectedPhoto,
     })),
     photos: photos.map(({ id, caption, signedUrl }) => ({

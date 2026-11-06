@@ -15,3 +15,23 @@ When the same component is rendered on more than one page, put it in the layout 
 ## Figma design source
 
 Every new or changed screen follows [rentOS Design - MAIN EM4](https://www.figma.com/design/lQSW9bPS82CPlMnf6Py6GG/rentOS-Design---MAIN-EM4-?node-id=470-1451&m=dev). Before implementing UI, load the Figma design-to-code skill and read the matching frame with `get_design_context`. If the user does not attach a screenshot or a more specific node, open this file, find the screen by name on canvas `470:1451`, and read that frame before implementing UI. Adapt it to the app’s existing components and omit prototype-only controls.
+
+## List reads
+
+A list page loads one page from one endpoint.
+
+Include every column that table shows in that page query. Load related
+rows with one `include` filtered by parent id, not a request or query
+per row.
+
+Do not walk every page on the server to return the full set to a table.
+
+Filter in the query. Reset to page 1 when the filter changes.
+
+A detail endpoint is for opening one record.
+
+## Code Style & Formatting Rules
+- Strictly adhere to a maximum line length of 80 characters for both code and comments.
+- Break long method chains, complex conditional statements, and multi-argument function calls onto multiple lines using language-standard indentation (e.g., hanging indents).
+- Explicitly inject newline characters (\n) to prevent horizontal scrolling.
+- Never let string literals or comments stretch infinitely; use string concatenation or multi-line comment structures.

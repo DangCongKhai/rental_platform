@@ -1,31 +1,31 @@
-import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { ListingEditor } from "../listing-editor";
-import { getOwnerListingEditor } from "@/server/listings/owner-listing-editor";
 
-export const instant = false;
-
-export default async function NewListingPage({
+export default function NewOwnerListingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ propertyId?: string; returnTo?: string }>;
+  searchParams: Promise<{ propertyId?: string }>;
 }) {
-  const { propertyId, returnTo: requestedReturnTo } = await searchParams;
-  if (!propertyId) redirect("/owner/listings");
-  const data = await getOwnerListingEditor(propertyId);
-  if (!data) notFound();
-  const propertyUnitsPath = `/owner/properties/${data.property.id}/units`;
-  const returnTo =
-    requestedReturnTo === propertyUnitsPath ? propertyUnitsPath : undefined;
-  if (data.listing) {
-    redirect(
-      `/owner/listings/${data.listing.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`,
-    );
-  }
   return (
-    <ListingEditor
-      key={data.property.id}
-      initialData={data}
-      returnTo={returnTo}
-    />
+    <Suspense
+      fallback={
+        <p className="px-1 py-6 text-sm text-slate-500">Đang tải tin đăng…</p>
+      }
+    >
+      <NewOwnerListingLoader searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function NewOwnerListingLoader({
+  searchParams,
+}: {
+  searchParams: Promise<{ propertyId?: string }>;
+}) {
+  const { propertyId } = await searchParams;
+  return (
+    <section className="mx-auto w-full max-w-5xl px-1 py-4 sm:px-2 sm:py-6">
+      <ListingEditor propertyId={propertyId} />
+    </section>
   );
 }

@@ -6,7 +6,7 @@ import { MainNav, MainNavFallback } from "./main-nav";
 
 export function Navbar() {
   return (
-    <header className="relative z-30 flex min-h-[75px] shrink-0 flex-wrap items-center gap-x-8 gap-y-2 bg-ink px-4 py-3 text-white sm:px-10">
+    <header className="z-40 flex min-h-[75px] shrink-0 flex-wrap items-center gap-x-8 gap-y-2 bg-ink px-4 py-3 text-white sm:px-10">
       <Logo />
       <Suspense fallback={<MainNavFallback />}>
         <MainNav />

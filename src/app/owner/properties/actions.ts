@@ -15,6 +15,20 @@ const propertyTypeSchema = z.enum(["HOUSE", "APARTMENT", "APARTMENT_BUILDING"]);
 
 const rentalArrangementSchema = z.enum(["WHOLE_SPACE", "SEPARATE_UNITS"]);
 
+const wholeSpaceUnitSchema = z
+  .object({
+    areaM2: z.number().positive().nullable().optional(),
+    bedrooms: z.number().int().min(0).optional(),
+    bathrooms: z.number().min(0).optional(),
+    advertisedMonthlyRent: z.number().positive().nullable().optional(),
+    deposit: z.number().min(0).nullable().optional(),
+    minimumRentalMonths: z.number().int().min(3).optional(),
+    maxOccupants: z.number().int().positive().nullable().optional(),
+    description: z.string().trim().max(2000).nullable().optional(),
+    amenities: z.unknown().optional(),
+  })
+  .strict();
+
 const createPropertySchema = z
   .object({
     name: z.string().trim().min(1).max(120),
@@ -26,6 +40,7 @@ const createPropertySchema = z
     description: z.string().trim().max(2000).nullable().optional(),
     sharedAmenities: z.unknown().optional(),
     policies: z.unknown().optional(),
+    wholeSpaceUnit: wholeSpaceUnitSchema.optional(),
   })
   .strict();
 
@@ -48,6 +63,57 @@ const DEFAULT_POLICIES = {
   },
   shared_rules: [],
 };
+
+const EMPTY_UNIT_AMENITIES = {
+  schema_version: 1,
+  standard: {},
+  custom: [],
+};
+
+function unitKindForPropertyType(propertyType: string) {
+  return propertyType === "HOUSE" ? "HOUSE" : "APARTMENT";
+}
+
+function wholeSpaceUnitLabel(propertyType: string) {
+  return propertyType === "HOUSE" ? "Toàn bộ nhà" : "Toàn bộ căn hộ";
+}
+
+function unitAmenities(value: unknown) {
+  const input = value ?? EMPTY_UNIT_AMENITIES;
+  const parsed = validateAmenities(input, "UNIT");
+  if (!parsed.success) return null;
+  return parsed.data as Prisma.InputJsonValue;
+}
+
+function wholeSpaceUnitData(
+  propertyType: string,
+  input: z.infer<typeof wholeSpaceUnitSchema> | undefined,
+  amenities: Prisma.InputJsonValue,
+): Omit<Prisma.UnitUncheckedCreateInput, "propertyId"> {
+  const label = wholeSpaceUnitLabel(propertyType);
+  return {
+    label,
+    normalizedLabel: normalizeUnitLabel(label),
+    unitKind: unitKindForPropertyType(propertyType),
+    bedrooms: input?.bedrooms ?? 0,
+    bathrooms: input?.bathrooms ?? 0,
+    bathroomArrangement: "PRIVATE",
+    areaM2: input?.areaM2 ?? null,
+    advertisedMonthlyRent: input?.advertisedMonthlyRent ?? null,
+    deposit: input?.deposit ?? null,
+    minimumRentalMonths: input?.minimumRentalMonths ?? 3,
+    maxOccupants: input?.maxOccupants ?? null,
+    description: nullableText(input?.description),
+    amenities,
+    policyOverrides: {
+      schema_version: 1,
+      overrides: {},
+      additional_rules: [],
+    } as Prisma.InputJsonValue,
+    operationalStatus: "READY",
+    isMarketed: true,
+  };
+}
 
 function fieldErrors(error: z.ZodError): Record<string, string> {
   const result: Record<string, string> = {};
@@ -100,7 +166,7 @@ export async function createProperty(
     parsed.data.sharedAmenities === undefined
       ? EMPTY_AMENITIES
       : parsed.data.sharedAmenities;
-
+  console.log(inputAmenities);
   const amenities = validateAmenities(inputAmenities, "PROPERTY");
   if (!amenities.success) {
     return invalidForm<CreatedProperty>({
@@ -116,6 +182,28 @@ export async function createProperty(
   const policies = validatePropertyPolicies(inputPolicies);
   if (!policies.success) {
     return invalidForm<CreatedProperty>({ policies: "Quy định không hợp lệ." });
+  }
+
+  if (
+    parsed.data.rentalArrangement === "SEPARATE_UNITS" &&
+    parsed.data.wholeSpaceUnit
+  ) {
+    return invalidForm<CreatedProperty>({
+      wholeSpaceUnit: "Chỉ dùng thông tin này khi cho thuê toàn bộ.",
+    });
+  }
+
+  const wholeAmenities =
+    parsed.data.rentalArrangement === "WHOLE_SPACE"
+      ? unitAmenities(parsed.data.wholeSpaceUnit?.amenities)
+      : null;
+  if (
+    parsed.data.rentalArrangement === "WHOLE_SPACE" &&
+    !wholeAmenities
+  ) {
+    return invalidForm<CreatedProperty>({
+      wholeSpaceUnit: "Tiện ích của không gian không hợp lệ.",
+    });
   }
 
   const result = await runAction(async () => {
@@ -136,21 +224,14 @@ export async function createProperty(
       });
 
       if (parsed.data.rentalArrangement === "WHOLE_SPACE") {
-        const unitKind =
-          parsed.data.propertyType === "HOUSE" ? "HOUSE" : "APARTMENT";
-        const unitLabel =
-          unitKind === "HOUSE" ? "Toàn bộ nhà" : "Toàn bộ căn hộ";
-
         await tx.unit.create({
           data: {
             propertyId: created.id,
-            label: unitLabel,
-            unitKind,
-            bedrooms: 0,
-            bathrooms: 0,
-            bathroomArrangement: "PRIVATE",
-            minimumRentalMonths: 3,
-            normalizedLabel: normalizeUnitLabel(unitLabel),
+            ...wholeSpaceUnitData(
+              parsed.data.propertyType,
+              parsed.data.wholeSpaceUnit,
+              wholeAmenities as Prisma.InputJsonValue,
+            ),
           },
         });
       }
@@ -159,6 +240,7 @@ export async function createProperty(
     });
 
     revalidatePath("/owner/properties");
+    revalidatePath("/owner/listings");
 
     return {
       id: property.id,
@@ -203,13 +285,11 @@ export async function updateProperty(
     });
   }
 
-  const changes: Prisma.PropertyUpdateManyMutationInput = {};
+  const changes: Prisma.PropertyUpdateInput = {};
 
   if (fields.name !== undefined) changes.name = fields.name;
   if (fields.propertyType !== undefined)
     changes.propertyType = fields.propertyType;
-  if (fields.rentalArrangement !== undefined)
-    changes.rentalArrangement = fields.rentalArrangement;
   if (fields.addressLine !== undefined)
     changes.addressLine = nullableText(fields.addressLine);
   if (fields.ward !== undefined) changes.ward = nullableText(fields.ward);
@@ -217,6 +297,7 @@ export async function updateProperty(
   if (fields.description !== undefined)
     changes.description = nullableText(fields.description);
   if (fields.sharedAmenities !== undefined) {
+    console.log(fields.sharedAmenities);
     const amenities = validateAmenities(fields.sharedAmenities, "PROPERTY");
     if (!amenities.success)
       return invalidForm<UpdatePropertyResult>({
@@ -234,44 +315,158 @@ export async function updateProperty(
     changes.policies = policies.data as Prisma.InputJsonValue;
   }
 
-  return runAction(async () => {
-    const updated = await prisma.property.updateMany({
-      where: {
-        id,
-        ownerId: user.profileId,
-        archivedAt: null,
-        contentRevision: expectedRevision,
-      },
-      data: {
-        ...changes,
-        contentRevision: { increment: 1 },
-      },
+  const submittedUnitAmenities = fields.wholeSpaceUnit?.amenities;
+  const validatedUnitAmenities =
+    submittedUnitAmenities === undefined
+      ? undefined
+      : unitAmenities(submittedUnitAmenities);
+  if (
+    submittedUnitAmenities !== undefined &&
+    !validatedUnitAmenities
+  ) {
+    return invalidForm<UpdatePropertyResult>({
+      wholeSpaceUnit: "Tiện ích của không gian không hợp lệ.",
     });
+  }
 
-    if (updated.count !== 1) {
-      const property = await prisma.property.findFirst({
-        where: { id, ownerId: user.profileId },
-        select: { archivedAt: true },
-      });
-
-      if (!property || property.archivedAt)
+  return runAction(async () => {
+    const updated = await prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<
+        Array<{
+          contentRevision: number;
+          rentalArrangement: string;
+          propertyType: string;
+        }>
+      >`
+        SELECT content_revision AS "contentRevision",
+               rental_arrangement AS "rentalArrangement",
+               property_type AS "propertyType"
+        FROM properties
+        WHERE id = ${id}::uuid
+          AND owner_id = ${user.profileId}::uuid
+          AND archived_at IS NULL
+        FOR UPDATE
+      `;
+      const current = rows[0];
+      if (!current) {
         throw new ActionError("NOT_FOUND", "Không tìm thấy dữ liệu.");
+      }
+      if (current.contentRevision !== expectedRevision) {
+        throw new ActionError(
+          "CONFLICT",
+          "Thông tin đã thay đổi. Hãy tải lại trang và thử lại.",
+        );
+      }
+      if (
+        fields.rentalArrangement !== undefined &&
+        fields.rentalArrangement !== current.rentalArrangement
+      ) {
+        throw new ActionError(
+          "CONFLICT",
+          "Không thể thay đổi hình thức thuê sau khi tạo bất động sản.",
+        );
+      }
+      if (
+        fields.wholeSpaceUnit &&
+        current.rentalArrangement !== "WHOLE_SPACE"
+      ) {
+        throw new ActionError(
+          "CONFLICT",
+          "Chỉ bất động sản cho thuê toàn bộ có thông tin không gian này.",
+        );
+      }
 
-      throw new ActionError(
-        "CONFLICT",
-        "Thông tin đã thay đổi. Hãy tải lại trang và thử lại.",
-      );
-    }
+      let listingId: string | null = null;
+      if (current.rentalArrangement === "WHOLE_SPACE") {
+        const units = await tx.unit.findMany({
+          where: { propertyId: id, archivedAt: null },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: 2,
+          select: { id: true },
+        });
+        if (units.length !== 1) {
+          throw new ActionError(
+            "CONFLICT",
+            "Bất động sản cho thuê toàn bộ cần đúng một căn đại diện.",
+          );
+        }
+
+        const unitData: Prisma.UnitUpdateInput = {};
+        if (fields.propertyType !== undefined) {
+          const label = wholeSpaceUnitLabel(fields.propertyType);
+          unitData.label = label;
+          unitData.normalizedLabel = normalizeUnitLabel(label);
+          unitData.unitKind = unitKindForPropertyType(
+            fields.propertyType,
+          );
+        }
+        const wholeSpaceUnit = fields.wholeSpaceUnit;
+        if (wholeSpaceUnit?.areaM2 !== undefined) {
+          unitData.areaM2 = wholeSpaceUnit.areaM2;
+        }
+        if (wholeSpaceUnit?.bedrooms !== undefined) {
+          unitData.bedrooms = wholeSpaceUnit.bedrooms;
+        }
+        if (wholeSpaceUnit?.bathrooms !== undefined) {
+          unitData.bathrooms = wholeSpaceUnit.bathrooms;
+        }
+        if (wholeSpaceUnit?.advertisedMonthlyRent !== undefined) {
+          unitData.advertisedMonthlyRent =
+            wholeSpaceUnit.advertisedMonthlyRent;
+        }
+        if (wholeSpaceUnit?.deposit !== undefined) {
+          unitData.deposit = wholeSpaceUnit.deposit;
+        }
+        if (wholeSpaceUnit?.minimumRentalMonths !== undefined) {
+          unitData.minimumRentalMonths =
+            wholeSpaceUnit.minimumRentalMonths;
+        }
+        if (wholeSpaceUnit?.maxOccupants !== undefined) {
+          unitData.maxOccupants = wholeSpaceUnit.maxOccupants;
+        }
+        if (wholeSpaceUnit?.description !== undefined) {
+          unitData.description = nullableText(wholeSpaceUnit.description);
+        }
+        if (
+          validatedUnitAmenities !== undefined &&
+          validatedUnitAmenities !== null
+        ) {
+          unitData.amenities = validatedUnitAmenities;
+        }
+        if (Object.keys(unitData).length > 0) {
+          await tx.unit.update({
+            where: { id: units[0].id },
+            data: unitData,
+          });
+        }
+
+        const listing = await tx.listing.findFirst({
+          where: { propertyId: id, archivedAt: null },
+          select: { id: true },
+        });
+        listingId = listing?.id ?? null;
+      }
+
+      const property = await tx.property.update({
+        where: { id },
+        data: {
+          ...changes,
+          contentRevision: { increment: 1 },
+        },
+        select: { contentRevision: true },
+      });
+      return { contentRevision: property.contentRevision, listingId };
+    });
 
     revalidatePath("/owner/properties");
     revalidatePath(`/owner/properties/${id}`);
+    revalidatePath("/owner/listings");
+    if (updated.listingId) {
+      revalidatePath(`/owner/listings/${updated.listingId}`);
+    }
+    revalidatePath("/listings");
 
-    const property = await prisma.property.findFirstOrThrow({
-      where: { id, ownerId: user.profileId },
-      select: { contentRevision: true },
-    });
-
-    return { contentRevision: property.contentRevision };
+    return { contentRevision: updated.contentRevision };
   });
 }
 

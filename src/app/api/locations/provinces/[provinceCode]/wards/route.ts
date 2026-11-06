@@ -1,4 +1,7 @@
-import { getCurrentWards } from "@/server/administrative-divisions";
+import {
+  AdministrativeDivisionError,
+  getCurrentWards,
+} from "@/server/administrative-divisions";
 
 export async function GET(
   _request: Request,
@@ -14,7 +17,10 @@ export async function GET(
 
   try {
     return Response.json(await getCurrentWards(provinceCode));
-  } catch {
+  } catch (error) {
+    const status =
+      error instanceof AdministrativeDivisionError ? error.status : undefined;
+    console.error("Failed to load wards.", status, error);
     return Response.json(
       { error: "Không thể tải danh sách phường/xã. Vui lòng thử lại." },
       { status: 502 },

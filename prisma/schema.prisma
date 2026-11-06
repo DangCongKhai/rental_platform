@@ -67,6 +67,7 @@ model Property {
   favourites FavouriteProperty[]
 
   @@index([ownerId])
+  @@index([ownerId, archivedAt, updatedAt(sort: Desc), id(sort: Desc)], map: "properties_owner_list_idx")
   @@map("properties")
 }
 

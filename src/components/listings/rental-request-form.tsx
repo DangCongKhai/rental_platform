@@ -45,8 +45,7 @@ export function RentalRequestForm({
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
   const [requestId, setRequestId] = useState("");
-  const [moveIn, setMoveIn] = useState("");
-  const [moveOut, setMoveOut] = useState("");
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isSignedIn) {
@@ -168,7 +167,6 @@ export function RentalRequestForm({
           name="desiredMoveInDate"
           label="Ngày dọn vào mong muốn"
           error={errors.desiredMoveInDate}
-          onValueChange={setMoveIn}
         />
         <div className="grid content-start gap-1.5">
           <DateField
@@ -176,7 +174,6 @@ export function RentalRequestForm({
             name="desiredEndDate"
             label="Ngày kết thúc mong muốn"
             error={errors.desiredEndDate}
-            onValueChange={setMoveOut}
           />
         </div>
       </div>
@@ -281,17 +278,3 @@ function unitOption(unit: RequestListing["units"][number]) {
   return `${unit.label} · ${dong(rent)}/tháng`;
 }
 
-function stayHint(moveIn: string, moveOut: string) {
-  const months = stayMonths(moveIn, moveOut);
-  return months ? `${months} tháng · tối thiểu 3 tháng` : "Tối thiểu 3 tháng";
-}
-
-function stayMonths(moveIn: string, moveOut: string) {
-  if (!moveIn || !moveOut) return null;
-  const start = new Date(`${moveIn}T00:00:00Z`);
-  const end = new Date(`${moveOut}T00:00:00Z`);
-  if (!(end > start)) return null;
-  const days = (end.getTime() - start.getTime()) / 86_400_000;
-  const months = Math.round(days / 30.4375);
-  return months > 0 ? months : null;
-}

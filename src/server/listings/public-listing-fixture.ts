@@ -37,7 +37,6 @@ export type PublishedListing = {
   propertyId: string;
   unitIds: string[];
   owner: { profileId: string; userId: string; fullName: string };
-  coverMediaId: string;
 };
 
 const propertyIds: string[] = [];
@@ -156,35 +155,6 @@ export async function publishedListing(
     createdUnits.push({ id: rows[0].id, label });
   }
 
-  const cover = await prisma.propertyMedia.create({
-    data: {
-      propertyId: property.id,
-      uploadedById: owner.profileId,
-      storagePath: `tests/${property.id}/cover.jpg`,
-      sha256: property.id.replaceAll("-", ""),
-      mimeType: "image/jpeg",
-      sizeBytes: 120_000,
-      caption: "Mặt tiền",
-      isSelectedForListing: true,
-    },
-  });
-
-  for (const unit of createdUnits) {
-    await prisma.propertyMedia.create({
-      data: {
-        propertyId: property.id,
-        unitId: unit.id,
-        uploadedById: owner.profileId,
-        storagePath: `tests/${property.id}/${unit.id}.jpg`,
-        sha256: unit.id.replaceAll("-", ""),
-        mimeType: "image/jpeg",
-        sizeBytes: 80_000,
-        caption: unit.label,
-        isSelectedForListing: true,
-      },
-    });
-  }
-
   const published =
     (overrides.publicationStatus ?? "PUBLISHED") === "PUBLISHED" &&
     (overrides.moderationStatus ?? "APPROVED") === "APPROVED";
@@ -194,7 +164,7 @@ export async function publishedListing(
       propertyId: property.id,
       title: `Tin ${property.id.slice(0, 8)}`,
       description: "Tin đăng công khai cho tìm kiếm.",
-      coverMediaId: cover.id,
+      coverMediaId: null,
       publicationStatus: overrides.publicationStatus ?? "PUBLISHED",
       moderationStatus: overrides.moderationStatus ?? "APPROVED",
       submittedAt: published ? new Date("2026-10-01T00:00:00.000Z") : null,
@@ -215,7 +185,6 @@ export async function publishedListing(
     propertyId: property.id,
     unitIds: createdUnits.map((unit) => unit.id),
     owner,
-    coverMediaId: cover.id,
   };
 }
 

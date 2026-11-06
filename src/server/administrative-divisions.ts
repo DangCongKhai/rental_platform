@@ -1,7 +1,6 @@
 import { cacheLife } from "next/cache";
 
-const API_BASE = "https://tinhthanhpho.com/api/v1";
-const PAGE_SIZE = 100;
+const API_BASE = "https://provinces.open-api.vn/api/v2";
 
 export type AdministrativeDivisionOption = {
   code: string;
@@ -9,56 +8,59 @@ export type AdministrativeDivisionOption = {
   type: string;
 };
 
-type ApiItem = {
-  code: string;
-  name: string;
-  type: string;
-};
+export class AdministrativeDivisionError extends Error {
+  readonly status: number;
 
-type ApiPage = {
-  success: boolean;
-  data: ApiItem[];
-  metadata?: {
-    total?: number;
-    limit?: number;
-  };
-};
-
-async function getPage(path: string, page: number): Promise<ApiPage> {
-  const url = new URL(`${API_BASE}${path}`);
-  url.searchParams.set("limit", String(PAGE_SIZE));
-  url.searchParams.set("page", String(page));
-
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok)
-    throw new Error("Administrative division service returned an error.");
-
-  const result = (await response.json()) as ApiPage;
-  if (!result.success || !Array.isArray(result.data)) {
-    throw new Error("Administrative division service returned invalid data.");
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "AdministrativeDivisionError";
+    this.status = status;
   }
-  return result;
 }
 
-async function getAllPages(
-  path: string,
-): Promise<AdministrativeDivisionOption[]> {
-  const firstPage = await getPage(path, 1);
-  const pageSize = firstPage.metadata?.limit || PAGE_SIZE;
-  const pageCount = Math.ceil(
-    (firstPage.metadata?.total ?? firstPage.data.length) / pageSize,
-  );
-  const remainingPages = await Promise.all(
-    Array.from({ length: Math.max(0, pageCount - 1) }, (_, index) =>
-      getPage(path, index + 2),
-    ),
-  );
+type DivisionItem = {
+  code: number;
+  name: string;
+  division_type: string;
+  wards?: DivisionItem[];
+};
 
-  return [firstPage, ...remainingPages]
-    .flatMap((page) => page.data)
-    .map(({ code, name, type }) => ({ code, name, type }));
+function option(item: DivisionItem): AdministrativeDivisionOption {
+  return {
+    code: String(item.code),
+    name: item.name,
+    type: item.division_type,
+  };
+}
+
+async function readDivision(path: string): Promise<unknown> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    throw new AdministrativeDivisionError(
+      `Administrative division service returned ${response.status}.`,
+      response.status,
+    );
+  }
+  return response.json();
+}
+
+function itemsOf(value: unknown): DivisionItem[] {
+  if (!Array.isArray(value)) {
+    throw new AdministrativeDivisionError(
+      "Administrative division service returned invalid data.",
+      502,
+    );
+  }
+  return value.filter(
+    (item): item is DivisionItem =>
+      typeof item === "object" &&
+      item !== null &&
+      typeof item.code === "number" &&
+      typeof item.name === "string" &&
+      typeof item.division_type === "string",
+  );
 }
 
 export async function getCurrentProvinces(): Promise<
@@ -66,7 +68,8 @@ export async function getCurrentProvinces(): Promise<
 > {
   "use cache";
   cacheLife("days");
-  return getAllPages("/new-provinces");
+  const payload = await readDivision("/?depth=1");
+  return itemsOf(payload).map(option);
 }
 
 export async function getCurrentWards(
@@ -74,7 +77,18 @@ export async function getCurrentWards(
 ): Promise<AdministrativeDivisionOption[]> {
   "use cache";
   cacheLife("days");
-  return getAllPages(
-    `/new-provinces/${encodeURIComponent(provinceCode)}/wards`,
+  const payload = await readDivision(
+    `/p/${encodeURIComponent(provinceCode)}?depth=2`,
   );
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("wards" in payload)
+  ) {
+    throw new AdministrativeDivisionError(
+      "Administrative division service returned invalid data.",
+      502,
+    );
+  }
+  return itemsOf(payload.wards).map(option);
 }

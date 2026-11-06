@@ -1,30 +1,31 @@
-import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { Suspense } from "react";
 import { ListingEditor } from "../listing-editor";
-import { getOwnerListingEditorById } from "@/server/listings/owner-listing-editor";
 
-export const instant = false;
-
-export default async function EditListingPage({
+export default function OwnerListingPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ returnTo?: string }>;
 }) {
-  await connection();
-  const { id } = await params;
-  const { returnTo: requestedReturnTo } = await searchParams;
-  const data = await getOwnerListingEditorById(id);
-  if (!data?.listing || data.listing.id !== id) notFound();
-  const propertyUnitsPath = `/owner/properties/${data.property.id}/units`;
-  const returnTo =
-    requestedReturnTo === propertyUnitsPath ? propertyUnitsPath : undefined;
   return (
-    <ListingEditor
-      key={data.listing.id}
-      initialData={data}
-      returnTo={returnTo}
-    />
+    <Suspense
+      fallback={
+        <p className="px-1 py-6 text-sm text-slate-500">Đang tải tin đăng…</p>
+      }
+    >
+      <OwnerListingLoader params={params} />
+    </Suspense>
+  );
+}
+
+async function OwnerListingLoader({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return (
+    <section className="mx-auto w-full max-w-5xl px-1 py-4 sm:px-2 sm:py-6">
+      <ListingEditor listingId={id} />
+    </section>
   );
 }

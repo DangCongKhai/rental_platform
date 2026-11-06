@@ -33,6 +33,21 @@ it("lets only the exact protected cron route reach its secret check without a br
   }
 });
 
+it("leaves a multipart upload body on the original request", async () => {
+  getClaims.mockClear();
+  const body = new FormData();
+  body.set("photo", new File([new Uint8Array([1])], "a.png", { type: "image/png" }));
+  const response = await updateSession(
+    new NextRequest("http://localhost/owner/properties/x", {
+      method: "POST",
+      body,
+    }),
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("location")).toBeNull();
+  expect(getClaims).not.toHaveBeenCalled();
+});
+
 it("does not load a session on the email confirm callback", async () => {
   getClaims.mockClear();
   const response = await updateSession(

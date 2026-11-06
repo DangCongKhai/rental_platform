@@ -1,430 +1,224 @@
+"use client";
+
 import Link from "next/link";
-import { PageLinks } from "@/components/page-links";
-import { buttonClass } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { getMyProperties } from "@/server/properties";
-import { PropertyActions } from "./property-actions";
-import { PropertySaveNotice } from "./property-save-notice";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Pagination } from "@/components/pagination";
+import { listingStatusClass } from "@/app/owner/listing-status";
+import { actionMessage } from "@/lib/action-error";
+import type {
+  OwnerPropertyPage,
+  OwnerPropertySummary,
+} from "@/lib/owner-types";
+import { getOwnerProperties } from "@/server/owner/actions";
 
-export const instant = false;
+const buttonClass =
+  "inline-flex min-h-10 items-center justify-center rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584]";
 
-const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "Asia/Ho_Chi_Minh",
-});
-
-const propertyTypeLabels: Record<string, string> = {
-  HOUSE: "Nhà riêng",
-  APARTMENT: "Căn hộ",
-  APARTMENT_BUILDING: "Tòa nhà căn hộ",
-};
-
-const arrangementLabels: Record<string, string> = {
-  WHOLE_SPACE: "Toàn bộ không gian",
-  SEPARATE_UNITS: "Từng căn riêng lẻ",
-};
-
-const unitStatuses = ["READY", "MAINTENANCE", "RETIRED"] as const;
-type UnitStatus = (typeof unitStatuses)[number];
-
-const unitStatusLabels: Record<UnitStatus, string> = {
-  READY: "Sẵn sàng",
-  MAINTENANCE: "Đang bảo trì",
-  RETIRED: "Đã ngừng hoạt động",
-};
-
-const moderationBadges: Record<
-  string,
-  { label: string; tone: "success" | "danger" | "neutral" }
-> = {
-  DRAFT: { label: "Bản nháp", tone: "neutral" },
-  PENDING: { label: "Chờ duyệt", tone: "neutral" },
-  APPROVED: { label: "Đã duyệt", tone: "success" },
-  REJECTED: { label: "Bị từ chối", tone: "danger" },
-};
-
-const publicationBadges: Record<
-  string,
-  { label: string; tone: "success" | "neutral" }
-> = {
-  PUBLISHED: { label: "Đã đăng", tone: "success" },
-  HIDDEN: { label: "Đã ẩn", tone: "neutral" },
-};
-
-const badgeClass = {
-  success: "bg-success-soft text-success",
-  danger: "bg-[#fdf2f1] text-danger-ink",
-  neutral: "bg-[#e8ebf0] text-muted",
-} as const;
-
-function locationLine(property: {
-  ward: string | null;
-  addressLine: string | null;
-  city: string | null;
-}) {
-  const place = [property.ward, property.city].filter(Boolean).join(", ");
-  return place || property.addressLine || "Chưa thêm địa chỉ";
+function listingStatus(listing: OwnerPropertySummary["listing"]) {
+  if (!listing) return "Chưa có tin";
+  if (listing.admin_suspended_at) return "Bị tạm ngưng";
+  if (listing.publication_status === "PUBLISHED") return "Đang hiển thị";
+  if (listing.publication_status === "HIDDEN") return "Đã ẩn";
+  if (listing.moderation_status === "PENDING") return "Chờ duyệt";
+  if (listing.moderation_status === "REJECTED") return "Cần chỉnh sửa";
+  if (listing.moderation_status === "APPROVED") return "Đã duyệt";
+  return "Bản nháp";
 }
 
-function StatusBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: keyof typeof badgeClass;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full px-2.5 py-0.5 text-[13px] font-semibold leading-5",
-        badgeClass[tone],
-      )}
-    >
-      {label}
-    </span>
-  );
-}
+export default function OwnerPropertiesPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+  const [page, setPage] = useState(1);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [result, setResult] = useState<OwnerPropertyPage | null>(null);
 
-export default async function OwnerPropertiesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    archived?: string;
-    saved?: string;
-    page?: string;
-    unitStatus?: string;
-  }>;
-}) {
-  const {
-    archived,
-    saved,
-    page: pageValue,
-    unitStatus: unitStatusValue,
-  } = await searchParams;
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const next = await getOwnerProperties({
+          page,
+          includeArchived,
+        });
+        if (!active) return;
+        setResult(next);
+      } catch (caught) {
+        if (!active) return;
+        setError(
+          actionMessage(caught, "Không thể tải thông tin bất động sản."),
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [includeArchived, page, retry]);
 
-  const showArchived = archived === "1";
-
-  const parsed = Number(pageValue);
-  const page =
-    Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : 1;
-
-  const unitStatus = unitStatuses.find((status) => status === unitStatusValue);
-
-  const result = await getMyProperties(showArchived, page, { unitStatus });
-  const properties = result.properties;
-
-  function statusHref(status?: UnitStatus) {
-    const params = new URLSearchParams();
-
-    if (showArchived) params.set("archived", "1");
-    if (saved === "1") params.set("saved", "1");
-    if (status) params.set("unitStatus", status);
-
-    const query = params.toString();
-    return query ? `/owner/properties?${query}` : "/owner/properties";
-  }
+  const rows = result?.data ?? [];
 
   return (
-    <section className="space-y-5">
-      {saved === "1" && <PropertySaveNotice />}
-
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[28px] font-bold tracking-[-0.02em] text-ink">
-          Bất động sản
-        </h1>
-
+    <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col px-1 py-4 sm:px-2 sm:py-6">
+      <header className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Bất động sản
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Quản lý bất động sản, phòng và ảnh. Tin đăng được tạo riêng sau khi
+            hoàn tất dữ liệu.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-4">
-          <Link
-            href={
-              showArchived
-                ? statusHref(unitStatus)
-                : (() => {
-                    const params = new URLSearchParams();
-                    params.set("archived", "1");
-                    if (unitStatus) params.set("unitStatus", unitStatus);
-                    if (saved === "1") params.set("saved", "1");
-                    return `/owner/properties?${params.toString()}`;
-                  })()
-            }
-            aria-pressed={showArchived}
-            className="inline-flex min-h-11 items-center gap-2.5 px-1.5 text-sm font-medium text-ink-3"
-          >
-            <span
-              aria-hidden="true"
-              className={cn(
-                "relative h-[26px] w-11 rounded-full",
-                showArchived ? "bg-brand" : "bg-[#b9c3d0]",
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-[3px] size-5 rounded-full bg-white",
-                  showArchived ? "left-[21px]" : "left-[3px]",
-                )}
-              />
-            </span>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={includeArchived}
+              onChange={(event) => {
+                setIncludeArchived(event.target.checked);
+                setPage(1);
+              }}
+              className="size-4 accent-[#3368a0]"
+            />
             Hiện mục đã lưu trữ
-          </Link>
-
-          <Link href="/owner/properties/new" className={buttonClass()}>
+          </label>
+          <Link
+            href="/owner/properties/new"
+            className={buttonClass}
+            onClick={(event) => {
+              event.preventDefault();
+              router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
+            }}
+          >
             Tạo bất động sản
           </Link>
         </div>
       </header>
-
-      <nav
-        aria-label="Lọc theo tình trạng căn"
-        className="flex flex-wrap gap-2"
-      >
-        <Link
-          href={statusHref()}
-          aria-current={!unitStatus ? "page" : undefined}
-          className={cn(
-            "inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-medium transition-colors",
-            !unitStatus
-              ? "border-brand bg-brand-soft text-brand-deep"
-              : "border-line bg-white text-ink-3 hover:bg-[#f7f9fb]",
-          )}
+      <div className="flex min-h-0 flex-1 flex-col">
+      {loading && (
+        <div
+          className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
+          aria-busy="true"
         >
-          Tất cả
-        </Link>
-
-        {unitStatuses.map((status) => (
-          <Link
-            key={status}
-            href={statusHref(status)}
-            aria-current={unitStatus === status ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-medium transition-colors",
-              unitStatus === status
-                ? "border-brand bg-brand-soft text-brand-deep"
-                : "border-line bg-white text-ink-3 hover:bg-[#f7f9fb]",
-            )}
-          >
-            {unitStatusLabels[status]}
-          </Link>
-        ))}
-      </nav>
-
-      <form
-        method="GET"
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-4"
-      >
-        {showArchived && <input type="hidden" name="archived" value="1" />}
-        {saved === "1" && <input type="hidden" name="saved" value="1" />}
-
-        <div className="min-w-52">
-          <label
-            htmlFor="unitStatus"
-            className="mb-1.5 block text-sm font-medium text-ink"
-          >
-            Tình trạng căn
-          </label>
-
-          <select
-            id="unitStatus"
-            name="unitStatus"
-            defaultValue={unitStatus ?? ""}
-            className="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink"
-          >
-            <option value="">Tất cả tình trạng căn</option>
-
-            {unitStatuses.map((status) => (
-              <option key={status} value={status}>
-                {unitStatusLabels[status]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button type="submit" className={buttonClass({ variant: "secondary" })}>
-          Lọc
-        </button>
-
-        {unitStatus && (
-          <Link
-            href={statusHref()}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-ink"
-          >
-            Xóa bộ lọc
-          </Link>
-        )}
-      </form>
-
-      {properties.length === 0 ? (
-        <div className="flex flex-col items-center rounded-[15px] border border-dashed border-line bg-white px-6 py-10 text-center">
-          <h2 className="text-lg font-semibold text-ink">
-            {showArchived
-              ? "Không có bất động sản đã lưu trữ"
-              : "Thêm bất động sản đầu tiên của bạn"}
-          </h2>
-
-          <p className="mt-2 max-w-md text-sm text-ink">
-            {showArchived
-              ? "Các bất động sản bạn lưu trữ sẽ xuất hiện tại đây."
-              : "Bắt đầu bằng thông tin cơ bản và địa chỉ, bạn có thể hoàn thiện sau."}
-          </p>
-
-          {!showArchived && (
-            <Link
-              href="/owner/properties/new"
-              className={`${buttonClass()} mt-4`}
-            >
-              Thêm bất động sản
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-[15px] border border-line bg-white">
-          <table className="w-full min-w-[860px] border-collapse text-left">
-            <thead>
-              <tr className="bg-[#f7f9fb] text-[13px] font-semibold text-subtle">
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Tên và địa chỉ
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Loại
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Hình thức cho thuê
-                </th>
-                <th
-                  scope="col"
-                  className="w-16 px-4 py-4 font-semibold leading-snug"
-                >
-                  Số căn
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Tin đăng
-                </th>
-                <th scope="col" className="px-4 py-4 font-semibold">
-                  Cập nhật
-                </th>
-                <th scope="col" className="px-4 py-4">
-                  <span className="sr-only">Thao tác</span>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {properties.map((property) => {
-                const listing = property.listings[0];
-
-                const moderation = listing
-                  ? moderationBadges[listing.moderationStatus]
-                  : undefined;
-
-                const publication =
-                  listing && listing.publicationStatus !== "DRAFT"
-                    ? publicationBadges[listing.publicationStatus]
-                    : undefined;
-
-                return (
-                  <tr
-                    key={property.id}
-                    className="border-t border-line-soft align-middle"
-                  >
-                    <td className="px-4 py-3.5">
-                      <p className="text-[15px] font-semibold leading-snug text-ink-2">
-                        {property.name}
-                      </p>
-
-                      <p className="mt-0.5 max-w-[220px] text-[13px] leading-5 text-subtle">
-                        {locationLine(property)}
-                      </p>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[15px] text-ink">
-                      {propertyTypeLabels[property.propertyType] ??
-                        property.propertyType}
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <StatusBadge
-                        label={
-                          arrangementLabels[property.rentalArrangement] ??
-                          property.rentalArrangement
-                        }
-                        tone="neutral"
-                      />
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[15px] whitespace-nowrap text-ink">
-                      {property._count.units} căn
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <div className="flex flex-col items-start gap-2">
-                        {moderation ? (
-                          <StatusBadge {...moderation} />
-                        ) : (
-                          <StatusBadge label="Chưa có tin" tone="neutral" />
-                        )}
-
-                        {publication && <StatusBadge {...publication} />}
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-[15px] whitespace-nowrap text-ink">
-                      {dateFormatter.format(property.updatedAt)}
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Link
-                          href={`/owner/properties/${property.id}/media`}
-                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
-                        >
-                          Hình ảnh
-                        </Link>
-
-                        <Link
-                          href={`/owner/properties/${property.id}/units`}
-                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-line-brand px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
-                        >
-                          Căn/phòng
-                        </Link>
-
-                        <Link
-                          href={`/owner/properties/${property.id}`}
-                          className="inline-flex min-h-11 items-center justify-center rounded-[15px] border border-ink px-2.5 text-[15px] font-semibold text-brand-deep hover:bg-brand-soft"
-                        >
-                          Chỉnh sửa
-                        </Link>
-
-                        {!showArchived && (
-                          <PropertyActions propertyId={property.id} />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          Đang tải bất động sản…
         </div>
       )}
-
-      <div className="flex justify-end">
-        <PageLinks
-          page={page}
-          total={result.total}
-          pageSize={result.pageSize}
-          href={(nextPage) => {
-            const params = new URLSearchParams();
-
-            if (showArchived) params.set("archived", "1");
-            if (saved === "1") params.set("saved", "1");
-            if (unitStatus) params.set("unitStatus", unitStatus);
-            if (nextPage > 1) params.set("page", String(nextPage));
-
-            const query = params.toString();
-
-            return query ? `/owner/properties?${query}` : "/owner/properties";
-          }}
-        />
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+        >
+          {error}
+          <button
+            type="button"
+            className="ml-3 font-semibold underline"
+            onClick={() => setRetry((value) => value + 1)}
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+      {!loading && !error && rows.length > 0 && (
+        <div className="min-h-0 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500">
+                <tr>
+                  <th className="px-4 py-4">Tên và địa chỉ</th>
+                  <th className="px-4 py-4">Loại</th>
+                  <th className="px-4 py-4">Hình thức cho thuê</th>
+                  <th className="px-4 py-4">Số căn</th>
+                  <th className="px-4 py-4">Tin đăng</th>
+                  <th className="px-4 py-4">Cập nhật</th>
+                  <th className="px-4 py-4">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((item) => (
+                  <tr key={item.id} className="align-middle">
+                    <td className="px-4 py-4">
+                      <p className="font-semibold text-slate-900">
+                        {item.name}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {[item.address_line, item.ward, item.city]
+                          .filter(Boolean)
+                          .join(", ") || "Chưa nhập địa chỉ"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      {item.property_type}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium whitespace-nowrap text-slate-700">
+                        {item.rental_arrangement === "WHOLE_SPACE"
+                          ? "Toàn bộ không gian"
+                          : "Từng căn riêng lẻ"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      {item.unit_count}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={listingStatusClass(item.listing)}>
+                        {listingStatus(item.listing)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {new Date(item.updated_at).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Link
+                        href={`/owner/properties/${item.id}`}
+                        className="font-semibold whitespace-nowrap text-[#3368a0] hover:underline"
+                      >
+                        Chỉnh sửa
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        </div>
+      )}
+      {!loading && !error && result && result.meta.last_page > 1 && (
+        <div className="mt-4 flex shrink-0 justify-end">
+          <Pagination
+            current={result.meta.current_page}
+            lastPage={result.meta.last_page}
+            onSelect={setPage}
+          />
+        </div>
+      )}
+      {!loading && !error && rows.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Trạng thái rỗng
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-slate-900">
+            Thêm bất động sản đầu tiên của bạn
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Bắt đầu với thông tin cơ bản và địa chỉ, bạn có thể hoàn thiện sau.
+          </p>
+          <Link
+            href="/owner/properties/new"
+            className={`${buttonClass} mt-5`}
+            onClick={(event) => {
+              event.preventDefault();
+              router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
+            }}
+          >
+            Thêm bất động sản
+          </Link>
+        </div>
+      )}
       </div>
     </section>
   );

@@ -98,6 +98,7 @@ function detailJson(listing: PublicListing) {
     property: {
       name: listing.property.name,
       property_type: listing.property.propertyType,
+      rental_arrangement: listing.property.rentalArrangement,
       address_line: listing.property.addressLine,
       ward: listing.property.ward,
       city: listing.property.city ?? "",

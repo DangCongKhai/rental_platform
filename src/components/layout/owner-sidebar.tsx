@@ -63,7 +63,7 @@ export function OwnerSidebarFallback() {
 
 function OwnerSidebarNav({ pathname }: { pathname: string }) {
   return (
-    <aside className="shrink-0 bg-ink text-white lg:flex lg:min-h-[calc(100svh-75px)] lg:w-[260px] lg:flex-col lg:px-4 lg:py-5">
+    <aside className="shrink-0 bg-ink text-white lg:flex lg:h-full lg:w-[260px] lg:flex-col lg:overflow-y-auto lg:px-4 lg:py-5">
       <p className="mb-4 hidden px-3 text-[11px] font-bold tracking-[0.16em] text-on-dark-muted uppercase lg:block">
         Không gian quản lý
       </p>
