@@ -1,4 +1,5 @@
 # Rental model
+
 All application PK/FK identifiers are UUIDs; version_number is a sequential integer per tenancy, not an identity key. Store timestamps in UTC, display Asia/Ho_Chi_Minh; use PostgreSQL DATE for rental boundaries and NUMERIC(14,0) for VND amounts.
 
 Confirmed contracts are consecutive segments: ORIGINAL Jan1–Jun30, RENEWAL Jul1–Dec31. A correction of an unconfirmed segment adds another row, keeps type/request, links supersedes_contract_id and requires new acknowledgements. No normal mutation/deletion of submitted terms/documents. Embedded acknowledgement metadata alone may transition null-to-value once under participant and current-version checks.

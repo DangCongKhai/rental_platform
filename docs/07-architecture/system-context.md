@@ -1,4 +1,7 @@
 # System context
-Users access Next.js public, tenant, owner and admin interfaces. Supabase Auth provides identity; Next.js calls Laravel with access bearer tokens. Laravel verifies project JWT claims/signature, resolves profile and applies resource Policies, then uses Eloquent/direct PostgreSQL for business data. Storage integration manages images and private contract objects. Queue workers and scheduler execute shared domain actions and dispatch durable notifications.
 
-No service key, database password or JWT signing material is sent to browser. A public/anon key alone must not grant direct application-table access. Direct DB connection may bypass RLS depending on role: do not assume auth.uid() magically scopes Eloquent. Restrict grants/RLS and enforce Laravel authorization regardless.
+Users reach the public, tenant, owner and admin areas of one Next.js app. Supabase Auth provides identity; `@supabase/ssr` keeps the session in cookies and `getClaims()` verifies it on the server. Server components and Server Actions resolve the profile, check access and query Supabase PostgreSQL through Prisma. Supabase Storage holds photos and private contract files.
+
+There is no separate worker. If background work is ever needed, Supabase Cron or a Database Webhook calls a protected Route Handler in the same app.
+
+No service key, database password or signing material is sent to the browser. The publishable key alone must not grant direct application-table access: revoke client grants on business tables and check access in server code for every action.

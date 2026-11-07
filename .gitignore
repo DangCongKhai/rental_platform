@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/generated/prisma
+
+
+# Keep the shared auth redirect configuration; ignore local Supabase state.
+/supabase/*
+!/supabase/config.toml
+
+
+# ignore local plan
+.local_plans/
+
+# Keep the shared Figma rule; ignore other local Cursor configuration.
+/.cursor/*
+!/.cursor/rules/
+/.cursor/rules/*
+!/.cursor/rules/figma-design.mdc
+
+# Local implementation and review notes
+/.superpowers/

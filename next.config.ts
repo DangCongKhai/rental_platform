@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "11mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +16,18 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  images: {
+    formats: ["image/webp"],
+    deviceSizes: [640, 828, 1080, 1200],
+    imageSizes: [64, 128, 256, 384],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "nktxpjkuwdxjfiopikrc.supabase.co",
+        pathname: "/storage/v1/object/**",
+      },
+    ],
   },
 };
 

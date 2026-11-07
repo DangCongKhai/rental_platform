@@ -1,0 +1,99 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import { hasEnvVars } from "../utils";
+
+export async function updateSession(request: NextRequest) {
+  // Cloning the request in the proxy drops a multipart body, so the
+  // upload route then sees no file and rejects it.
+  const contentType =
+    request.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    return NextResponse.next();
+  }
+
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  // If the env vars are not set, skip proxy check. You can remove this
+  // once you setup the project.
+  if (!hasEnvVars) {
+    return supabaseResponse;
+  }
+
+  // /auth/confirm verifies the email token and writes the session itself.
+  // getClaims() on a request with no session deletes auth cookies first.
+  if (request.nextUrl.pathname === "/auth/confirm") {
+    return supabaseResponse;
+  }
+
+  // With Fluid compute, don't put this client in a global environment
+  // variable. Always create a new one on each request.
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  // Do not run code between createServerClient and
+  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
+
+  // IMPORTANT: If you remove getClaims() and you use server-side rendering
+  // with the Supabase client, your users may be randomly logged out.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
+  const pathname = request.nextUrl.pathname;
+  const isPublicPage =
+    // Exact cron endpoint authenticates with assertCronRequest, not a browser session.
+    pathname === "/api/cron/expire-holds" ||
+    pathname === "/" ||
+    pathname === "/guide" ||
+    pathname === "/listings" ||
+    pathname.startsWith("/listings/") ||
+    pathname.startsWith("/api/listings") ||
+    pathname.startsWith("/api/amenities") ||
+    pathname.startsWith("/api/locations") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth");
+
+  if (!user && !isPublicPage) {
+    // no user, potentially respond by redirecting the user to the login page
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    return NextResponse.redirect(url);
+  }
+
+  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  // If you're creating a new response object with NextResponse.next() make sure to:
+  // 1. Pass the request in it, like so:
+  //    const myNewResponse = NextResponse.next({ request })
+  // 2. Copy over the cookies, like so:
+  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
+  // 3. Change the myNewResponse object to fit your needs, but avoid changing
+  //    the cookies!
+  // 4. Finally:
+  //    return myNewResponse
+  // If this is not done, you may be causing the browser and server to go out
+  // of sync and terminate the user's session prematurely!
+
+  return supabaseResponse;
+}
